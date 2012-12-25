@@ -68,13 +68,10 @@ class ZincClient(object):
 
     def create_order(self,order_obj):
         ''' Create a new order from order_obj. If wait, keep getting the order until it is finished. '''
-        js = self._post('orders',order_obj)
-        return ZincOrder(js,client=self)
+        return ZincOrder(client=self)._create(order_obj)
 
     def get_order(self,order_id):
-        o = ZincOrder(order_id,client=self)
-        o.update()
-        return o
+        return ZincOrder(order_id,client=self).update()
 
     def get_all_orders(self):
         js = self._get('orders')
@@ -82,7 +79,7 @@ class ZincClient(object):
 
     def get_user(self):
         ''' Return the user object. '''
-        return self._get('user')
+        return ZincUser(client=self).update()
 
 class _ZincWrappedObject(object):
     def __init__(self,first=None,client=None):
@@ -94,19 +91,15 @@ class _ZincWrappedObject(object):
             self._obj = None
         if not client: raise Exception("specify a client")
         self.client = client
-
     def update(self):
         self._obj = self.client._get(self.ADDRESS.format(self))
         return self
-
     def dict(self):
         return self._obj
-
     def __getitem__(self,key):
         return self._obj[key]
-
     def __repr__(self):
-        return '{0}({0})'.format(type(self),json.dumps(self.dict()))
+        return '{0}({1})'.format(self.__class__.__name__,json.dumps(self.dict(),indent=4,sort_keys=True))
 
 class ZincOrder(_ZincWrappedObject):
     ADDRESS = 'orders/{0.id}'
@@ -129,6 +122,5 @@ class ZincCancellation(_ZincWrappedObject):
         return ZincOrder(self.id,client=self.client).update()
 
 class ZincUser(_ZincWrappedObject):
-    def update(self):
-        self._obj = self.client._get('user')
+    ADDRESS = 'user'
 

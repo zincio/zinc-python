@@ -49,7 +49,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 
 if args.get_user:
     print 'User object:'
-    print client._pjs(client.get_user())
+    print client.get_user()
 if args.create_order:
     print 'Creating an order...'
     client.create_order(order)
@@ -68,6 +68,6 @@ if args.get_order:
     print client.get_order(args.get_order)
 if args.get_cancellation:
     print 'Cancellation:'
-    print client._pjs(client.get_order(args.get_cancellation).get_cancellation())
+    print client.get_order(args.get_cancellation).get_cancellation()
 
 
