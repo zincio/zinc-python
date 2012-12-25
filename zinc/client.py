@@ -48,8 +48,10 @@ class ZincClient(object):
         r = getattr(requests,method)(fullurl,**kwargs).json
         if isinstance(r,type(lambda:0)): r = r() # new requests uses r.json()
 
-        if r['_type'] == 'error':
-            raise ZincAPIError(code=r['code'],message=r['message'],http_code=r['_http_code'])
+        try:
+            if r['_type'] == 'error':
+                raise ZincAPIError(code=r['code'],message=r['message'],http_code=r['_http_code'])
+        except TypeError: pass # Probably a list
 
         try:
             logger.debug('Response data: %s',self._pjs(r))
