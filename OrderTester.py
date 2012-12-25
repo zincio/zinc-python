@@ -4,12 +4,12 @@ import time,datetime
 
 import logging
 logging.basicConfig()
-from pyzinc import ZincClient
+from zinc import ZincClient
 
 order = {
     "address" : {
         "address_line2" : None,
-        "city" : "Washington"
+        "city" : "Washington",
         "address_line1" : "1600 Pennsylvania Ave",
         "name" : "Barack Obama",
         "country" : "US",
@@ -40,7 +40,7 @@ parser.add_argument('--get-all-orders',dest='get_all_orders',action='store_true'
 parser.add_argument('--get-cancellation',dest='get_cancellation',help='Print the cancellation object with this order ID.')
 parser.add_argument('--get-user',action='store_true',dest='get_user',help='Print the User object.')
 parser.add_argument('--verify-https',action='store_true',dest='verify_https',help='Force HTTPS verification (off by default).')
-parser.add_argument('--base-url',dest='base_url',default='api.local.zinc.io',help='Specify a base url (default api.local.zinc.io)')
+parser.add_argument('--base-url',dest='base_url',default='api.zinc.io',help='Specify a base url (default api.zinc.io)')
 args = parser.parse_args()
 
 client = ZincClient(api_key=args.apikey,verify_https=args.verify_https,base=args.base_url)

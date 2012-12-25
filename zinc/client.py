@@ -7,6 +7,18 @@ import pprint
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+class ZincAPIError(Exception):
+    def __init__(self,code,message,http_code=None):
+        self.code = code
+        self.message = message
+        self.http_code = http_code
+    def __unicode__(self):
+        return u'{0}: {1}'.format(self.code,self.message)
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+    def __repr__(self):
+        return 'ZincAPIError(code={0.code:r},message={0.message:r},http_code={0.http_code:r})'
+
 class ZincClient(object):
     def __init__(self,api_key,version=1,base='api.zinc.io',verify_https=True):
         self.api_key = api_key
@@ -35,6 +47,9 @@ class ZincClient(object):
 
         r = getattr(requests,method)(fullurl,**kwargs).json
         if isinstance(r,type(lambda:0)): r = r() # new requests uses r.json()
+
+        if r['_type'] == 'error':
+            raise ZincAPIError(code=r['code'],message=r['message'],http_code=r['_http_code'])
 
         try:
             logger.debug('Response data: %s',self._pjs(r))
@@ -69,18 +84,20 @@ class ZincClient(object):
         ''' Return the user object. '''
         return self._get('user')
 
-class ZincOrder(object):
-    def __init__(self,first,client):
+class _ZincWrappedObject(object):
+    def __init__(self,first=None,client=None):
         if isinstance(first,dict):
             self._obj = first
             self.id = first['id']
         elif isinstance(first,basestring):
             self.id = first
             self._obj = None
+        if not client: raise Exception("specify a client")
         self.client = client
 
     def update(self):
-        self._obj = self.client._get('orders/{0.id}'.format(self))
+        self._obj = self.client._get(self.ADDRESS.format(self))
+        return self
 
     def dict(self):
         return self._obj
@@ -88,12 +105,30 @@ class ZincOrder(object):
     def __getitem__(self,key):
         return self._obj[key]
 
-    def cancel(self):
-        return self.client._post('orders/{0.id}/cancellation'.format(self))
-    
-    def get_cancellation(self):
-        return self.client._get('orders/{0.id}/cancellation'.format(self))
-
     def __repr__(self):
-        return 'ZincOrder({0})'.format(pprint.pformat(self.dict()))
+        return '{0}({0})'.format(type(self),json.dumps(self.dict()))
+
+class ZincOrder(_ZincWrappedObject):
+    ADDRESS = 'orders/{0.id}'
+    def _create(self,obj):
+        self._obj = self.client._post('orders',order_obj)
+        self.id = self._obj['id']
+        return self
+    def cancel(self):
+        return ZincCancellation(client=self.client)._create(self.id)
+    def get_cancellation(self):
+        return ZincCancellation(self.id,client=self.client).update()
+
+class ZincCancellation(_ZincWrappedObject):
+    ADDRESS = 'orders/{0.id}/cancellation'
+    def _create(self,id):
+        self._obj = self.client._post('orders/{0}/cancellation'.format(id))
+        self._id = id
+        return self
+    def get_order(self):
+        return ZincOrder(self.id,client=self.client).update()
+
+class ZincUser(_ZincWrappedObject):
+    def update(self):
+        self._obj = self.client._get('user')
 
