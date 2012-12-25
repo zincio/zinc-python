@@ -1,9 +1,8 @@
 import requests,json
 import sys,argparse
 import time,datetime
-
 import logging
-logging.basicConfig()
+
 from zinc import ZincClient
 
 order = {
@@ -32,6 +31,7 @@ order = {
 
 parser = argparse.ArgumentParser(description='Zinc API test script')
 parser.add_argument('-k','--key',dest='apikey',help='API key')
+parser.add_argument('-v',dest='verbose',action='store_true',help='Output verbose debugging information')
 parser.add_argument('--create-order',dest='create_order',action='store_true',help='Create a new order (object specified in python file) - wait until it finishes.')
 parser.add_argument('--cancel-order',dest='cancel_order',help='Cancel the order with this ID - wait until it finishes.')
 parser.add_argument('--get-order',dest='get_order',help='Print the order object with this ID.')
@@ -44,7 +44,9 @@ parser.add_argument('--base-url',dest='base_url',default='api.zinc.io',help='Spe
 args = parser.parse_args()
 
 client = ZincClient(api_key=args.apikey,verify_https=args.verify_https,base=args.base_url)
-logging.getLogger().setLevel(logging.DEBUG)
+if args.verbose:
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("requests").setLevel(logging.WARNING)
 
 if args.get_user:

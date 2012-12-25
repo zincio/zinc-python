@@ -49,13 +49,13 @@ class ZincClient(object):
         if isinstance(r,type(lambda:0)): r = r() # new requests uses r.json()
 
         try:
+            logger.debug('Response data: %s',self._pjs(r))
+        except: pass
+
+        try:
             if r['_type'] == 'error':
                 raise ZincAPIError(code=r['code'],message=r['message'],http_code=r['_http_code'])
         except TypeError: pass # Probably a list
-
-        try:
-            logger.debug('Response data: %s',self._pjs(r))
-        except: pass
 
         return r
 
