@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import requests,json
 import sys,argparse
 import time,datetime
