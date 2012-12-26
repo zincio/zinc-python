@@ -9,21 +9,31 @@ order = {
     "address" : {
         "address_line2" : None,
         "city" : "Washington",
-        "address_line1" : "1600 Pennsylvania Ave",
+        "address_line1" : "1600 Pennsylvania Ave Nw",
         "name" : "Barack Obama",
         "country" : "US",
         "state" : "DC",
         "zip_code" : "20500" 
     },
     "gift_ship" : True,
-    "max_total" : 4500,
+    "max_total" : 30000,
     "merchant" : "amazon_all",
     "mode" : "live",
     "products" : [
         {
             "pid_type" : "ASIN",
-            "pid" : "B000PM96NA",
+            "pid" : "1600610978",
             "qty" : 1 
+        },
+        {
+            "pid_type" : "ASIN",
+            "pid" : "0226113728",
+            "qty" : 1
+        },
+        {
+            "pid_type" : "ASIN",
+            "pid" : "B00000ISUU",
+            "qty" : 1
         }
     ],
     "shipping_method" : "standard"
@@ -54,10 +64,10 @@ if args.get_user:
     print client.get_user()
 if args.create_order:
     print 'Creating an order...'
-    client.create_order(order)
+    print client.create_order(order)
 if args.cancel_order:
     print 'Cancelling an order...'
-    client.get_order(args.cancel_order).cancel()
+    print client.get_order(args.cancel_order).cancel()
 if args.get_last_order:
     print 'Last order:'
     print client.get_all_orders()[-1]
