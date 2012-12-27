@@ -118,7 +118,7 @@ class ZincCancellation(_ZincWrappedObject):
     ADDRESS = 'orders/{0.id}/cancellation'
     def _create(self,id):
         self._obj = self.client._post('orders/{0}/cancellation'.format(id))
-        self._id = id
+        self.id = id
         return self
     def get_order(self):
         return ZincOrder(self.id,client=self.client).update()
