@@ -3,6 +3,7 @@ import sys,argparse
 import time,datetime
 import logging
 import pprint
+import urllib
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -75,9 +76,15 @@ class ZincClient(object):
     def get_order(self,order_id):
         return ZincOrder(order_id,client=self).update()
 
-    def get_all_orders(self):
-        js = self._get('orders')
+    def get_orders(self,limit=None,offset=None):
+        d = {}
+        if limit: d['limit'] = limit
+        if offset: d['offset'] = offset
+        js = self._get('orders?{0}'.format(urllib.urlencode(d)))
         return [ZincOrder(o,client=self) for o in js]
+
+    def get_order_count(self):
+        return self._get('orders/count')
 
     def get_user(self):
         ''' Return the user object. '''
@@ -98,6 +105,11 @@ class _ZincWrappedObject(object):
         return self
     def dict(self):
         return self._obj
+    def __eq__(self,other):
+        try:
+            return self.dict() == other.dict()
+        except:
+            return False
     def __getitem__(self,key):
         return self._obj[key]
     def __repr__(self):
