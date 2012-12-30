@@ -200,4 +200,3 @@ Example Interactive Session
     >>> c2 = o.get_cancellation()
     >>> c2 == c
     True
-
