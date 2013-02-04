@@ -55,7 +55,7 @@ Example Interactive Session
 ---------------------------
 
     >>> from zinc import ZincClient
-    >>> zc = ZincClient(api_key='6c414ebd4e5843f4a06e8f8ba280eb52')
+    >>> zc = ZincClient(api_key='dev-f0fe73b8dc4e402696964abecb79dbce')
     >>> o = zc.create_order({
             "merchant": "amazon",
             "shipping_method": "standard",
