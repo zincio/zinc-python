@@ -1,1 +1,2 @@
+v0.1.1 2013-02-16 -- Removed OrderTester.py from scripts.
 v0.1.0 2013-02-04 -- Initial release.

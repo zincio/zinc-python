@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='zinc',
-    version='0.1.0',
+    version='0.1.1',
     author='Eric Swanson',
     author_email='eswanson@alloscomp.com',
     packages=['zinc'],
