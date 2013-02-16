@@ -6,7 +6,6 @@ setup(
     author='Eric Swanson',
     author_email='eswanson@alloscomp.com',
     packages=['zinc'],
-    scripts=['bin/OrderTester.py'],
     url='http://pypi.python.org/pypi/Zinc/',
     license='LICENSE.txt',
     description='Wrapper for Zinc ecommerce API (zinc.io).',
