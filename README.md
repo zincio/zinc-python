@@ -1,3 +1,7 @@
+**WARNING: this repository is deprecated. If you are interested in using the Zinc Automatic Ordering API, please see zinc.io/docs.**
+
+
+
 zinc-python
 ===========
 
