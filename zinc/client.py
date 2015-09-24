@@ -47,7 +47,7 @@ class ZincClient(object):
         if data: logger.debug('Request data: %s',self._pjs(data))
 
         r = getattr(requests,method)(fullurl,**kwargs).json
-        if isinstance(r,type(lambda:0)): r = r() # new requests uses r.json()
+        if hasattr(r, '__call__'): r = r() # new requests uses r.json()
 
         try:
             logger.debug('Response data: %s',self._pjs(r))
