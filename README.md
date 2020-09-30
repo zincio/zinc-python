@@ -7,7 +7,7 @@ zinc-python
 
 A lightweight python library for e-commerce on Zinc.io. Full API documentation is available at [the Zinc docs page](https://zinc.io/docs).
 
-Check out the OrderTester.py program for some example usage. 
+Check out the OrderTester.py program's for some example usage. 
 
 ZincClient Object
 -----------------
