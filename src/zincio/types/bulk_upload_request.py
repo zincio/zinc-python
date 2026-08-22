@@ -21,6 +21,11 @@ class BulkUploadRequest(UniversalBaseModel):
     Parsed CSV rows, each a mapping of column header to cell value.
     """
 
+    notify_on_complete: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Email the account holder once every order in this batch has reached a terminal state (placed, failed, or cancelled).
+    """
+
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
     else:

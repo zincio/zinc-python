@@ -5,6 +5,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .customer_notification_status import CustomerNotificationStatus
 from .order_connect_info import OrderConnectInfo
 from .order_item_response import OrderItemResponse
 from .order_job_result import OrderJobResult
@@ -28,11 +29,17 @@ class OrderResponse(UniversalBaseModel):
     po_number: typing.Optional[str] = None
     handling_days_max: typing.Optional[int] = None
     is_gift: typing.Optional[bool] = None
+    gift_message: typing.Optional[str] = None
     retailer_credentials_id: typing.Optional[str] = None
     retailer_credentials_uuid: typing.Optional[str] = None
     job_result: typing.Optional[OrderJobResult] = pydantic.Field(default=None)
     """
     Fulfillment result and price breakdown for a completed or failed order; null while processing.
+    """
+
+    merchant_order_ids: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    The retailer's own order number(s) for this order (e.g. an Amazon `113-…` ID), as recorded when it was placed. Empty while processing, or if the order never reached the retailer.
     """
 
     tracking_numbers: typing.Optional[typing.List[TrackingNumberResponse]] = None
@@ -42,6 +49,11 @@ class OrderResponse(UniversalBaseModel):
     connect: typing.Optional[OrderConnectInfo] = pydantic.Field(default=None)
     """
     Stripe Connect charge details when this order was paid via Connect; null for prepaid-wallet orders.
+    """
+
+    customer_notifications: typing.Optional[CustomerNotificationStatus] = pydantic.Field(default=None)
+    """
+    End-customer email-notification status when the order opted into the notifications add-on; null when it didn't.
     """
 
     created_at: dt.datetime

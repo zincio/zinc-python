@@ -4,7 +4,14 @@ import typing
 
 OrderMilestoneType = typing.Union[
     typing.Literal[
-        "order_created", "order_placed", "tracking_acquired", "shipped", "delivered", "order_failed", "cancelled"
+        "order_created",
+        "order_placed",
+        "tracking_acquired",
+        "shipped",
+        "delivered",
+        "undeliverable",
+        "order_failed",
+        "cancelled",
     ],
     typing.Any,
 ]

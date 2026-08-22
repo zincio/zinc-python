@@ -6,18 +6,20 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .agent_product_details_post_request_retailer import AgentProductDetailsPostRequestRetailer
     from .agent_product_details_request_retailer import AgentProductDetailsRequestRetailer
-    from .agent_product_offers_post_request_retailer import AgentProductOffersPostRequestRetailer
+    from .agent_product_details_response import AgentProductDetailsResponse
+    from .agent_product_details_response_status import AgentProductDetailsResponseStatus
     from .agent_product_offers_request_retailer import AgentProductOffersRequestRetailer
-    from .agent_product_search_post_request_retailer import AgentProductSearchPostRequestRetailer
+    from .agent_product_offers_response import AgentProductOffersResponse
+    from .agent_product_offers_response_status import AgentProductOffersResponseStatus
     from .agent_product_search_request_retailer import AgentProductSearchRequestRetailer
 _dynamic_imports: typing.Dict[str, str] = {
-    "AgentProductDetailsPostRequestRetailer": ".agent_product_details_post_request_retailer",
     "AgentProductDetailsRequestRetailer": ".agent_product_details_request_retailer",
-    "AgentProductOffersPostRequestRetailer": ".agent_product_offers_post_request_retailer",
+    "AgentProductDetailsResponse": ".agent_product_details_response",
+    "AgentProductDetailsResponseStatus": ".agent_product_details_response_status",
     "AgentProductOffersRequestRetailer": ".agent_product_offers_request_retailer",
-    "AgentProductSearchPostRequestRetailer": ".agent_product_search_post_request_retailer",
+    "AgentProductOffersResponse": ".agent_product_offers_response",
+    "AgentProductOffersResponseStatus": ".agent_product_offers_response_status",
     "AgentProductSearchRequestRetailer": ".agent_product_search_request_retailer",
 }
 
@@ -44,10 +46,11 @@ def __dir__():
 
 
 __all__ = [
-    "AgentProductDetailsPostRequestRetailer",
     "AgentProductDetailsRequestRetailer",
-    "AgentProductOffersPostRequestRetailer",
+    "AgentProductDetailsResponse",
+    "AgentProductDetailsResponseStatus",
     "AgentProductOffersRequestRetailer",
-    "AgentProductSearchPostRequestRetailer",
+    "AgentProductOffersResponse",
+    "AgentProductOffersResponseStatus",
     "AgentProductSearchRequestRetailer",
 ]

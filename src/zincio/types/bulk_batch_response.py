@@ -20,6 +20,8 @@ class BulkBatchResponse(UniversalBaseModel):
     row_count: int
     placed_count: int
     failed_count: int
+    notify_on_complete: typing.Optional[bool] = None
+    notified_at: typing.Optional[dt.datetime] = None
     created_at: dt.datetime
     updated_at: dt.datetime
     rows: typing.Optional[typing.List[BulkRowResult]] = None

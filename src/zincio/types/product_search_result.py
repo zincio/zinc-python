@@ -37,6 +37,9 @@ class ProductSearchResult(UniversalBaseModel):
     preorder: typing.Optional[bool] = None
     first_party_seller: typing.Optional[bool] = None
     buyapi_hint: typing.Optional[bool] = None
+    url: typing.Optional[str] = None
+    variant_id: typing.Optional[str] = None
+    currency_code: typing.Optional[str] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

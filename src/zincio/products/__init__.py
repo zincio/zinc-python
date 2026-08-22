@@ -7,14 +7,16 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .types import (
-        GetProductDetailsProductsProductIdGetRequestRetailer,
-        GetProductOffersProductsProductIdOffersGetRequestRetailer,
-        SearchProductsProductsSearchGetRequestRetailer,
+        GetProductDetailsProductsProductIdGetResponse,
+        GetProductDetailsProductsProductIdGetResponseStatus,
+        GetProductOffersProductsProductIdOffersGetResponse,
+        GetProductOffersProductsProductIdOffersGetResponseStatus,
     )
 _dynamic_imports: typing.Dict[str, str] = {
-    "GetProductDetailsProductsProductIdGetRequestRetailer": ".types",
-    "GetProductOffersProductsProductIdOffersGetRequestRetailer": ".types",
-    "SearchProductsProductsSearchGetRequestRetailer": ".types",
+    "GetProductDetailsProductsProductIdGetResponse": ".types",
+    "GetProductDetailsProductsProductIdGetResponseStatus": ".types",
+    "GetProductOffersProductsProductIdOffersGetResponse": ".types",
+    "GetProductOffersProductsProductIdOffersGetResponseStatus": ".types",
 }
 
 
@@ -40,7 +42,8 @@ def __dir__():
 
 
 __all__ = [
-    "GetProductDetailsProductsProductIdGetRequestRetailer",
-    "GetProductOffersProductsProductIdOffersGetRequestRetailer",
-    "SearchProductsProductsSearchGetRequestRetailer",
+    "GetProductDetailsProductsProductIdGetResponse",
+    "GetProductDetailsProductsProductIdGetResponseStatus",
+    "GetProductOffersProductsProductIdOffersGetResponse",
+    "GetProductOffersProductsProductIdOffersGetResponseStatus",
 ]

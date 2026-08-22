@@ -7,19 +7,21 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .types import (
-        AgentProductDetailsPostRequestRetailer,
         AgentProductDetailsRequestRetailer,
-        AgentProductOffersPostRequestRetailer,
+        AgentProductDetailsResponse,
+        AgentProductDetailsResponseStatus,
         AgentProductOffersRequestRetailer,
-        AgentProductSearchPostRequestRetailer,
+        AgentProductOffersResponse,
+        AgentProductOffersResponseStatus,
         AgentProductSearchRequestRetailer,
     )
 _dynamic_imports: typing.Dict[str, str] = {
-    "AgentProductDetailsPostRequestRetailer": ".types",
     "AgentProductDetailsRequestRetailer": ".types",
-    "AgentProductOffersPostRequestRetailer": ".types",
+    "AgentProductDetailsResponse": ".types",
+    "AgentProductDetailsResponseStatus": ".types",
     "AgentProductOffersRequestRetailer": ".types",
-    "AgentProductSearchPostRequestRetailer": ".types",
+    "AgentProductOffersResponse": ".types",
+    "AgentProductOffersResponseStatus": ".types",
     "AgentProductSearchRequestRetailer": ".types",
 }
 
@@ -46,10 +48,11 @@ def __dir__():
 
 
 __all__ = [
-    "AgentProductDetailsPostRequestRetailer",
     "AgentProductDetailsRequestRetailer",
-    "AgentProductOffersPostRequestRetailer",
+    "AgentProductDetailsResponse",
+    "AgentProductDetailsResponseStatus",
     "AgentProductOffersRequestRetailer",
-    "AgentProductSearchPostRequestRetailer",
+    "AgentProductOffersResponse",
+    "AgentProductOffersResponseStatus",
     "AgentProductSearchRequestRetailer",
 ]

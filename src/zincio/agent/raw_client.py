@@ -13,16 +13,16 @@ from ..core.serialization import convert_and_respect_annotation_metadata
 from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.address import Address
+from ..types.customer_notifications import CustomerNotifications
 from ..types.order_payment import OrderPayment
 from ..types.order_product import OrderProduct
 from ..types.order_response import OrderResponse
 from ..types.product_search_response import ProductSearchResponse
 from ..types.search_response import SearchResponse
-from .types.agent_product_details_post_request_retailer import AgentProductDetailsPostRequestRetailer
 from .types.agent_product_details_request_retailer import AgentProductDetailsRequestRetailer
-from .types.agent_product_offers_post_request_retailer import AgentProductOffersPostRequestRetailer
+from .types.agent_product_details_response import AgentProductDetailsResponse
 from .types.agent_product_offers_request_retailer import AgentProductOffersRequestRetailer
-from .types.agent_product_search_post_request_retailer import AgentProductSearchPostRequestRetailer
+from .types.agent_product_offers_response import AgentProductOffersResponse
 from .types.agent_product_search_request_retailer import AgentProductSearchRequestRetailer
 from pydantic import ValidationError
 
@@ -48,7 +48,9 @@ class RawAgentClient:
         po_number: typing.Optional[str] = OMIT,
         handling_days_max: typing.Optional[int] = OMIT,
         is_gift: typing.Optional[bool] = OMIT,
+        gift_message: typing.Optional[str] = OMIT,
         payment: typing.Optional[OrderPayment] = OMIT,
+        customer_notifications: typing.Optional[CustomerNotifications] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OrderResponse]:
         """
@@ -99,10 +101,16 @@ class RawAgentClient:
             Optional ceiling on a seller's shipping and handling days. Omit or send null for no limit.
 
         is_gift : typing.Optional[bool]
-            Mark the order as a gift. Prices are suppressed on the packing slip where the fulfillment method supports it.
+            Mark the order as a gift, suppressing prices on the packing slip. If the retailer's checkout offers no free gift option, the order FAILS with `gift_option_unavailable` rather than being placed as a normal order — a gift that arrives with prices visible to the recipient is treated as worse than no order.
+
+        gift_message : typing.Optional[str]
+            Optional note for the recipient, entered into the retailer's gift-message field at checkout. Requires `is_gift` to be true. Max 240 characters. Delivered where the retailer's checkout offers a gift message; the order is still placed without it where one isn't available.
 
         payment : typing.Optional[OrderPayment]
             Optional payment block. Omit for prepaid-wallet billing (default).
+
+        customer_notifications : typing.Optional[CustomerNotifications]
+            Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -132,8 +140,12 @@ class RawAgentClient:
                 "po_number": po_number,
                 "handling_days_max": handling_days_max,
                 "is_gift": is_gift,
+                "gift_message": gift_message,
                 "payment": convert_and_respect_annotation_metadata(
                     object_=payment, annotation=typing.Optional[OrderPayment], direction="write"
+                ),
+                "customer_notifications": convert_and_respect_annotation_metadata(
+                    object_=customer_notifications, annotation=typing.Optional[CustomerNotifications], direction="write"
                 ),
             },
             headers={
@@ -185,75 +197,6 @@ class RawAgentClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def search(
-        self, *, q: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> HttpResponse[SearchResponse]:
-        """
-        **Beta** — response shape may change. Cross-retailer product search for agents. Returns orderable listings whose
-        `url` can be passed straight to POST /agent/orders.
-
-        Parameters
-        ----------
-        q : str
-            Search term
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[SearchResponse]
-            Successful Response
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "agent/search",
-            method="GET",
-            params={
-                "q": q,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    SearchResponse,
-                    parse_obj_as(
-                        type_=SearchResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 402:
-                raise PaymentRequiredError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def search_post(
         self, *, q: str, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[SearchResponse]:
         """
@@ -358,92 +301,6 @@ class RawAgentClient:
         """
         _response = self._client_wrapper.httpx_client.request(
             "agent/products/search",
-            method="GET",
-            params={
-                "query": query,
-                "retailer": retailer,
-                "page": page,
-                "free_shipping": free_shipping,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    ProductSearchResponse,
-                    parse_obj_as(
-                        type_=ProductSearchResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 402:
-                raise PaymentRequiredError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def product_search_post(
-        self,
-        *,
-        query: str,
-        retailer: AgentProductSearchPostRequestRetailer,
-        page: typing.Optional[int] = None,
-        free_shipping: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[ProductSearchResponse]:
-        """
-        Per-retailer product search for agents (amazon | walmart).
-
-        Parameters
-        ----------
-        query : str
-            Search term
-
-        retailer : AgentProductSearchPostRequestRetailer
-            Retailer: amazon or walmart
-
-        page : typing.Optional[int]
-            Page number for pagination
-
-        free_shipping : typing.Optional[bool]
-            Only return items that ship for free (Walmart: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so Amazon results are returned unfiltered. Applied per-page after pagination; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[ProductSearchResponse]
-            Successful Response
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "agent/products/search",
             method="POST",
             params={
                 "query": query,
@@ -503,7 +360,7 @@ class RawAgentClient:
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[typing.Any]:
+    ) -> HttpResponse[AgentProductOffersResponse]:
         """
         Offers/pricing for a specific product on a retailer.
 
@@ -529,101 +386,8 @@ class RawAgentClient:
 
         Returns
         -------
-        HttpResponse[typing.Any]
-            Successful Response
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "agent/products/offers",
-            method="GET",
-            params={
-                "product_id": product_id,
-                "retailer": retailer,
-                "max_age": max_age,
-                "newer_than": newer_than,
-                "async": async_,
-            },
-            request_options=request_options,
-        )
-        try:
-            if _response is None or not _response.text.strip():
-                return HttpResponse(response=_response, data=None)
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    typing.Any,
-                    parse_obj_as(
-                        type_=typing.Any,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 402:
-                raise PaymentRequiredError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def product_offers_post(
-        self,
-        *,
-        product_id: str,
-        retailer: AgentProductOffersPostRequestRetailer,
-        max_age: typing.Optional[int] = None,
-        newer_than: typing.Optional[int] = None,
-        async_: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[typing.Any]:
-        """
-        Offers/pricing for a specific product on a retailer.
-
-        Parameters
-        ----------
-        product_id : str
-            Product identifier (e.g. ASIN)
-
-        retailer : AgentProductOffersPostRequestRetailer
-            Retailer: amazon or walmart
-
-        max_age : typing.Optional[int]
-            Max response age in seconds
-
-        newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
-
-        async_ : typing.Optional[bool]
-            Return immediately with status=processing
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[typing.Any]
-            Successful Response
+        HttpResponse[AgentProductOffersResponse]
+            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
         """
         _response = self._client_wrapper.httpx_client.request(
             "agent/products/offers",
@@ -638,13 +402,11 @@ class RawAgentClient:
             request_options=request_options,
         )
         try:
-            if _response is None or not _response.text.strip():
-                return HttpResponse(response=_response, data=None)
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    typing.Any,
+                    AgentProductOffersResponse,
                     parse_obj_as(
-                        type_=typing.Any,  # type: ignore
+                        type_=AgentProductOffersResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -689,7 +451,7 @@ class RawAgentClient:
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[typing.Any]:
+    ) -> HttpResponse[AgentProductDetailsResponse]:
         """
         Full product details for a specific product on a retailer.
 
@@ -715,101 +477,8 @@ class RawAgentClient:
 
         Returns
         -------
-        HttpResponse[typing.Any]
-            Successful Response
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            "agent/products/details",
-            method="GET",
-            params={
-                "product_id": product_id,
-                "retailer": retailer,
-                "max_age": max_age,
-                "newer_than": newer_than,
-                "async": async_,
-            },
-            request_options=request_options,
-        )
-        try:
-            if _response is None or not _response.text.strip():
-                return HttpResponse(response=_response, data=None)
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    typing.Any,
-                    parse_obj_as(
-                        type_=typing.Any,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return HttpResponse(response=_response, data=_data)
-            if _response.status_code == 402:
-                raise PaymentRequiredError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    def product_details_post(
-        self,
-        *,
-        product_id: str,
-        retailer: AgentProductDetailsPostRequestRetailer,
-        max_age: typing.Optional[int] = None,
-        newer_than: typing.Optional[int] = None,
-        async_: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[typing.Any]:
-        """
-        Full product details for a specific product on a retailer.
-
-        Parameters
-        ----------
-        product_id : str
-            Product identifier (e.g. ASIN)
-
-        retailer : AgentProductDetailsPostRequestRetailer
-            Retailer: amazon or walmart
-
-        max_age : typing.Optional[int]
-            Max response age in seconds
-
-        newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
-
-        async_ : typing.Optional[bool]
-            Return immediately with status=processing
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        HttpResponse[typing.Any]
-            Successful Response
+        HttpResponse[AgentProductDetailsResponse]
+            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
         """
         _response = self._client_wrapper.httpx_client.request(
             "agent/products/details",
@@ -824,13 +493,11 @@ class RawAgentClient:
             request_options=request_options,
         )
         try:
-            if _response is None or not _response.text.strip():
-                return HttpResponse(response=_response, data=None)
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    typing.Any,
+                    AgentProductDetailsResponse,
                     parse_obj_as(
-                        type_=typing.Any,  # type: ignore
+                        type_=AgentProductDetailsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -885,7 +552,9 @@ class AsyncRawAgentClient:
         po_number: typing.Optional[str] = OMIT,
         handling_days_max: typing.Optional[int] = OMIT,
         is_gift: typing.Optional[bool] = OMIT,
+        gift_message: typing.Optional[str] = OMIT,
         payment: typing.Optional[OrderPayment] = OMIT,
+        customer_notifications: typing.Optional[CustomerNotifications] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OrderResponse]:
         """
@@ -936,10 +605,16 @@ class AsyncRawAgentClient:
             Optional ceiling on a seller's shipping and handling days. Omit or send null for no limit.
 
         is_gift : typing.Optional[bool]
-            Mark the order as a gift. Prices are suppressed on the packing slip where the fulfillment method supports it.
+            Mark the order as a gift, suppressing prices on the packing slip. If the retailer's checkout offers no free gift option, the order FAILS with `gift_option_unavailable` rather than being placed as a normal order — a gift that arrives with prices visible to the recipient is treated as worse than no order.
+
+        gift_message : typing.Optional[str]
+            Optional note for the recipient, entered into the retailer's gift-message field at checkout. Requires `is_gift` to be true. Max 240 characters. Delivered where the retailer's checkout offers a gift message; the order is still placed without it where one isn't available.
 
         payment : typing.Optional[OrderPayment]
             Optional payment block. Omit for prepaid-wallet billing (default).
+
+        customer_notifications : typing.Optional[CustomerNotifications]
+            Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -969,8 +644,12 @@ class AsyncRawAgentClient:
                 "po_number": po_number,
                 "handling_days_max": handling_days_max,
                 "is_gift": is_gift,
+                "gift_message": gift_message,
                 "payment": convert_and_respect_annotation_metadata(
                     object_=payment, annotation=typing.Optional[OrderPayment], direction="write"
+                ),
+                "customer_notifications": convert_and_respect_annotation_metadata(
+                    object_=customer_notifications, annotation=typing.Optional[CustomerNotifications], direction="write"
                 ),
             },
             headers={
@@ -1022,75 +701,6 @@ class AsyncRawAgentClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def search(
-        self, *, q: str, request_options: typing.Optional[RequestOptions] = None
-    ) -> AsyncHttpResponse[SearchResponse]:
-        """
-        **Beta** — response shape may change. Cross-retailer product search for agents. Returns orderable listings whose
-        `url` can be passed straight to POST /agent/orders.
-
-        Parameters
-        ----------
-        q : str
-            Search term
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[SearchResponse]
-            Successful Response
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "agent/search",
-            method="GET",
-            params={
-                "q": q,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    SearchResponse,
-                    parse_obj_as(
-                        type_=SearchResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 402:
-                raise PaymentRequiredError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def search_post(
         self, *, q: str, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[SearchResponse]:
         """
@@ -1195,92 +805,6 @@ class AsyncRawAgentClient:
         """
         _response = await self._client_wrapper.httpx_client.request(
             "agent/products/search",
-            method="GET",
-            params={
-                "query": query,
-                "retailer": retailer,
-                "page": page,
-                "free_shipping": free_shipping,
-            },
-            request_options=request_options,
-        )
-        try:
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    ProductSearchResponse,
-                    parse_obj_as(
-                        type_=ProductSearchResponse,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 402:
-                raise PaymentRequiredError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def product_search_post(
-        self,
-        *,
-        query: str,
-        retailer: AgentProductSearchPostRequestRetailer,
-        page: typing.Optional[int] = None,
-        free_shipping: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[ProductSearchResponse]:
-        """
-        Per-retailer product search for agents (amazon | walmart).
-
-        Parameters
-        ----------
-        query : str
-            Search term
-
-        retailer : AgentProductSearchPostRequestRetailer
-            Retailer: amazon or walmart
-
-        page : typing.Optional[int]
-            Page number for pagination
-
-        free_shipping : typing.Optional[bool]
-            Only return items that ship for free (Walmart: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so Amazon results are returned unfiltered. Applied per-page after pagination; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[ProductSearchResponse]
-            Successful Response
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "agent/products/search",
             method="POST",
             params={
                 "query": query,
@@ -1340,7 +864,7 @@ class AsyncRawAgentClient:
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[typing.Any]:
+    ) -> AsyncHttpResponse[AgentProductOffersResponse]:
         """
         Offers/pricing for a specific product on a retailer.
 
@@ -1366,101 +890,8 @@ class AsyncRawAgentClient:
 
         Returns
         -------
-        AsyncHttpResponse[typing.Any]
-            Successful Response
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "agent/products/offers",
-            method="GET",
-            params={
-                "product_id": product_id,
-                "retailer": retailer,
-                "max_age": max_age,
-                "newer_than": newer_than,
-                "async": async_,
-            },
-            request_options=request_options,
-        )
-        try:
-            if _response is None or not _response.text.strip():
-                return AsyncHttpResponse(response=_response, data=None)
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    typing.Any,
-                    parse_obj_as(
-                        type_=typing.Any,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 402:
-                raise PaymentRequiredError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def product_offers_post(
-        self,
-        *,
-        product_id: str,
-        retailer: AgentProductOffersPostRequestRetailer,
-        max_age: typing.Optional[int] = None,
-        newer_than: typing.Optional[int] = None,
-        async_: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[typing.Any]:
-        """
-        Offers/pricing for a specific product on a retailer.
-
-        Parameters
-        ----------
-        product_id : str
-            Product identifier (e.g. ASIN)
-
-        retailer : AgentProductOffersPostRequestRetailer
-            Retailer: amazon or walmart
-
-        max_age : typing.Optional[int]
-            Max response age in seconds
-
-        newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
-
-        async_ : typing.Optional[bool]
-            Return immediately with status=processing
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[typing.Any]
-            Successful Response
+        AsyncHttpResponse[AgentProductOffersResponse]
+            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
         """
         _response = await self._client_wrapper.httpx_client.request(
             "agent/products/offers",
@@ -1475,13 +906,11 @@ class AsyncRawAgentClient:
             request_options=request_options,
         )
         try:
-            if _response is None or not _response.text.strip():
-                return AsyncHttpResponse(response=_response, data=None)
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    typing.Any,
+                    AgentProductOffersResponse,
                     parse_obj_as(
-                        type_=typing.Any,  # type: ignore
+                        type_=AgentProductOffersResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -1526,7 +955,7 @@ class AsyncRawAgentClient:
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[typing.Any]:
+    ) -> AsyncHttpResponse[AgentProductDetailsResponse]:
         """
         Full product details for a specific product on a retailer.
 
@@ -1552,101 +981,8 @@ class AsyncRawAgentClient:
 
         Returns
         -------
-        AsyncHttpResponse[typing.Any]
-            Successful Response
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            "agent/products/details",
-            method="GET",
-            params={
-                "product_id": product_id,
-                "retailer": retailer,
-                "max_age": max_age,
-                "newer_than": newer_than,
-                "async": async_,
-            },
-            request_options=request_options,
-        )
-        try:
-            if _response is None or not _response.text.strip():
-                return AsyncHttpResponse(response=_response, data=None)
-            if 200 <= _response.status_code < 300:
-                _data = typing.cast(
-                    typing.Any,
-                    parse_obj_as(
-                        type_=typing.Any,  # type: ignore
-                        object_=_response.json(),
-                    ),
-                )
-                return AsyncHttpResponse(response=_response, data=_data)
-            if _response.status_code == 402:
-                raise PaymentRequiredError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            if _response.status_code == 422:
-                raise UnprocessableEntityError(
-                    headers=dict(_response.headers),
-                    body=typing.cast(
-                        typing.Any,
-                        parse_obj_as(
-                            type_=typing.Any,  # type: ignore
-                            object_=_response.json(),
-                        ),
-                    ),
-                )
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
-        except ValidationError as e:
-            raise ParsingError(
-                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
-            )
-        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
-
-    async def product_details_post(
-        self,
-        *,
-        product_id: str,
-        retailer: AgentProductDetailsPostRequestRetailer,
-        max_age: typing.Optional[int] = None,
-        newer_than: typing.Optional[int] = None,
-        async_: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[typing.Any]:
-        """
-        Full product details for a specific product on a retailer.
-
-        Parameters
-        ----------
-        product_id : str
-            Product identifier (e.g. ASIN)
-
-        retailer : AgentProductDetailsPostRequestRetailer
-            Retailer: amazon or walmart
-
-        max_age : typing.Optional[int]
-            Max response age in seconds
-
-        newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
-
-        async_ : typing.Optional[bool]
-            Return immediately with status=processing
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        AsyncHttpResponse[typing.Any]
-            Successful Response
+        AsyncHttpResponse[AgentProductDetailsResponse]
+            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
         """
         _response = await self._client_wrapper.httpx_client.request(
             "agent/products/details",
@@ -1661,13 +997,11 @@ class AsyncRawAgentClient:
             request_options=request_options,
         )
         try:
-            if _response is None or not _response.text.strip():
-                return AsyncHttpResponse(response=_response, data=None)
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    typing.Any,
+                    AgentProductDetailsResponse,
                     parse_obj_as(
-                        type_=typing.Any,  # type: ignore
+                        type_=AgentProductDetailsResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

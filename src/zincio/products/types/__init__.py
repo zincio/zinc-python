@@ -6,17 +6,21 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .get_product_details_products_product_id_get_request_retailer import (
-        GetProductDetailsProductsProductIdGetRequestRetailer,
+    from .get_product_details_products_product_id_get_response import GetProductDetailsProductsProductIdGetResponse
+    from .get_product_details_products_product_id_get_response_status import (
+        GetProductDetailsProductsProductIdGetResponseStatus,
     )
-    from .get_product_offers_products_product_id_offers_get_request_retailer import (
-        GetProductOffersProductsProductIdOffersGetRequestRetailer,
+    from .get_product_offers_products_product_id_offers_get_response import (
+        GetProductOffersProductsProductIdOffersGetResponse,
     )
-    from .search_products_products_search_get_request_retailer import SearchProductsProductsSearchGetRequestRetailer
+    from .get_product_offers_products_product_id_offers_get_response_status import (
+        GetProductOffersProductsProductIdOffersGetResponseStatus,
+    )
 _dynamic_imports: typing.Dict[str, str] = {
-    "GetProductDetailsProductsProductIdGetRequestRetailer": ".get_product_details_products_product_id_get_request_retailer",
-    "GetProductOffersProductsProductIdOffersGetRequestRetailer": ".get_product_offers_products_product_id_offers_get_request_retailer",
-    "SearchProductsProductsSearchGetRequestRetailer": ".search_products_products_search_get_request_retailer",
+    "GetProductDetailsProductsProductIdGetResponse": ".get_product_details_products_product_id_get_response",
+    "GetProductDetailsProductsProductIdGetResponseStatus": ".get_product_details_products_product_id_get_response_status",
+    "GetProductOffersProductsProductIdOffersGetResponse": ".get_product_offers_products_product_id_offers_get_response",
+    "GetProductOffersProductsProductIdOffersGetResponseStatus": ".get_product_offers_products_product_id_offers_get_response_status",
 }
 
 
@@ -42,7 +46,8 @@ def __dir__():
 
 
 __all__ = [
-    "GetProductDetailsProductsProductIdGetRequestRetailer",
-    "GetProductOffersProductsProductIdOffersGetRequestRetailer",
-    "SearchProductsProductsSearchGetRequestRetailer",
+    "GetProductDetailsProductsProductIdGetResponse",
+    "GetProductDetailsProductsProductIdGetResponseStatus",
+    "GetProductOffersProductsProductIdOffersGetResponse",
+    "GetProductOffersProductsProductIdOffersGetResponseStatus",
 ]

@@ -5,17 +5,17 @@ import typing
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.address import Address
+from ..types.customer_notifications import CustomerNotifications
 from ..types.order_payment import OrderPayment
 from ..types.order_product import OrderProduct
 from ..types.order_response import OrderResponse
 from ..types.product_search_response import ProductSearchResponse
 from ..types.search_response import SearchResponse
 from .raw_client import AsyncRawAgentClient, RawAgentClient
-from .types.agent_product_details_post_request_retailer import AgentProductDetailsPostRequestRetailer
 from .types.agent_product_details_request_retailer import AgentProductDetailsRequestRetailer
-from .types.agent_product_offers_post_request_retailer import AgentProductOffersPostRequestRetailer
+from .types.agent_product_details_response import AgentProductDetailsResponse
 from .types.agent_product_offers_request_retailer import AgentProductOffersRequestRetailer
-from .types.agent_product_search_post_request_retailer import AgentProductSearchPostRequestRetailer
+from .types.agent_product_offers_response import AgentProductOffersResponse
 from .types.agent_product_search_request_retailer import AgentProductSearchRequestRetailer
 
 # this is used as the default value for optional parameters
@@ -51,7 +51,9 @@ class AgentClient:
         po_number: typing.Optional[str] = OMIT,
         handling_days_max: typing.Optional[int] = OMIT,
         is_gift: typing.Optional[bool] = OMIT,
+        gift_message: typing.Optional[str] = OMIT,
         payment: typing.Optional[OrderPayment] = OMIT,
+        customer_notifications: typing.Optional[CustomerNotifications] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderResponse:
         """
@@ -102,10 +104,16 @@ class AgentClient:
             Optional ceiling on a seller's shipping and handling days. Omit or send null for no limit.
 
         is_gift : typing.Optional[bool]
-            Mark the order as a gift. Prices are suppressed on the packing slip where the fulfillment method supports it.
+            Mark the order as a gift, suppressing prices on the packing slip. If the retailer's checkout offers no free gift option, the order FAILS with `gift_option_unavailable` rather than being placed as a normal order — a gift that arrives with prices visible to the recipient is treated as worse than no order.
+
+        gift_message : typing.Optional[str]
+            Optional note for the recipient, entered into the retailer's gift-message field at checkout. Requires `is_gift` to be true. Max 240 characters. Delivered where the retailer's checkout offers a gift message; the order is still placed without it where one isn't available.
 
         payment : typing.Optional[OrderPayment]
             Optional payment block. Omit for prepaid-wallet billing (default).
+
+        customer_notifications : typing.Optional[CustomerNotifications]
+            Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -151,7 +159,9 @@ class AgentClient:
             po_number=po_number,
             handling_days_max=handling_days_max,
             is_gift=is_gift,
+            gift_message=gift_message,
             payment=payment,
+            customer_notifications=customer_notifications,
             request_options=request_options,
         )
         return _response.data
@@ -186,38 +196,6 @@ class AgentClient:
         )
         """
         _response = self._raw_client.search(q=q, request_options=request_options)
-        return _response.data
-
-    def search_post(self, *, q: str, request_options: typing.Optional[RequestOptions] = None) -> SearchResponse:
-        """
-        **Beta** — response shape may change. Cross-retailer product search for agents. Returns orderable listings whose
-        `url` can be passed straight to POST /agent/orders.
-
-        Parameters
-        ----------
-        q : str
-            Search term
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SearchResponse
-            Successful Response
-
-        Examples
-        --------
-        from zincio import ZincioApi
-
-        client = ZincioApi(
-            api_key="YOUR_API_KEY",
-        )
-        client.agent.search_post(
-            q="q",
-        )
-        """
-        _response = self._raw_client.search_post(q=q, request_options=request_options)
         return _response.data
 
     def product_search(
@@ -271,57 +249,6 @@ class AgentClient:
         )
         return _response.data
 
-    def product_search_post(
-        self,
-        *,
-        query: str,
-        retailer: AgentProductSearchPostRequestRetailer,
-        page: typing.Optional[int] = None,
-        free_shipping: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> ProductSearchResponse:
-        """
-        Per-retailer product search for agents (amazon | walmart).
-
-        Parameters
-        ----------
-        query : str
-            Search term
-
-        retailer : AgentProductSearchPostRequestRetailer
-            Retailer: amazon or walmart
-
-        page : typing.Optional[int]
-            Page number for pagination
-
-        free_shipping : typing.Optional[bool]
-            Only return items that ship for free (Walmart: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so Amazon results are returned unfiltered. Applied per-page after pagination; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        ProductSearchResponse
-            Successful Response
-
-        Examples
-        --------
-        from zincio import ZincioApi
-
-        client = ZincioApi(
-            api_key="YOUR_API_KEY",
-        )
-        client.agent.product_search_post(
-            query="query",
-            retailer="amazon",
-        )
-        """
-        _response = self._raw_client.product_search_post(
-            query=query, retailer=retailer, page=page, free_shipping=free_shipping, request_options=request_options
-        )
-        return _response.data
-
     def product_offers(
         self,
         *,
@@ -331,7 +258,7 @@ class AgentClient:
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> AgentProductOffersResponse:
         """
         Offers/pricing for a specific product on a retailer.
 
@@ -357,8 +284,8 @@ class AgentClient:
 
         Returns
         -------
-        typing.Any
-            Successful Response
+        AgentProductOffersResponse
+            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
 
         Examples
         --------
@@ -382,66 +309,6 @@ class AgentClient:
         )
         return _response.data
 
-    def product_offers_post(
-        self,
-        *,
-        product_id: str,
-        retailer: AgentProductOffersPostRequestRetailer,
-        max_age: typing.Optional[int] = None,
-        newer_than: typing.Optional[int] = None,
-        async_: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
-        """
-        Offers/pricing for a specific product on a retailer.
-
-        Parameters
-        ----------
-        product_id : str
-            Product identifier (e.g. ASIN)
-
-        retailer : AgentProductOffersPostRequestRetailer
-            Retailer: amazon or walmart
-
-        max_age : typing.Optional[int]
-            Max response age in seconds
-
-        newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
-
-        async_ : typing.Optional[bool]
-            Return immediately with status=processing
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Any
-            Successful Response
-
-        Examples
-        --------
-        from zincio import ZincioApi
-
-        client = ZincioApi(
-            api_key="YOUR_API_KEY",
-        )
-        client.agent.product_offers_post(
-            product_id="product_id",
-            retailer="amazon",
-        )
-        """
-        _response = self._raw_client.product_offers_post(
-            product_id=product_id,
-            retailer=retailer,
-            max_age=max_age,
-            newer_than=newer_than,
-            async_=async_,
-            request_options=request_options,
-        )
-        return _response.data
-
     def product_details(
         self,
         *,
@@ -451,7 +318,7 @@ class AgentClient:
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> AgentProductDetailsResponse:
         """
         Full product details for a specific product on a retailer.
 
@@ -477,8 +344,8 @@ class AgentClient:
 
         Returns
         -------
-        typing.Any
-            Successful Response
+        AgentProductDetailsResponse
+            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
 
         Examples
         --------
@@ -493,66 +360,6 @@ class AgentClient:
         )
         """
         _response = self._raw_client.product_details(
-            product_id=product_id,
-            retailer=retailer,
-            max_age=max_age,
-            newer_than=newer_than,
-            async_=async_,
-            request_options=request_options,
-        )
-        return _response.data
-
-    def product_details_post(
-        self,
-        *,
-        product_id: str,
-        retailer: AgentProductDetailsPostRequestRetailer,
-        max_age: typing.Optional[int] = None,
-        newer_than: typing.Optional[int] = None,
-        async_: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
-        """
-        Full product details for a specific product on a retailer.
-
-        Parameters
-        ----------
-        product_id : str
-            Product identifier (e.g. ASIN)
-
-        retailer : AgentProductDetailsPostRequestRetailer
-            Retailer: amazon or walmart
-
-        max_age : typing.Optional[int]
-            Max response age in seconds
-
-        newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
-
-        async_ : typing.Optional[bool]
-            Return immediately with status=processing
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Any
-            Successful Response
-
-        Examples
-        --------
-        from zincio import ZincioApi
-
-        client = ZincioApi(
-            api_key="YOUR_API_KEY",
-        )
-        client.agent.product_details_post(
-            product_id="product_id",
-            retailer="amazon",
-        )
-        """
-        _response = self._raw_client.product_details_post(
             product_id=product_id,
             retailer=retailer,
             max_age=max_age,
@@ -592,7 +399,9 @@ class AsyncAgentClient:
         po_number: typing.Optional[str] = OMIT,
         handling_days_max: typing.Optional[int] = OMIT,
         is_gift: typing.Optional[bool] = OMIT,
+        gift_message: typing.Optional[str] = OMIT,
         payment: typing.Optional[OrderPayment] = OMIT,
+        customer_notifications: typing.Optional[CustomerNotifications] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderResponse:
         """
@@ -643,10 +452,16 @@ class AsyncAgentClient:
             Optional ceiling on a seller's shipping and handling days. Omit or send null for no limit.
 
         is_gift : typing.Optional[bool]
-            Mark the order as a gift. Prices are suppressed on the packing slip where the fulfillment method supports it.
+            Mark the order as a gift, suppressing prices on the packing slip. If the retailer's checkout offers no free gift option, the order FAILS with `gift_option_unavailable` rather than being placed as a normal order — a gift that arrives with prices visible to the recipient is treated as worse than no order.
+
+        gift_message : typing.Optional[str]
+            Optional note for the recipient, entered into the retailer's gift-message field at checkout. Requires `is_gift` to be true. Max 240 characters. Delivered where the retailer's checkout offers a gift message; the order is still placed without it where one isn't available.
 
         payment : typing.Optional[OrderPayment]
             Optional payment block. Omit for prepaid-wallet billing (default).
+
+        customer_notifications : typing.Optional[CustomerNotifications]
+            Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -700,7 +515,9 @@ class AsyncAgentClient:
             po_number=po_number,
             handling_days_max=handling_days_max,
             is_gift=is_gift,
+            gift_message=gift_message,
             payment=payment,
+            customer_notifications=customer_notifications,
             request_options=request_options,
         )
         return _response.data
@@ -743,46 +560,6 @@ class AsyncAgentClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.search(q=q, request_options=request_options)
-        return _response.data
-
-    async def search_post(self, *, q: str, request_options: typing.Optional[RequestOptions] = None) -> SearchResponse:
-        """
-        **Beta** — response shape may change. Cross-retailer product search for agents. Returns orderable listings whose
-        `url` can be passed straight to POST /agent/orders.
-
-        Parameters
-        ----------
-        q : str
-            Search term
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SearchResponse
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from zincio import AsyncZincioApi
-
-        client = AsyncZincioApi(
-            api_key="YOUR_API_KEY",
-        )
-
-
-        async def main() -> None:
-            await client.agent.search_post(
-                q="q",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.search_post(q=q, request_options=request_options)
         return _response.data
 
     async def product_search(
@@ -844,65 +621,6 @@ class AsyncAgentClient:
         )
         return _response.data
 
-    async def product_search_post(
-        self,
-        *,
-        query: str,
-        retailer: AgentProductSearchPostRequestRetailer,
-        page: typing.Optional[int] = None,
-        free_shipping: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> ProductSearchResponse:
-        """
-        Per-retailer product search for agents (amazon | walmart).
-
-        Parameters
-        ----------
-        query : str
-            Search term
-
-        retailer : AgentProductSearchPostRequestRetailer
-            Retailer: amazon or walmart
-
-        page : typing.Optional[int]
-            Page number for pagination
-
-        free_shipping : typing.Optional[bool]
-            Only return items that ship for free (Walmart: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so Amazon results are returned unfiltered. Applied per-page after pagination; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results.
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        ProductSearchResponse
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from zincio import AsyncZincioApi
-
-        client = AsyncZincioApi(
-            api_key="YOUR_API_KEY",
-        )
-
-
-        async def main() -> None:
-            await client.agent.product_search_post(
-                query="query",
-                retailer="amazon",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.product_search_post(
-            query=query, retailer=retailer, page=page, free_shipping=free_shipping, request_options=request_options
-        )
-        return _response.data
-
     async def product_offers(
         self,
         *,
@@ -912,7 +630,7 @@ class AsyncAgentClient:
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> AgentProductOffersResponse:
         """
         Offers/pricing for a specific product on a retailer.
 
@@ -938,8 +656,8 @@ class AsyncAgentClient:
 
         Returns
         -------
-        typing.Any
-            Successful Response
+        AgentProductOffersResponse
+            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
 
         Examples
         --------
@@ -971,74 +689,6 @@ class AsyncAgentClient:
         )
         return _response.data
 
-    async def product_offers_post(
-        self,
-        *,
-        product_id: str,
-        retailer: AgentProductOffersPostRequestRetailer,
-        max_age: typing.Optional[int] = None,
-        newer_than: typing.Optional[int] = None,
-        async_: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
-        """
-        Offers/pricing for a specific product on a retailer.
-
-        Parameters
-        ----------
-        product_id : str
-            Product identifier (e.g. ASIN)
-
-        retailer : AgentProductOffersPostRequestRetailer
-            Retailer: amazon or walmart
-
-        max_age : typing.Optional[int]
-            Max response age in seconds
-
-        newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
-
-        async_ : typing.Optional[bool]
-            Return immediately with status=processing
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Any
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from zincio import AsyncZincioApi
-
-        client = AsyncZincioApi(
-            api_key="YOUR_API_KEY",
-        )
-
-
-        async def main() -> None:
-            await client.agent.product_offers_post(
-                product_id="product_id",
-                retailer="amazon",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.product_offers_post(
-            product_id=product_id,
-            retailer=retailer,
-            max_age=max_age,
-            newer_than=newer_than,
-            async_=async_,
-            request_options=request_options,
-        )
-        return _response.data
-
     async def product_details(
         self,
         *,
@@ -1048,7 +698,7 @@ class AsyncAgentClient:
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> AgentProductDetailsResponse:
         """
         Full product details for a specific product on a retailer.
 
@@ -1074,8 +724,8 @@ class AsyncAgentClient:
 
         Returns
         -------
-        typing.Any
-            Successful Response
+        AgentProductDetailsResponse
+            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
 
         Examples
         --------
@@ -1098,74 +748,6 @@ class AsyncAgentClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.product_details(
-            product_id=product_id,
-            retailer=retailer,
-            max_age=max_age,
-            newer_than=newer_than,
-            async_=async_,
-            request_options=request_options,
-        )
-        return _response.data
-
-    async def product_details_post(
-        self,
-        *,
-        product_id: str,
-        retailer: AgentProductDetailsPostRequestRetailer,
-        max_age: typing.Optional[int] = None,
-        newer_than: typing.Optional[int] = None,
-        async_: typing.Optional[bool] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
-        """
-        Full product details for a specific product on a retailer.
-
-        Parameters
-        ----------
-        product_id : str
-            Product identifier (e.g. ASIN)
-
-        retailer : AgentProductDetailsPostRequestRetailer
-            Retailer: amazon or walmart
-
-        max_age : typing.Optional[int]
-            Max response age in seconds
-
-        newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
-
-        async_ : typing.Optional[bool]
-            Return immediately with status=processing
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        typing.Any
-            Successful Response
-
-        Examples
-        --------
-        import asyncio
-
-        from zincio import AsyncZincioApi
-
-        client = AsyncZincioApi(
-            api_key="YOUR_API_KEY",
-        )
-
-
-        async def main() -> None:
-            await client.agent.product_details_post(
-                product_id="product_id",
-                retailer="amazon",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.product_details_post(
             product_id=product_id,
             retailer=retailer,
             max_age=max_age,

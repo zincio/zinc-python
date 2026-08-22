@@ -4,6 +4,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .order_cart_item import OrderCartItem
 
 
 class OrderPriceComponents(UniversalBaseModel):
@@ -41,9 +42,14 @@ class OrderPriceComponents(UniversalBaseModel):
 
     currency: typing.Optional[str] = None
     payment_currency: typing.Optional[str] = None
+    cart_items: typing.Optional[typing.List[OrderCartItem]] = pydantic.Field(default=None)
+    """
+    Per-product rows making up `subtotal`. Distinct from `line_items`, which carries order-level adjustments (discounts, fees) and shares no fields with these — a discount is never a cart row. Null when the retailer's checkout page did not expose readable line items, so handle both `null` and `[]`. Individual fields may also be null on a row we could only partly read. Best-effort: `sum(line_total)` normally equals `subtotal`, but that is not guaranteed and must not be used as a billing input — the charge is always driven by `total`.
+    """
+
     line_items: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = pydantic.Field(default=None)
     """
-    Itemized rows, each `{description, amount, category}`.
+    Order-level adjustments, each `{description, amount, category}`. Null — not `[]` — when the producer didn't supply them, which is every BizAPI-placed order today, so null-check before iterating.
     """
 
     if IS_PYDANTIC_V2:

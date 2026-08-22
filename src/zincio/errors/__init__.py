@@ -7,11 +7,17 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .conflict_error import ConflictError
+    from .not_found_error import NotFoundError
     from .payment_required_error import PaymentRequiredError
+    from .service_unavailable_error import ServiceUnavailableError
+    from .too_many_requests_error import TooManyRequestsError
     from .unprocessable_entity_error import UnprocessableEntityError
 _dynamic_imports: typing.Dict[str, str] = {
     "ConflictError": ".conflict_error",
+    "NotFoundError": ".not_found_error",
     "PaymentRequiredError": ".payment_required_error",
+    "ServiceUnavailableError": ".service_unavailable_error",
+    "TooManyRequestsError": ".too_many_requests_error",
     "UnprocessableEntityError": ".unprocessable_entity_error",
 }
 
@@ -37,4 +43,11 @@ def __dir__():
     return sorted(lazy_attrs)
 
 
-__all__ = ["ConflictError", "PaymentRequiredError", "UnprocessableEntityError"]
+__all__ = [
+    "ConflictError",
+    "NotFoundError",
+    "PaymentRequiredError",
+    "ServiceUnavailableError",
+    "TooManyRequestsError",
+    "UnprocessableEntityError",
+]

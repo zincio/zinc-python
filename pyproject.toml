@@ -4,7 +4,7 @@ dynamic = ["version"]
 
 [tool.poetry]
 name = "zinc"
-version = "2026.7.17"
+version = "2026.8.21"
 description = ""
 readme = "README.md"
 authors = []

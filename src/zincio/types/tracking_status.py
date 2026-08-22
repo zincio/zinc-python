@@ -2,4 +2,4 @@
 
 import typing
 
-TrackingStatus = typing.Union[typing.Literal["pending", "in_transit", "delivered"], typing.Any]
+TrackingStatus = typing.Union[typing.Literal["pending", "in_transit", "delivered", "undeliverable"], typing.Any]

@@ -17,6 +17,7 @@ if typing.TYPE_CHECKING:
     from .products.client import AsyncProductsClient, ProductsClient
     from .retailers.client import AsyncRetailersClient, RetailersClient
     from .returns.client import AsyncReturnsClient, ReturnsClient
+    from .sandbox.client import AsyncSandboxClient, SandboxClient
     from .search.client import AsyncSearchClient, SearchClient
     from .tracking.client import AsyncTrackingClient, TrackingClient
     from .usage.client import AsyncUsageClient, UsageClient
@@ -115,6 +116,7 @@ class ZincioApi:
         self._retailers: typing.Optional[RetailersClient] = None
         self._usage: typing.Optional[UsageClient] = None
         self._tracking: typing.Optional[TrackingClient] = None
+        self._sandbox: typing.Optional[SandboxClient] = None
         self._health: typing.Optional[HealthClient] = None
 
     @property
@@ -188,6 +190,14 @@ class ZincioApi:
 
             self._tracking = TrackingClient(client_wrapper=self._client_wrapper)
         return self._tracking
+
+    @property
+    def sandbox(self):
+        if self._sandbox is None:
+            from .sandbox.client import SandboxClient  # noqa: E402
+
+            self._sandbox = SandboxClient(client_wrapper=self._client_wrapper)
+        return self._sandbox
 
     @property
     def health(self):
@@ -307,6 +317,7 @@ class AsyncZincioApi:
         self._retailers: typing.Optional[AsyncRetailersClient] = None
         self._usage: typing.Optional[AsyncUsageClient] = None
         self._tracking: typing.Optional[AsyncTrackingClient] = None
+        self._sandbox: typing.Optional[AsyncSandboxClient] = None
         self._health: typing.Optional[AsyncHealthClient] = None
 
     @property
@@ -380,6 +391,14 @@ class AsyncZincioApi:
 
             self._tracking = AsyncTrackingClient(client_wrapper=self._client_wrapper)
         return self._tracking
+
+    @property
+    def sandbox(self):
+        if self._sandbox is None:
+            from .sandbox.client import AsyncSandboxClient  # noqa: E402
+
+            self._sandbox = AsyncSandboxClient(client_wrapper=self._client_wrapper)
+        return self._sandbox
 
     @property
     def health(self):

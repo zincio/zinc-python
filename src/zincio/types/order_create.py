@@ -5,6 +5,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .address import Address
+from .customer_notifications import CustomerNotifications
 from .order_payment import OrderPayment
 from .order_product import OrderProduct
 
@@ -48,12 +49,22 @@ class OrderCreate(UniversalBaseModel):
 
     is_gift: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Mark the order as a gift. Prices are suppressed on the packing slip where the fulfillment method supports it.
+    Mark the order as a gift, suppressing prices on the packing slip. If the retailer's checkout offers no free gift option, the order FAILS with `gift_option_unavailable` rather than being placed as a normal order — a gift that arrives with prices visible to the recipient is treated as worse than no order.
+    """
+
+    gift_message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Optional note for the recipient, entered into the retailer's gift-message field at checkout. Requires `is_gift` to be true. Max 240 characters. Delivered where the retailer's checkout offers a gift message; the order is still placed without it where one isn't available.
     """
 
     payment: typing.Optional[OrderPayment] = pydantic.Field(default=None)
     """
     Optional payment block. Omit for prepaid-wallet billing (default).
+    """
+
+    customer_notifications: typing.Optional[CustomerNotifications] = pydantic.Field(default=None)
+    """
+    Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
     """
 
     if IS_PYDANTIC_V2:

@@ -6,13 +6,10 @@ from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.product_search_response import ProductSearchResponse
 from .raw_client import AsyncRawProductsClient, RawProductsClient
-from .types.get_product_details_products_product_id_get_request_retailer import (
-    GetProductDetailsProductsProductIdGetRequestRetailer,
+from .types.get_product_details_products_product_id_get_response import GetProductDetailsProductsProductIdGetResponse
+from .types.get_product_offers_products_product_id_offers_get_response import (
+    GetProductOffersProductsProductIdOffersGetResponse,
 )
-from .types.get_product_offers_products_product_id_offers_get_request_retailer import (
-    GetProductOffersProductsProductIdOffersGetRequestRetailer,
-)
-from .types.search_products_products_search_get_request_retailer import SearchProductsProductsSearchGetRequestRetailer
 
 
 class ProductsClient:
@@ -34,7 +31,7 @@ class ProductsClient:
         self,
         *,
         query: str,
-        retailer: SearchProductsProductsSearchGetRequestRetailer,
+        retailer: str,
         page: typing.Optional[int] = None,
         free_shipping: typing.Optional[bool] = None,
         authorization: typing.Optional[str] = None,
@@ -43,19 +40,49 @@ class ProductsClient:
         """
         Search for products on a retailer.
 
+        **Best Buy returns a partial page.** Best Buy server-renders only about 4 of
+        the ~24 products on a search page and loads the rest in the browser, so each
+        page yields roughly 4 results rather than a full page. Ranking, pricing and
+        availability are Best Buy's own; there are simply fewer items per page. Page
+        through with `next_page` to collect more — `next_page` reflects whether Best
+        Buy has further results, not how many came back in this response.
+
+        **Shopify stores are their own retailer**: pass the store's domain as
+        `retailer` (e.g. `retailer=yetch.studio`; any Shopify-powered storefront
+        works). Results are the store's own top matches (~10) and there is no
+        pagination, so `next_page` is always null and `page` must be omitted or 1.
+        `product_id` is the store-scoped product handle to pass to the details
+        endpoint with the same `retailer`.
+
+        **Etsy search covers US shops, priced in USD.** Etsy sellers price in their
+        own currency and a single page routinely mixes several, which makes `price`
+        incomparable across a result set — so search is narrowed to US-located
+        shops and any remaining non-USD listing is dropped. `currency_code` is set
+        on every result and is always `USD` here, and prices are never converted,
+        so the number is what the seller charges. Because the currency check runs
+        after Etsy paginates, **a page can come back short while more results still
+        exist** — page on with `next_page`. (Details is neither narrowed nor
+        filtered: it returns any listing, in its own currency.)
+
+        Etsy results carry no `stars`/`num_reviews` — Etsy publishes a rating for
+        the *shop*, not the listing, and reporting a seller's rating as the
+        product's would be misleading; `brand` carries the shop name, and the
+        details endpoint reports the shop's rating explicitly. `product_id` is the
+        numeric listing id.
+
         Parameters
         ----------
         query : str
             Search term
 
-        retailer : SearchProductsProductsSearchGetRequestRetailer
-            Retailer identifier
+        retailer : str
+            Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
 
         page : typing.Optional[int]
             Page number for pagination
 
         free_shipping : typing.Optional[bool]
-            Only return items that ship for free (Walmart: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after v1 pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results.
+            Only return items that ship for free (Walmart and Best Buy: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results. Rejected for Shopify stores: their search data carries no shipping information, so the filter cannot be honored.
 
         authorization : typing.Optional[str]
 
@@ -76,7 +103,7 @@ class ProductsClient:
         )
         client.products.search_products(
             query="query",
-            retailer="amazon",
+            retailer="retailer",
         )
         """
         _response = self._raw_client.search_products(
@@ -93,22 +120,25 @@ class ProductsClient:
         self,
         product_id: str,
         *,
-        retailer: GetProductOffersProductsProductIdOffersGetRequestRetailer,
+        retailer: str,
         max_age: typing.Optional[int] = None,
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> GetProductOffersProductsProductIdOffersGetResponse:
         """
         Get offers for a product from a retailer.
+
+        Not available for Shopify stores: a storefront lists one seller (itself),
+        so per-variant price and availability live on the details endpoint instead.
 
         Parameters
         ----------
         product_id : str
 
-        retailer : GetProductOffersProductsProductIdOffersGetRequestRetailer
-            Retailer identifier
+        retailer : str
+            Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
 
         max_age : typing.Optional[int]
             Max response age in seconds (mutually exclusive with newer_than)
@@ -126,8 +156,8 @@ class ProductsClient:
 
         Returns
         -------
-        typing.Any
-            Successful Response
+        GetProductOffersProductsProductIdOffersGetResponse
+            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
 
         Examples
         --------
@@ -138,7 +168,7 @@ class ProductsClient:
         )
         client.products.get_product_offers(
             product_id="product_id",
-            retailer="amazon",
+            retailer="retailer",
         )
         """
         _response = self._raw_client.get_product_offers(
@@ -156,22 +186,54 @@ class ProductsClient:
         self,
         product_id: str,
         *,
-        retailer: GetProductDetailsProductsProductIdGetRequestRetailer,
+        retailer: str,
         max_age: typing.Optional[int] = None,
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> GetProductDetailsProductsProductIdGetResponse:
         """
         Get details for a product from a retailer.
+
+        **Best Buy is addressed by `bsin`**, not by the numeric SKU — the bsin is the
+        trailing id in a Best Buy product URL (`/product/{slug}/{bsin}`). Search
+        results return the SKU as `product_id` and also carry the bsin, so pass the
+        bsin here. The response repeats the SKU as `sku` for cross-referencing.
+
+        Unlike `/search`, a Best Buy detail response is complete: detail pages are
+        fully server-rendered, so nothing is withheld for client-side loading.
+
+        **Shopify is addressed by (store, handle)**: pass the store's domain as
+        `retailer` (e.g. `retailer=yetch.studio`) and the product handle — the slug
+        in `/products/{handle}`, returned as `product_id` by search — as the path
+        parameter. The response includes per-variant price and availability.
+        `async` is not supported for Shopify stores.
+
+        **Etsy is addressed by the numeric listing id** (returned as `product_id` by
+        search). `price` is in minor units of `currency_code`, not converted to USD.
+
+        Etsy ratings are the **shop's**, reported as `shop_review_average` /
+        `shop_review_count`, and both cover only the **past year** — an established
+        shop with no recent sales reports 0, and an unrated shop reports a null
+        average rather than 0.0 stars. `stars` and `num_reviews` are deliberately
+        not set: they mean a product's rating everywhere else in this API, and a
+        seller's rating is a different claim.
+
+        `listing_type` is `physical`, `download` or `both` — a download has nothing
+        to ship. `available` accounts for the shop being on vacation as well as
+        stock, so it can be false on an in-stock active listing; `shop_is_vacation`
+        says which it was. `variants` is populated only when Etsy exposes a
+        listing's inventory matrix — check `has_variations` to tell "no variants"
+        from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
+        is no category name yet. `async` is not supported for Etsy.
 
         Parameters
         ----------
         product_id : str
 
-        retailer : GetProductDetailsProductsProductIdGetRequestRetailer
-            Retailer identifier
+        retailer : str
+            Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
 
         max_age : typing.Optional[int]
             Max response age in seconds (mutually exclusive with newer_than)
@@ -189,8 +251,8 @@ class ProductsClient:
 
         Returns
         -------
-        typing.Any
-            Successful Response
+        GetProductDetailsProductsProductIdGetResponse
+            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
 
         Examples
         --------
@@ -201,7 +263,7 @@ class ProductsClient:
         )
         client.products.get_product_details(
             product_id="product_id",
-            retailer="amazon",
+            retailer="retailer",
         )
         """
         _response = self._raw_client.get_product_details(
@@ -235,7 +297,7 @@ class AsyncProductsClient:
         self,
         *,
         query: str,
-        retailer: SearchProductsProductsSearchGetRequestRetailer,
+        retailer: str,
         page: typing.Optional[int] = None,
         free_shipping: typing.Optional[bool] = None,
         authorization: typing.Optional[str] = None,
@@ -244,19 +306,49 @@ class AsyncProductsClient:
         """
         Search for products on a retailer.
 
+        **Best Buy returns a partial page.** Best Buy server-renders only about 4 of
+        the ~24 products on a search page and loads the rest in the browser, so each
+        page yields roughly 4 results rather than a full page. Ranking, pricing and
+        availability are Best Buy's own; there are simply fewer items per page. Page
+        through with `next_page` to collect more — `next_page` reflects whether Best
+        Buy has further results, not how many came back in this response.
+
+        **Shopify stores are their own retailer**: pass the store's domain as
+        `retailer` (e.g. `retailer=yetch.studio`; any Shopify-powered storefront
+        works). Results are the store's own top matches (~10) and there is no
+        pagination, so `next_page` is always null and `page` must be omitted or 1.
+        `product_id` is the store-scoped product handle to pass to the details
+        endpoint with the same `retailer`.
+
+        **Etsy search covers US shops, priced in USD.** Etsy sellers price in their
+        own currency and a single page routinely mixes several, which makes `price`
+        incomparable across a result set — so search is narrowed to US-located
+        shops and any remaining non-USD listing is dropped. `currency_code` is set
+        on every result and is always `USD` here, and prices are never converted,
+        so the number is what the seller charges. Because the currency check runs
+        after Etsy paginates, **a page can come back short while more results still
+        exist** — page on with `next_page`. (Details is neither narrowed nor
+        filtered: it returns any listing, in its own currency.)
+
+        Etsy results carry no `stars`/`num_reviews` — Etsy publishes a rating for
+        the *shop*, not the listing, and reporting a seller's rating as the
+        product's would be misleading; `brand` carries the shop name, and the
+        details endpoint reports the shop's rating explicitly. `product_id` is the
+        numeric listing id.
+
         Parameters
         ----------
         query : str
             Search term
 
-        retailer : SearchProductsProductsSearchGetRequestRetailer
-            Retailer identifier
+        retailer : str
+            Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
 
         page : typing.Optional[int]
             Page number for pagination
 
         free_shipping : typing.Optional[bool]
-            Only return items that ship for free (Walmart: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after v1 pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results.
+            Only return items that ship for free (Walmart and Best Buy: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results. Rejected for Shopify stores: their search data carries no shipping information, so the filter cannot be honored.
 
         authorization : typing.Optional[str]
 
@@ -282,7 +374,7 @@ class AsyncProductsClient:
         async def main() -> None:
             await client.products.search_products(
                 query="query",
-                retailer="amazon",
+                retailer="retailer",
             )
 
 
@@ -302,22 +394,25 @@ class AsyncProductsClient:
         self,
         product_id: str,
         *,
-        retailer: GetProductOffersProductsProductIdOffersGetRequestRetailer,
+        retailer: str,
         max_age: typing.Optional[int] = None,
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> GetProductOffersProductsProductIdOffersGetResponse:
         """
         Get offers for a product from a retailer.
+
+        Not available for Shopify stores: a storefront lists one seller (itself),
+        so per-variant price and availability live on the details endpoint instead.
 
         Parameters
         ----------
         product_id : str
 
-        retailer : GetProductOffersProductsProductIdOffersGetRequestRetailer
-            Retailer identifier
+        retailer : str
+            Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
 
         max_age : typing.Optional[int]
             Max response age in seconds (mutually exclusive with newer_than)
@@ -335,8 +430,8 @@ class AsyncProductsClient:
 
         Returns
         -------
-        typing.Any
-            Successful Response
+        GetProductOffersProductsProductIdOffersGetResponse
+            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
 
         Examples
         --------
@@ -352,7 +447,7 @@ class AsyncProductsClient:
         async def main() -> None:
             await client.products.get_product_offers(
                 product_id="product_id",
-                retailer="amazon",
+                retailer="retailer",
             )
 
 
@@ -373,22 +468,54 @@ class AsyncProductsClient:
         self,
         product_id: str,
         *,
-        retailer: GetProductDetailsProductsProductIdGetRequestRetailer,
+        retailer: str,
         max_age: typing.Optional[int] = None,
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> GetProductDetailsProductsProductIdGetResponse:
         """
         Get details for a product from a retailer.
+
+        **Best Buy is addressed by `bsin`**, not by the numeric SKU — the bsin is the
+        trailing id in a Best Buy product URL (`/product/{slug}/{bsin}`). Search
+        results return the SKU as `product_id` and also carry the bsin, so pass the
+        bsin here. The response repeats the SKU as `sku` for cross-referencing.
+
+        Unlike `/search`, a Best Buy detail response is complete: detail pages are
+        fully server-rendered, so nothing is withheld for client-side loading.
+
+        **Shopify is addressed by (store, handle)**: pass the store's domain as
+        `retailer` (e.g. `retailer=yetch.studio`) and the product handle — the slug
+        in `/products/{handle}`, returned as `product_id` by search — as the path
+        parameter. The response includes per-variant price and availability.
+        `async` is not supported for Shopify stores.
+
+        **Etsy is addressed by the numeric listing id** (returned as `product_id` by
+        search). `price` is in minor units of `currency_code`, not converted to USD.
+
+        Etsy ratings are the **shop's**, reported as `shop_review_average` /
+        `shop_review_count`, and both cover only the **past year** — an established
+        shop with no recent sales reports 0, and an unrated shop reports a null
+        average rather than 0.0 stars. `stars` and `num_reviews` are deliberately
+        not set: they mean a product's rating everywhere else in this API, and a
+        seller's rating is a different claim.
+
+        `listing_type` is `physical`, `download` or `both` — a download has nothing
+        to ship. `available` accounts for the shop being on vacation as well as
+        stock, so it can be false on an in-stock active listing; `shop_is_vacation`
+        says which it was. `variants` is populated only when Etsy exposes a
+        listing's inventory matrix — check `has_variations` to tell "no variants"
+        from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
+        is no category name yet. `async` is not supported for Etsy.
 
         Parameters
         ----------
         product_id : str
 
-        retailer : GetProductDetailsProductsProductIdGetRequestRetailer
-            Retailer identifier
+        retailer : str
+            Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
 
         max_age : typing.Optional[int]
             Max response age in seconds (mutually exclusive with newer_than)
@@ -406,8 +533,8 @@ class AsyncProductsClient:
 
         Returns
         -------
-        typing.Any
-            Successful Response
+        GetProductDetailsProductsProductIdGetResponse
+            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
 
         Examples
         --------
@@ -423,7 +550,7 @@ class AsyncProductsClient:
         async def main() -> None:
             await client.products.get_product_details(
                 product_id="product_id",
-                retailer="amazon",
+                retailer="retailer",
             )
 
 

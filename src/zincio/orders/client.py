@@ -9,6 +9,7 @@ from ..types.address import Address
 from ..types.bulk_batch_list_response import BulkBatchListResponse
 from ..types.bulk_batch_response import BulkBatchResponse
 from ..types.bulk_validate_response import BulkValidateResponse
+from ..types.customer_notifications import CustomerNotifications
 from ..types.order_list_response import OrderListResponse
 from ..types.order_payment import OrderPayment
 from ..types.order_product import OrderProduct
@@ -41,6 +42,7 @@ class OrdersClient:
         authorization: typing.Optional[str] = None,
         filename: typing.Optional[str] = OMIT,
         rows: typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]] = OMIT,
+        notify_on_complete: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BulkValidateResponse:
         """
@@ -58,6 +60,9 @@ class OrdersClient:
 
         rows : typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]
             Parsed CSV rows, each a mapping of column header to cell value.
+
+        notify_on_complete : typing.Optional[bool]
+            Email the account holder once every order in this batch has reached a terminal state (placed, failed, or cancelled).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -77,7 +82,11 @@ class OrdersClient:
         client.orders.validate_bulk_upload()
         """
         _response = self._raw_client.validate_bulk_upload(
-            authorization=authorization, filename=filename, rows=rows, request_options=request_options
+            authorization=authorization,
+            filename=filename,
+            rows=rows,
+            notify_on_complete=notify_on_complete,
+            request_options=request_options,
         )
         return _response.data
 
@@ -128,6 +137,7 @@ class OrdersClient:
         authorization: typing.Optional[str] = None,
         filename: typing.Optional[str] = OMIT,
         rows: typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]] = OMIT,
+        notify_on_complete: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BulkBatchResponse:
         """
@@ -142,6 +152,9 @@ class OrdersClient:
 
         rows : typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]
             Parsed CSV rows, each a mapping of column header to cell value.
+
+        notify_on_complete : typing.Optional[bool]
+            Email the account holder once every order in this batch has reached a terminal state (placed, failed, or cancelled).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -161,7 +174,11 @@ class OrdersClient:
         client.orders.create_bulk_upload()
         """
         _response = self._raw_client.create_bulk_upload(
-            authorization=authorization, filename=filename, rows=rows, request_options=request_options
+            authorization=authorization,
+            filename=filename,
+            rows=rows,
+            notify_on_complete=notify_on_complete,
+            request_options=request_options,
         )
         return _response.data
 
@@ -211,7 +228,7 @@ class OrdersClient:
         *,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> str:
         """
         Download the batch results as a CSV (status + echoed custom columns).
 
@@ -226,8 +243,8 @@ class OrdersClient:
 
         Returns
         -------
-        typing.Any
-            Successful Response
+        str
+            CSV export: one row per uploaded row, with its order status and any echoed custom columns. Served as an attachment via Content-Disposition.
 
         Examples
         --------
@@ -252,12 +269,15 @@ class OrdersClient:
         offset: typing.Optional[int] = None,
         order_id: typing.Optional[str] = None,
         search: typing.Optional[str] = None,
+        merchant_order_id: typing.Optional[str] = None,
         status_filter: typing.Optional[str] = None,
         tracking_status: typing.Optional[str] = None,
         has_tracking: typing.Optional[bool] = None,
         return_status: typing.Optional[str] = None,
         created_after: typing.Optional[dt.datetime] = None,
         created_before: typing.Optional[dt.datetime] = None,
+        metadata_key: typing.Optional[str] = None,
+        metadata_value: typing.Optional[str] = None,
         include: typing.Optional[typing.Union[str, typing.Sequence[str]]] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
@@ -279,6 +299,9 @@ class OrdersClient:
         search : typing.Optional[str]
             Partial match on order ID OR tracking number
 
+        merchant_order_id : typing.Optional[str]
+            Filter by the retailer's own order number (e.g. an Amazon `113-…` ID), matched exactly against any of the order's order-placing jobs. Exact, not partial — dashes in the term are matched both as typed and stripped.
+
         status_filter : typing.Optional[str]
             Filter by order status
 
@@ -296,6 +319,12 @@ class OrdersClient:
 
         created_before : typing.Optional[dt.datetime]
             Only orders created before this instant (exclusive)
+
+        metadata_key : typing.Optional[str]
+            Top-level `metadata` key to match, e.g. `po_number`. Must be sent together with `metadata_value`. Nested paths are not supported.
+
+        metadata_value : typing.Optional[str]
+            Exact value `metadata_key` must equal. Matching is exact, not partial, and case-sensitive. Must be sent together with `metadata_key`.
 
         include : typing.Optional[typing.Union[str, typing.Sequence[str]]]
             Optional expansions. `tracking_events` embeds the full carrier checkpoint timeline (and latest status) on each tracking number; omitted by default to keep list payloads small.
@@ -324,12 +353,15 @@ class OrdersClient:
             offset=offset,
             order_id=order_id,
             search=search,
+            merchant_order_id=merchant_order_id,
             status_filter=status_filter,
             tracking_status=tracking_status,
             has_tracking=has_tracking,
             return_status=return_status,
             created_after=created_after,
             created_before=created_before,
+            metadata_key=metadata_key,
+            metadata_value=metadata_value,
             include=include,
             authorization=authorization,
             request_options=request_options,
@@ -349,7 +381,9 @@ class OrdersClient:
         po_number: typing.Optional[str] = OMIT,
         handling_days_max: typing.Optional[int] = OMIT,
         is_gift: typing.Optional[bool] = OMIT,
+        gift_message: typing.Optional[str] = OMIT,
         payment: typing.Optional[OrderPayment] = OMIT,
+        customer_notifications: typing.Optional[CustomerNotifications] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderResponse:
         """
@@ -382,10 +416,16 @@ class OrdersClient:
             Optional ceiling on a seller's shipping and handling days. Omit or send null for no limit.
 
         is_gift : typing.Optional[bool]
-            Mark the order as a gift. Prices are suppressed on the packing slip where the fulfillment method supports it.
+            Mark the order as a gift, suppressing prices on the packing slip. If the retailer's checkout offers no free gift option, the order FAILS with `gift_option_unavailable` rather than being placed as a normal order — a gift that arrives with prices visible to the recipient is treated as worse than no order.
+
+        gift_message : typing.Optional[str]
+            Optional note for the recipient, entered into the retailer's gift-message field at checkout. Requires `is_gift` to be true. Max 240 characters. Delivered where the retailer's checkout offers a gift message; the order is still placed without it where one isn't available.
 
         payment : typing.Optional[OrderPayment]
             Optional payment block. Omit for prepaid-wallet billing (default).
+
+        customer_notifications : typing.Optional[CustomerNotifications]
+            Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -430,7 +470,9 @@ class OrdersClient:
             po_number=po_number,
             handling_days_max=handling_days_max,
             is_gift=is_gift,
+            gift_message=gift_message,
             payment=payment,
+            customer_notifications=customer_notifications,
             request_options=request_options,
         )
         return _response.data
@@ -610,6 +652,7 @@ class AsyncOrdersClient:
         authorization: typing.Optional[str] = None,
         filename: typing.Optional[str] = OMIT,
         rows: typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]] = OMIT,
+        notify_on_complete: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BulkValidateResponse:
         """
@@ -627,6 +670,9 @@ class AsyncOrdersClient:
 
         rows : typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]
             Parsed CSV rows, each a mapping of column header to cell value.
+
+        notify_on_complete : typing.Optional[bool]
+            Email the account holder once every order in this batch has reached a terminal state (placed, failed, or cancelled).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -654,7 +700,11 @@ class AsyncOrdersClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.validate_bulk_upload(
-            authorization=authorization, filename=filename, rows=rows, request_options=request_options
+            authorization=authorization,
+            filename=filename,
+            rows=rows,
+            notify_on_complete=notify_on_complete,
+            request_options=request_options,
         )
         return _response.data
 
@@ -713,6 +763,7 @@ class AsyncOrdersClient:
         authorization: typing.Optional[str] = None,
         filename: typing.Optional[str] = OMIT,
         rows: typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]] = OMIT,
+        notify_on_complete: typing.Optional[bool] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> BulkBatchResponse:
         """
@@ -727,6 +778,9 @@ class AsyncOrdersClient:
 
         rows : typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]
             Parsed CSV rows, each a mapping of column header to cell value.
+
+        notify_on_complete : typing.Optional[bool]
+            Email the account holder once every order in this batch has reached a terminal state (placed, failed, or cancelled).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -754,7 +808,11 @@ class AsyncOrdersClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.create_bulk_upload(
-            authorization=authorization, filename=filename, rows=rows, request_options=request_options
+            authorization=authorization,
+            filename=filename,
+            rows=rows,
+            notify_on_complete=notify_on_complete,
+            request_options=request_options,
         )
         return _response.data
 
@@ -812,7 +870,7 @@ class AsyncOrdersClient:
         *,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
-    ) -> typing.Any:
+    ) -> str:
         """
         Download the batch results as a CSV (status + echoed custom columns).
 
@@ -827,8 +885,8 @@ class AsyncOrdersClient:
 
         Returns
         -------
-        typing.Any
-            Successful Response
+        str
+            CSV export: one row per uploaded row, with its order status and any echoed custom columns. Served as an attachment via Content-Disposition.
 
         Examples
         --------
@@ -861,12 +919,15 @@ class AsyncOrdersClient:
         offset: typing.Optional[int] = None,
         order_id: typing.Optional[str] = None,
         search: typing.Optional[str] = None,
+        merchant_order_id: typing.Optional[str] = None,
         status_filter: typing.Optional[str] = None,
         tracking_status: typing.Optional[str] = None,
         has_tracking: typing.Optional[bool] = None,
         return_status: typing.Optional[str] = None,
         created_after: typing.Optional[dt.datetime] = None,
         created_before: typing.Optional[dt.datetime] = None,
+        metadata_key: typing.Optional[str] = None,
+        metadata_value: typing.Optional[str] = None,
         include: typing.Optional[typing.Union[str, typing.Sequence[str]]] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
@@ -888,6 +949,9 @@ class AsyncOrdersClient:
         search : typing.Optional[str]
             Partial match on order ID OR tracking number
 
+        merchant_order_id : typing.Optional[str]
+            Filter by the retailer's own order number (e.g. an Amazon `113-…` ID), matched exactly against any of the order's order-placing jobs. Exact, not partial — dashes in the term are matched both as typed and stripped.
+
         status_filter : typing.Optional[str]
             Filter by order status
 
@@ -905,6 +969,12 @@ class AsyncOrdersClient:
 
         created_before : typing.Optional[dt.datetime]
             Only orders created before this instant (exclusive)
+
+        metadata_key : typing.Optional[str]
+            Top-level `metadata` key to match, e.g. `po_number`. Must be sent together with `metadata_value`. Nested paths are not supported.
+
+        metadata_value : typing.Optional[str]
+            Exact value `metadata_key` must equal. Matching is exact, not partial, and case-sensitive. Must be sent together with `metadata_key`.
 
         include : typing.Optional[typing.Union[str, typing.Sequence[str]]]
             Optional expansions. `tracking_events` embeds the full carrier checkpoint timeline (and latest status) on each tracking number; omitted by default to keep list payloads small.
@@ -941,12 +1011,15 @@ class AsyncOrdersClient:
             offset=offset,
             order_id=order_id,
             search=search,
+            merchant_order_id=merchant_order_id,
             status_filter=status_filter,
             tracking_status=tracking_status,
             has_tracking=has_tracking,
             return_status=return_status,
             created_after=created_after,
             created_before=created_before,
+            metadata_key=metadata_key,
+            metadata_value=metadata_value,
             include=include,
             authorization=authorization,
             request_options=request_options,
@@ -966,7 +1039,9 @@ class AsyncOrdersClient:
         po_number: typing.Optional[str] = OMIT,
         handling_days_max: typing.Optional[int] = OMIT,
         is_gift: typing.Optional[bool] = OMIT,
+        gift_message: typing.Optional[str] = OMIT,
         payment: typing.Optional[OrderPayment] = OMIT,
+        customer_notifications: typing.Optional[CustomerNotifications] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderResponse:
         """
@@ -999,10 +1074,16 @@ class AsyncOrdersClient:
             Optional ceiling on a seller's shipping and handling days. Omit or send null for no limit.
 
         is_gift : typing.Optional[bool]
-            Mark the order as a gift. Prices are suppressed on the packing slip where the fulfillment method supports it.
+            Mark the order as a gift, suppressing prices on the packing slip. If the retailer's checkout offers no free gift option, the order FAILS with `gift_option_unavailable` rather than being placed as a normal order — a gift that arrives with prices visible to the recipient is treated as worse than no order.
+
+        gift_message : typing.Optional[str]
+            Optional note for the recipient, entered into the retailer's gift-message field at checkout. Requires `is_gift` to be true. Max 240 characters. Delivered where the retailer's checkout offers a gift message; the order is still placed without it where one isn't available.
 
         payment : typing.Optional[OrderPayment]
             Optional payment block. Omit for prepaid-wallet billing (default).
+
+        customer_notifications : typing.Optional[CustomerNotifications]
+            Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1055,7 +1136,9 @@ class AsyncOrdersClient:
             po_number=po_number,
             handling_days_max=handling_days_max,
             is_gift=is_gift,
+            gift_message=gift_message,
             payment=payment,
+            customer_notifications=customer_notifications,
             request_options=request_options,
         )
         return _response.data

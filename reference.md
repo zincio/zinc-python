@@ -329,7 +329,7 @@ client.orders.get_bulk_upload(
 </dl>
 </details>
 
-<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">download_bulk_results</a>(...) -> typing.Any</code></summary>
+<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">download_bulk_results</a>(...) -> str</code></summary>
 <dl>
 <dd>
 
@@ -493,6 +493,14 @@ client.orders.list_orders()
 <dl>
 <dd>
 
+**merchant_order_id:** `typing.Optional[str]` — Filter by the retailer's own order number (e.g. an Amazon `113-…` ID), matched exactly against any of the order's order-placing jobs. Exact, not partial — dashes in the term are matched both as typed and stripped.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **status_filter:** `typing.Optional[str]` — Filter by order status
     
 </dd>
@@ -534,6 +542,22 @@ client.orders.list_orders()
 <dd>
 
 **created_before:** `typing.Optional[datetime.datetime]` — Only orders created before this instant (exclusive)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**metadata_key:** `typing.Optional[str]` — Top-level `metadata` key to match, e.g. `po_number`. Must be sent together with `metadata_value`. Nested paths are not supported.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**metadata_value:** `typing.Optional[str]` — Exact value `metadata_key` must equal. Matching is exact, not partial, and case-sensitive. Must be sent together with `metadata_key`.
     
 </dd>
 </dl>
@@ -991,6 +1015,36 @@ client.orders.cancel_order(
 <dd>
 
 Search for products on a retailer.
+
+**Best Buy returns a partial page.** Best Buy server-renders only about 4 of
+the ~24 products on a search page and loads the rest in the browser, so each
+page yields roughly 4 results rather than a full page. Ranking, pricing and
+availability are Best Buy's own; there are simply fewer items per page. Page
+through with `next_page` to collect more — `next_page` reflects whether Best
+Buy has further results, not how many came back in this response.
+
+**Shopify stores are their own retailer**: pass the store's domain as
+`retailer` (e.g. `retailer=yetch.studio`; any Shopify-powered storefront
+works). Results are the store's own top matches (~10) and there is no
+pagination, so `next_page` is always null and `page` must be omitted or 1.
+`product_id` is the store-scoped product handle to pass to the details
+endpoint with the same `retailer`.
+
+**Etsy search covers US shops, priced in USD.** Etsy sellers price in their
+own currency and a single page routinely mixes several, which makes `price`
+incomparable across a result set — so search is narrowed to US-located
+shops and any remaining non-USD listing is dropped. `currency_code` is set
+on every result and is always `USD` here, and prices are never converted,
+so the number is what the seller charges. Because the currency check runs
+after Etsy paginates, **a page can come back short while more results still
+exist** — page on with `next_page`. (Details is neither narrowed nor
+filtered: it returns any listing, in its own currency.)
+
+Etsy results carry no `stars`/`num_reviews` — Etsy publishes a rating for
+the *shop*, not the listing, and reporting a seller's rating as the
+product's would be misleading; `brand` carries the shop name, and the
+details endpoint reports the shop's rating explicitly. `product_id` is the
+numeric listing id.
 </dd>
 </dl>
 </dd>
@@ -1015,7 +1069,7 @@ client = ZincioApi(
 
 client.products.search_products(
     query="query",
-    retailer="amazon",
+    retailer="retailer",
 )
 
 ```
@@ -1040,7 +1094,7 @@ client.products.search_products(
 <dl>
 <dd>
 
-**retailer:** `SearchProductsProductsSearchGetRequestRetailer` — Retailer identifier
+**retailer:** `str` — Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
     
 </dd>
 </dl>
@@ -1056,7 +1110,7 @@ client.products.search_products(
 <dl>
 <dd>
 
-**free_shipping:** `typing.Optional[bool]` — Only return items that ship for free (Walmart: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after v1 pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results.
+**free_shipping:** `typing.Optional[bool]` — Only return items that ship for free (Walmart and Best Buy: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results. Rejected for Shopify stores: their search data carries no shipping information, so the filter cannot be honored.
     
 </dd>
 </dl>
@@ -1084,7 +1138,7 @@ client.products.search_products(
 </dl>
 </details>
 
-<details><summary><code>client.products.<a href="src/zincio/products/client.py">get_product_offers</a>(...) -> typing.Any</code></summary>
+<details><summary><code>client.products.<a href="src/zincio/products/client.py">get_product_offers</a>(...) -> GetProductOffersProductsProductIdOffersGetResponse</code></summary>
 <dl>
 <dd>
 
@@ -1097,6 +1151,9 @@ client.products.search_products(
 <dd>
 
 Get offers for a product from a retailer.
+
+Not available for Shopify stores: a storefront lists one seller (itself),
+so per-variant price and availability live on the details endpoint instead.
 </dd>
 </dl>
 </dd>
@@ -1121,7 +1178,7 @@ client = ZincioApi(
 
 client.products.get_product_offers(
     product_id="product_id",
-    retailer="amazon",
+    retailer="retailer",
 )
 
 ```
@@ -1146,7 +1203,7 @@ client.products.get_product_offers(
 <dl>
 <dd>
 
-**retailer:** `GetProductOffersProductsProductIdOffersGetRequestRetailer` — Retailer identifier
+**retailer:** `str` — Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
     
 </dd>
 </dl>
@@ -1198,7 +1255,7 @@ client.products.get_product_offers(
 </dl>
 </details>
 
-<details><summary><code>client.products.<a href="src/zincio/products/client.py">get_product_details</a>(...) -> typing.Any</code></summary>
+<details><summary><code>client.products.<a href="src/zincio/products/client.py">get_product_details</a>(...) -> GetProductDetailsProductsProductIdGetResponse</code></summary>
 <dl>
 <dd>
 
@@ -1211,6 +1268,38 @@ client.products.get_product_offers(
 <dd>
 
 Get details for a product from a retailer.
+
+**Best Buy is addressed by `bsin`**, not by the numeric SKU — the bsin is the
+trailing id in a Best Buy product URL (`/product/{slug}/{bsin}`). Search
+results return the SKU as `product_id` and also carry the bsin, so pass the
+bsin here. The response repeats the SKU as `sku` for cross-referencing.
+
+Unlike `/search`, a Best Buy detail response is complete: detail pages are
+fully server-rendered, so nothing is withheld for client-side loading.
+
+**Shopify is addressed by (store, handle)**: pass the store's domain as
+`retailer` (e.g. `retailer=yetch.studio`) and the product handle — the slug
+in `/products/{handle}`, returned as `product_id` by search — as the path
+parameter. The response includes per-variant price and availability.
+`async` is not supported for Shopify stores.
+
+**Etsy is addressed by the numeric listing id** (returned as `product_id` by
+search). `price` is in minor units of `currency_code`, not converted to USD.
+
+Etsy ratings are the **shop's**, reported as `shop_review_average` /
+`shop_review_count`, and both cover only the **past year** — an established
+shop with no recent sales reports 0, and an unrated shop reports a null
+average rather than 0.0 stars. `stars` and `num_reviews` are deliberately
+not set: they mean a product's rating everywhere else in this API, and a
+seller's rating is a different claim.
+
+`listing_type` is `physical`, `download` or `both` — a download has nothing
+to ship. `available` accounts for the shop being on vacation as well as
+stock, so it can be false on an in-stock active listing; `shop_is_vacation`
+says which it was. `variants` is populated only when Etsy exposes a
+listing's inventory matrix — check `has_variations` to tell "no variants"
+from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
+is no category name yet. `async` is not supported for Etsy.
 </dd>
 </dl>
 </dd>
@@ -1235,7 +1324,7 @@ client = ZincioApi(
 
 client.products.get_product_details(
     product_id="product_id",
-    retailer="amazon",
+    retailer="retailer",
 )
 
 ```
@@ -1260,7 +1349,7 @@ client.products.get_product_details(
 <dl>
 <dd>
 
-**retailer:** `GetProductDetailsProductsProductIdGetRequestRetailer` — Retailer identifier
+**retailer:** `str` — Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
     
 </dd>
 </dl>
@@ -2001,80 +2090,6 @@ client.agent.search(
 </dl>
 </details>
 
-<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">search_post</a>(...) -> SearchResponse</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**Beta** — response shape may change. Cross-retailer product search for agents. Returns orderable listings whose
-`url` can be passed straight to POST /agent/orders.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
-
-client = ZincioApi(
-    api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
-)
-
-client.agent.search_post(
-    q="q",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**q:** `str` — Search term
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
 <details><summary><code>client.agent.<a href="src/zincio/agent/client.py">product_search</a>(...) -> ProductSearchResponse</code></summary>
 <dl>
 <dd>
@@ -2173,105 +2188,7 @@ client.agent.product_search(
 </dl>
 </details>
 
-<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">product_search_post</a>(...) -> ProductSearchResponse</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Per-retailer product search for agents (amazon | walmart).
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
-
-client = ZincioApi(
-    api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
-)
-
-client.agent.product_search_post(
-    query="query",
-    retailer="amazon",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**query:** `str` — Search term
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**retailer:** `AgentProductSearchPostRequestRetailer` — Retailer: amazon or walmart
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**page:** `typing.Optional[int]` — Page number for pagination
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**free_shipping:** `typing.Optional[bool]` — Only return items that ship for free (Walmart: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so Amazon results are returned unfiltered. Applied per-page after pagination; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results.
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">product_offers</a>(...) -> typing.Any</code></summary>
+<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">product_offers</a>(...) -> AgentProductOffersResponse</code></summary>
 <dl>
 <dd>
 
@@ -2377,113 +2294,7 @@ client.agent.product_offers(
 </dl>
 </details>
 
-<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">product_offers_post</a>(...) -> typing.Any</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Offers/pricing for a specific product on a retailer.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
-
-client = ZincioApi(
-    api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
-)
-
-client.agent.product_offers_post(
-    product_id="product_id",
-    retailer="amazon",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**product_id:** `str` — Product identifier (e.g. ASIN)
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**retailer:** `AgentProductOffersPostRequestRetailer` — Retailer: amazon or walmart
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**max_age:** `typing.Optional[int]` — Max response age in seconds
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**newer_than:** `typing.Optional[int]` — Minimum retrieval timestamp
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**async:** `typing.Optional[bool]` — Return immediately with status=processing
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">product_details</a>(...) -> typing.Any</code></summary>
+<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">product_details</a>(...) -> AgentProductDetailsResponse</code></summary>
 <dl>
 <dd>
 
@@ -2546,112 +2357,6 @@ client.agent.product_details(
 <dd>
 
 **retailer:** `AgentProductDetailsRequestRetailer` — Retailer: amazon or walmart
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**max_age:** `typing.Optional[int]` — Max response age in seconds
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**newer_than:** `typing.Optional[int]` — Minimum retrieval timestamp
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**async:** `typing.Optional[bool]` — Return immediately with status=processing
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">product_details_post</a>(...) -> typing.Any</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Full product details for a specific product on a retailer.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
-
-client = ZincioApi(
-    api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
-)
-
-client.agent.product_details_post(
-    product_id="product_id",
-    retailer="amazon",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**product_id:** `str` — Product identifier (e.g. ASIN)
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**retailer:** `AgentProductDetailsPostRequestRetailer` — Retailer: amazon or walmart
     
 </dd>
 </dl>
@@ -3189,6 +2894,310 @@ client.tracking.get_public_tracking(
     
 </dd>
 </dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+## Sandbox
+<details><summary><code>client.sandbox.<a href="src/zincio/sandbox/client.py">create_sandbox_key</a>(...) -> SandboxKeyResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Mint a provisional sandbox user + test API key. No account needed.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zincio import ZincioApi, SandboxKeyCreate
+from zincio.environment import ZincioApiEnvironment
+
+client = ZincioApi(
+    api_key="<value>",
+    environment=ZincioApiEnvironment.PRODUCTION,
+)
+
+client.sandbox.create_sandbox_key(
+    request=SandboxKeyCreate(),
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**request:** `typing.Optional[SandboxKeyCreate]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.sandbox.<a href="src/zincio/sandbox/client.py">claim_sandbox</a>(...) -> SandboxClaimResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Fold a provisional sandbox into the authenticated account.
+
+Always a merge: Stytch's callback creates a real user row on first login,
+so a caller reaching this endpoint already has an account. The agent's key
+is reassigned rather than revoked, so whatever it has hardcoded keeps
+working — that is the point of claiming rather than starting over.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zincio import ZincioApi
+from zincio.environment import ZincioApiEnvironment
+
+client = ZincioApi(
+    api_key="<value>",
+    environment=ZincioApiEnvironment.PRODUCTION,
+)
+
+client.sandbox.claim_sandbox(
+    token="token",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**token:** `str` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.sandbox.<a href="src/zincio/sandbox/client.py">get_sandbox_status</a>(...) -> SandboxStatusResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Whether the sandbox this key belongs to has been claimed yet.
+
+An agent hands its claim URL to a human and then has no way to learn what
+happened — a device-code grant would tell it for free (issue #825). Until
+we have one, polling this closes the loop.
+
+Still provisional means nobody has claimed it. Past that, "not provisional"
+alone would be a lie — every ordinary account would read as claimed — so
+the answer comes from the claim event written on the account, which is
+also the only durable evidence a claim happened once the provisional row
+is deleted.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zincio import ZincioApi
+from zincio.environment import ZincioApiEnvironment
+
+client = ZincioApi(
+    api_key="<value>",
+    environment=ZincioApiEnvironment.PRODUCTION,
+)
+
+client.sandbox.get_sandbox_status()
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.sandbox.<a href="src/zincio/sandbox/client.py">get_quickstart</a>() -> str</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+The agent quickstart, served as plain markdown.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zincio import ZincioApi
+from zincio.environment import ZincioApiEnvironment
+
+client = ZincioApi(
+    api_key="<value>",
+    environment=ZincioApiEnvironment.PRODUCTION,
+)
+
+client.sandbox.get_quickstart()
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
 
 <dl>
 <dd>
