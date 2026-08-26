@@ -1,6 +1,6 @@
 # Reference
 ## Orders
-<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">validate_bulk_upload</a>(...) -> BulkValidateResponse</code></summary>
+<details><summary><code>client.orders.<a href="src/zinc/orders/client.py">validate_bulk_upload</a>(...) -> BulkValidateResponse</code></summary>
 <dl>
 <dd>
 
@@ -30,12 +30,12 @@ calling POST /orders/bulk.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.orders.validate_bulk_upload()
@@ -82,7 +82,7 @@ client.orders.validate_bulk_upload()
 </dl>
 </details>
 
-<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">list_bulk_uploads</a>(...) -> BulkBatchListResponse</code></summary>
+<details><summary><code>client.orders.<a href="src/zinc/orders/client.py">list_bulk_uploads</a>(...) -> BulkBatchListResponse</code></summary>
 <dl>
 <dd>
 
@@ -109,12 +109,12 @@ List the current user's bulk-upload batches, newest first.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.orders.list_bulk_uploads()
@@ -169,7 +169,7 @@ client.orders.list_bulk_uploads()
 </dl>
 </details>
 
-<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">create_bulk_upload</a>(...) -> BulkBatchResponse</code></summary>
+<details><summary><code>client.orders.<a href="src/zinc/orders/client.py">create_bulk_upload</a>(...) -> BulkBatchResponse</code></summary>
 <dl>
 <dd>
 
@@ -196,12 +196,12 @@ Create a bulk-upload batch and place its rows asynchronously.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.orders.create_bulk_upload()
@@ -248,7 +248,7 @@ client.orders.create_bulk_upload()
 </dl>
 </details>
 
-<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">get_bulk_upload</a>(...) -> BulkBatchResponse</code></summary>
+<details><summary><code>client.orders.<a href="src/zinc/orders/client.py">get_bulk_upload</a>(...) -> BulkBatchResponse</code></summary>
 <dl>
 <dd>
 
@@ -275,12 +275,12 @@ Get a batch with per-row results and live order statuses.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.orders.get_bulk_upload(
@@ -329,7 +329,7 @@ client.orders.get_bulk_upload(
 </dl>
 </details>
 
-<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">download_bulk_results</a>(...) -> str</code></summary>
+<details><summary><code>client.orders.<a href="src/zinc/orders/client.py">download_bulk_results</a>(...) -> str</code></summary>
 <dl>
 <dd>
 
@@ -356,12 +356,12 @@ Download the batch results as a CSV (status + echoed custom columns).
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.orders.download_bulk_results(
@@ -410,7 +410,7 @@ client.orders.download_bulk_results(
 </dl>
 </details>
 
-<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">list_orders</a>(...) -> OrderListResponse</code></summary>
+<details><summary><code>client.orders.<a href="src/zinc/orders/client.py">list_orders</a>(...) -> OrderListResponse</code></summary>
 <dl>
 <dd>
 
@@ -437,12 +437,12 @@ Get a list of orders for the current user
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.orders.list_orders()
@@ -593,7 +593,7 @@ client.orders.list_orders()
 </dl>
 </details>
 
-<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">create_order</a>(...) -> OrderResponse</code></summary>
+<details><summary><code>client.orders.<a href="src/zinc/orders/client.py">create_order</a>(...) -> OrderResponse</code></summary>
 <dl>
 <dd>
 
@@ -620,12 +620,12 @@ Posts an order to a queue for processing
 <dd>
 
 ```python
-from zincio import ZincioApi, OrderProduct, Address
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient, OrderProduct, Address
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.orders.create_order(
@@ -687,7 +687,7 @@ client.orders.create_order(
 </dl>
 </details>
 
-<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">list_test_products</a>() -> typing.Dict[str, typing.Any]</code></summary>
+<details><summary><code>client.orders.<a href="src/zinc/orders/client.py">list_test_products</a>() -> typing.Dict[str, typing.Any]</code></summary>
 <dl>
 <dd>
 
@@ -717,12 +717,12 @@ to trigger different test scenarios.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.orders.list_test_products()
@@ -753,7 +753,7 @@ client.orders.list_test_products()
 </dl>
 </details>
 
-<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">get_order</a>(...) -> OrderResponse</code></summary>
+<details><summary><code>client.orders.<a href="src/zinc/orders/client.py">get_order</a>(...) -> OrderResponse</code></summary>
 <dl>
 <dd>
 
@@ -780,12 +780,12 @@ Retrieves an order by its ID
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.orders.get_order(
@@ -834,7 +834,7 @@ client.orders.get_order(
 </dl>
 </details>
 
-<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">get_order_timeline</a>(...) -> OrderTimelineResponse</code></summary>
+<details><summary><code>client.orders.<a href="src/zinc/orders/client.py">get_order_timeline</a>(...) -> OrderTimelineResponse</code></summary>
 <dl>
 <dd>
 
@@ -866,12 +866,12 @@ story to the customer, distinct from the admin-only job/automation log.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.orders.get_order_timeline(
@@ -920,7 +920,7 @@ client.orders.get_order_timeline(
 </dl>
 </details>
 
-<details><summary><code>client.orders.<a href="src/zincio/orders/client.py">cancel_order</a>(...)</code></summary>
+<details><summary><code>client.orders.<a href="src/zinc/orders/client.py">cancel_order</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -947,12 +947,12 @@ Cancel an order by its ID. Orders can only be cancelled if they are pending.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.orders.cancel_order(
@@ -1002,7 +1002,7 @@ client.orders.cancel_order(
 </details>
 
 ## Products
-<details><summary><code>client.products.<a href="src/zincio/products/client.py">search_products</a>(...) -> ProductSearchResponse</code></summary>
+<details><summary><code>client.products.<a href="src/zinc/products/client.py">search_products</a>(...) -> ProductSearchResponse</code></summary>
 <dl>
 <dd>
 
@@ -1059,12 +1059,12 @@ numeric listing id.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.products.search_products(
@@ -1138,7 +1138,7 @@ client.products.search_products(
 </dl>
 </details>
 
-<details><summary><code>client.products.<a href="src/zincio/products/client.py">get_product_offers</a>(...) -> GetProductOffersProductsProductIdOffersGetResponse</code></summary>
+<details><summary><code>client.products.<a href="src/zinc/products/client.py">get_product_offers</a>(...) -> GetProductOffersProductsProductIdOffersGetResponse</code></summary>
 <dl>
 <dd>
 
@@ -1168,12 +1168,12 @@ so per-variant price and availability live on the details endpoint instead.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.products.get_product_offers(
@@ -1255,7 +1255,7 @@ client.products.get_product_offers(
 </dl>
 </details>
 
-<details><summary><code>client.products.<a href="src/zincio/products/client.py">get_product_details</a>(...) -> GetProductDetailsProductsProductIdGetResponse</code></summary>
+<details><summary><code>client.products.<a href="src/zinc/products/client.py">get_product_details</a>(...) -> GetProductDetailsProductsProductIdGetResponse</code></summary>
 <dl>
 <dd>
 
@@ -1314,12 +1314,12 @@ is no category name yet. `async` is not supported for Etsy.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.products.get_product_details(
@@ -1402,7 +1402,7 @@ client.products.get_product_details(
 </details>
 
 ## Search
-<details><summary><code>client.search.<a href="src/zincio/search/client.py">search</a>(...) -> SearchResponse</code></summary>
+<details><summary><code>client.search.<a href="src/zinc/search/client.py">search</a>(...) -> SearchResponse</code></summary>
 <dl>
 <dd>
 
@@ -1429,12 +1429,12 @@ Search for products across retailers; returns orderable zn_sku_ listings.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.search.search(
@@ -1484,7 +1484,7 @@ client.search.search(
 </details>
 
 ## ManagedAccounts
-<details><summary><code>client.managed_accounts.<a href="src/zincio/managed_accounts/client.py">list_retailer_credentials</a>(...) -> RetailerCredentialsListResponse</code></summary>
+<details><summary><code>client.managed_accounts.<a href="src/zinc/managed_accounts/client.py">list_retailer_credentials</a>(...) -> RetailerCredentialsListResponse</code></summary>
 <dl>
 <dd>
 
@@ -1512,12 +1512,12 @@ If is_global=True (admin only), list global credentials instead.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.managed_accounts.list_retailer_credentials()
@@ -1580,7 +1580,7 @@ client.managed_accounts.list_retailer_credentials()
 </dl>
 </details>
 
-<details><summary><code>client.managed_accounts.<a href="src/zincio/managed_accounts/client.py">create_retailer_credentials</a>(...) -> RetailerCredentialsResponse</code></summary>
+<details><summary><code>client.managed_accounts.<a href="src/zinc/managed_accounts/client.py">create_retailer_credentials</a>(...) -> RetailerCredentialsResponse</code></summary>
 <dl>
 <dd>
 
@@ -1608,12 +1608,12 @@ If is_global=True (admin only), creates global credentials owned by the system u
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.managed_accounts.create_retailer_credentials(
@@ -1694,7 +1694,7 @@ client.managed_accounts.create_retailer_credentials(
 </dl>
 </details>
 
-<details><summary><code>client.managed_accounts.<a href="src/zincio/managed_accounts/client.py">update_retailer_credentials</a>(...) -> RetailerCredentialsResponse</code></summary>
+<details><summary><code>client.managed_accounts.<a href="src/zinc/managed_accounts/client.py">update_retailer_credentials</a>(...) -> RetailerCredentialsResponse</code></summary>
 <dl>
 <dd>
 
@@ -1722,12 +1722,12 @@ Admins can also update global credentials.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.managed_accounts.update_retailer_credentials(
@@ -1816,7 +1816,7 @@ client.managed_accounts.update_retailer_credentials(
 </dl>
 </details>
 
-<details><summary><code>client.managed_accounts.<a href="src/zincio/managed_accounts/client.py">delete_retailer_credentials</a>(...)</code></summary>
+<details><summary><code>client.managed_accounts.<a href="src/zinc/managed_accounts/client.py">delete_retailer_credentials</a>(...)</code></summary>
 <dl>
 <dd>
 
@@ -1844,12 +1844,12 @@ Admins can also delete global credentials.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.managed_accounts.delete_retailer_credentials(
@@ -1899,7 +1899,7 @@ client.managed_accounts.delete_retailer_credentials(
 </details>
 
 ## Agent
-<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">create_mpp_order</a>(...) -> OrderResponse</code></summary>
+<details><summary><code>client.agent.<a href="src/zinc/agent/client.py">create_mpp_order</a>(...) -> OrderResponse</code></summary>
 <dl>
 <dd>
 
@@ -1941,12 +1941,12 @@ whose retry body no longer matches the challenge).
 <dd>
 
 ```python
-from zincio import ZincioApi, OrderProduct, Address
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient, OrderProduct, Address
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.agent.create_mpp_order(
@@ -2016,7 +2016,7 @@ client.agent.create_mpp_order(
 </dl>
 </details>
 
-<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">search</a>(...) -> SearchResponse</code></summary>
+<details><summary><code>client.agent.<a href="src/zinc/agent/client.py">search</a>(...) -> SearchResponse</code></summary>
 <dl>
 <dd>
 
@@ -2044,12 +2044,12 @@ client.agent.create_mpp_order(
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.agent.search(
@@ -2090,7 +2090,7 @@ client.agent.search(
 </dl>
 </details>
 
-<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">product_search</a>(...) -> ProductSearchResponse</code></summary>
+<details><summary><code>client.agent.<a href="src/zinc/agent/client.py">product_search</a>(...) -> ProductSearchResponse</code></summary>
 <dl>
 <dd>
 
@@ -2117,12 +2117,12 @@ Per-retailer product search for agents (amazon | walmart).
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.agent.product_search(
@@ -2188,7 +2188,7 @@ client.agent.product_search(
 </dl>
 </details>
 
-<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">product_offers</a>(...) -> AgentProductOffersResponse</code></summary>
+<details><summary><code>client.agent.<a href="src/zinc/agent/client.py">product_offers</a>(...) -> AgentProductOffersResponse</code></summary>
 <dl>
 <dd>
 
@@ -2215,12 +2215,12 @@ Offers/pricing for a specific product on a retailer.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.agent.product_offers(
@@ -2294,7 +2294,7 @@ client.agent.product_offers(
 </dl>
 </details>
 
-<details><summary><code>client.agent.<a href="src/zincio/agent/client.py">product_details</a>(...) -> AgentProductDetailsResponse</code></summary>
+<details><summary><code>client.agent.<a href="src/zinc/agent/client.py">product_details</a>(...) -> AgentProductDetailsResponse</code></summary>
 <dl>
 <dd>
 
@@ -2321,12 +2321,12 @@ Full product details for a specific product on a retailer.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.agent.product_details(
@@ -2401,7 +2401,7 @@ client.agent.product_details(
 </details>
 
 ## Returns
-<details><summary><code>client.returns.<a href="src/zincio/returns/client.py">list_return_requests</a>(...) -> ReturnRequestListResponse</code></summary>
+<details><summary><code>client.returns.<a href="src/zinc/returns/client.py">list_return_requests</a>(...) -> ReturnRequestListResponse</code></summary>
 <dl>
 <dd>
 
@@ -2414,12 +2414,12 @@ client.agent.product_details(
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.returns.list_return_requests()
@@ -2490,7 +2490,7 @@ client.returns.list_return_requests()
 </dl>
 </details>
 
-<details><summary><code>client.returns.<a href="src/zincio/returns/client.py">create_return_request</a>(...) -> ReturnRequestResponse</code></summary>
+<details><summary><code>client.returns.<a href="src/zinc/returns/client.py">create_return_request</a>(...) -> ReturnRequestResponse</code></summary>
 <dl>
 <dd>
 
@@ -2503,12 +2503,12 @@ client.returns.list_return_requests()
 <dd>
 
 ```python
-from zincio import ZincioApi, ReturnRequestItem
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient, ReturnRequestItem
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.returns.create_return_request(
@@ -2588,7 +2588,7 @@ client.returns.create_return_request(
 </dl>
 </details>
 
-<details><summary><code>client.returns.<a href="src/zincio/returns/client.py">get_return_request</a>(...) -> ReturnRequestResponse</code></summary>
+<details><summary><code>client.returns.<a href="src/zinc/returns/client.py">get_return_request</a>(...) -> ReturnRequestResponse</code></summary>
 <dl>
 <dd>
 
@@ -2601,12 +2601,12 @@ client.returns.create_return_request(
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.returns.get_return_request(
@@ -2656,7 +2656,7 @@ client.returns.get_return_request(
 </details>
 
 ## Retailers
-<details><summary><code>client.retailers.<a href="src/zincio/retailers/client.py">list_retailers</a>(...) -> PublicRetailerListResponse</code></summary>
+<details><summary><code>client.retailers.<a href="src/zinc/retailers/client.py">list_retailers</a>(...) -> PublicRetailerListResponse</code></summary>
 <dl>
 <dd>
 
@@ -2688,12 +2688,12 @@ the country listed in `supported_countries`. Optionally filter by name.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.retailers.list_retailers()
@@ -2749,7 +2749,7 @@ client.retailers.list_retailers()
 </details>
 
 ## Usage
-<details><summary><code>client.usage.<a href="src/zincio/usage/client.py">get_my_usage</a>(...) -> UserUsageResponse</code></summary>
+<details><summary><code>client.usage.<a href="src/zinc/usage/client.py">get_my_usage</a>(...) -> UserUsageResponse</code></summary>
 <dl>
 <dd>
 
@@ -2776,12 +2776,12 @@ The caller's own data-API usage over a trailing window, per endpoint.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.usage.get_my_usage()
@@ -2837,7 +2837,7 @@ client.usage.get_my_usage()
 </details>
 
 ## Tracking
-<details><summary><code>client.tracking.<a href="src/zincio/tracking/client.py">get_public_tracking</a>(...) -> PublicTrackingResponse</code></summary>
+<details><summary><code>client.tracking.<a href="src/zinc/tracking/client.py">get_public_tracking</a>(...) -> PublicTrackingResponse</code></summary>
 <dl>
 <dd>
 
@@ -2864,12 +2864,12 @@ Public tracking view for a single order, keyed by its UUID.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.tracking.get_public_tracking(
@@ -2911,7 +2911,7 @@ client.tracking.get_public_tracking(
 </details>
 
 ## Sandbox
-<details><summary><code>client.sandbox.<a href="src/zincio/sandbox/client.py">create_sandbox_key</a>(...) -> SandboxKeyResponse</code></summary>
+<details><summary><code>client.sandbox.<a href="src/zinc/sandbox/client.py">create_sandbox_key</a>(...) -> SandboxKeyResponse</code></summary>
 <dl>
 <dd>
 
@@ -2938,12 +2938,12 @@ Mint a provisional sandbox user + test API key. No account needed.
 <dd>
 
 ```python
-from zincio import ZincioApi, SandboxKeyCreate
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient, SandboxKeyCreate
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.sandbox.create_sandbox_key(
@@ -2984,7 +2984,7 @@ client.sandbox.create_sandbox_key(
 </dl>
 </details>
 
-<details><summary><code>client.sandbox.<a href="src/zincio/sandbox/client.py">claim_sandbox</a>(...) -> SandboxClaimResponse</code></summary>
+<details><summary><code>client.sandbox.<a href="src/zinc/sandbox/client.py">claim_sandbox</a>(...) -> SandboxClaimResponse</code></summary>
 <dl>
 <dd>
 
@@ -3016,12 +3016,12 @@ working — that is the point of claiming rather than starting over.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.sandbox.claim_sandbox(
@@ -3070,7 +3070,7 @@ client.sandbox.claim_sandbox(
 </dl>
 </details>
 
-<details><summary><code>client.sandbox.<a href="src/zincio/sandbox/client.py">get_sandbox_status</a>(...) -> SandboxStatusResponse</code></summary>
+<details><summary><code>client.sandbox.<a href="src/zinc/sandbox/client.py">get_sandbox_status</a>(...) -> SandboxStatusResponse</code></summary>
 <dl>
 <dd>
 
@@ -3107,12 +3107,12 @@ is deleted.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.sandbox.get_sandbox_status()
@@ -3151,7 +3151,7 @@ client.sandbox.get_sandbox_status()
 </dl>
 </details>
 
-<details><summary><code>client.sandbox.<a href="src/zincio/sandbox/client.py">get_quickstart</a>() -> str</code></summary>
+<details><summary><code>client.sandbox.<a href="src/zinc/sandbox/client.py">get_quickstart</a>() -> str</code></summary>
 <dl>
 <dd>
 
@@ -3178,12 +3178,12 @@ The agent quickstart, served as plain markdown.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.sandbox.get_quickstart()
@@ -3215,7 +3215,7 @@ client.sandbox.get_quickstart()
 </details>
 
 ## Health
-<details><summary><code>client.health.<a href="src/zincio/health/client.py">get_public_health</a>() -> PublicHealthResponse</code></summary>
+<details><summary><code>client.health.<a href="src/zinc/health/client.py">get_public_health</a>() -> PublicHealthResponse</code></summary>
 <dl>
 <dd>
 
@@ -3245,12 +3245,12 @@ cron cadence, the DB is touched at most ~once per tick.
 <dd>
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
-    environment=ZincioApiEnvironment.PRODUCTION,
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 
 client.health.get_public_health()

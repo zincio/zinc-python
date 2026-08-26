@@ -54,9 +54,9 @@ class UsageClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.usage.get_my_usage()
@@ -115,9 +115,9 @@ class AsyncUsageClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 

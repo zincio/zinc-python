@@ -111,8 +111,8 @@ if typing.TYPE_CHECKING:
         AgentProductOffersResponseStatus,
         AgentProductSearchRequestRetailer,
     )
-    from .client import AsyncZincioApi, ZincioApi
-    from .environment import ZincioApiEnvironment
+    from .client import AsyncZincClient, ZincClient
+    from .environment import ZincClientEnvironment
     from .products import (
         GetProductDetailsProductsProductIdGetResponse,
         GetProductDetailsProductsProductIdGetResponseStatus,
@@ -129,7 +129,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "AgentProductOffersResponse": ".agent",
     "AgentProductOffersResponseStatus": ".agent",
     "AgentProductSearchRequestRetailer": ".agent",
-    "AsyncZincioApi": ".client",
+    "AsyncZincClient": ".client",
     "BulkBatchListResponse": ".types",
     "BulkBatchResponse": ".types",
     "BulkBatchStatus": ".types",
@@ -213,8 +213,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "UserUsageResponse": ".types",
     "ValidationError": ".types",
     "ValidationErrorLocItem": ".types",
-    "ZincioApi": ".client",
-    "ZincioApiEnvironment": ".environment",
+    "ZincClient": ".client",
+    "ZincClientEnvironment": ".environment",
     "__version__": ".version",
     "agent": ".agent",
     "health": ".health",
@@ -260,7 +260,7 @@ __all__ = [
     "AgentProductOffersResponse",
     "AgentProductOffersResponseStatus",
     "AgentProductSearchRequestRetailer",
-    "AsyncZincioApi",
+    "AsyncZincClient",
     "BulkBatchListResponse",
     "BulkBatchResponse",
     "BulkBatchStatus",
@@ -344,8 +344,8 @@ __all__ = [
     "UserUsageResponse",
     "ValidationError",
     "ValidationErrorLocItem",
-    "ZincioApi",
-    "ZincioApiEnvironment",
+    "ZincClient",
+    "ZincClientEnvironment",
     "__version__",
     "agent",
     "health",

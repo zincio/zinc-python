@@ -8,7 +8,7 @@ import typing
 
 import typing_extensions
 
-from zincio.core.serialization import FieldMetadata
+from zinc.core.serialization import FieldMetadata
 
 
 class Base(typing_extensions.TypedDict):

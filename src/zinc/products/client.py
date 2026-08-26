@@ -96,9 +96,9 @@ class ProductsClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.products.search_products(
@@ -161,9 +161,9 @@ class ProductsClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.products.get_product_offers(
@@ -256,9 +256,9 @@ class ProductsClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.products.get_product_details(
@@ -364,9 +364,9 @@ class AsyncProductsClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -437,9 +437,9 @@ class AsyncProductsClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -540,9 +540,9 @@ class AsyncProductsClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 

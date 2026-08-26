@@ -12,7 +12,9 @@ class Address(UniversalBaseModel):
 
     Supports international addresses. The `state` field is optional for countries
     that don't use states/provinces. The `country` field uses ISO 3166-1 alpha-2
-    country codes (e.g., "US", "CA", "GB", "DE").
+    country codes (e.g., "US", "CA", "GB", "DE"), which are required rather than
+    inferred — a longer spelling like "USA" is rejected with the code to use, so
+    everything downstream can rely on seeing alpha-2.
     """
 
     first_name: str
@@ -23,7 +25,10 @@ class Address(UniversalBaseModel):
     state: typing.Optional[str] = None
     postal_code: str
     phone_number: str
-    country: typing.Optional[str] = None
+    country: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Country as an ISO 3166-1 alpha-2 code (e.g. 'US', 'CA', 'GB', 'DE'). Case-insensitive. Longer spellings such as 'USA' or 'United States' are rejected — the error names the code to use.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

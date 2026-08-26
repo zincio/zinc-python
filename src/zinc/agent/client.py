@@ -125,9 +125,9 @@ class AgentClient:
 
         Examples
         --------
-        from zincio import Address, OrderProduct, ZincioApi
+        from zinc import Address, OrderProduct, ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.agent.create_mpp_order(
@@ -186,9 +186,9 @@ class AgentClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.agent.search(
@@ -234,9 +234,9 @@ class AgentClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.agent.product_search(
@@ -289,9 +289,9 @@ class AgentClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.agent.product_offers(
@@ -349,9 +349,9 @@ class AgentClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.agent.product_details(
@@ -475,9 +475,9 @@ class AsyncAgentClient:
         --------
         import asyncio
 
-        from zincio import Address, AsyncZincioApi, OrderProduct
+        from zinc import Address, AsyncZincClient, OrderProduct
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -544,9 +544,9 @@ class AsyncAgentClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -600,9 +600,9 @@ class AsyncAgentClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -663,9 +663,9 @@ class AsyncAgentClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -731,9 +731,9 @@ class AsyncAgentClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 

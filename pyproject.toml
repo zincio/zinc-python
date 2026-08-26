@@ -4,7 +4,7 @@ dynamic = ["version"]
 
 [tool.poetry]
 name = "zinc"
-version = "2026.8.21"
+version = "2026.8.21.post1"
 description = ""
 readme = "README.md"
 authors = []
@@ -29,7 +29,7 @@ classifiers = [
     "Typing :: Typed"
 ]
 packages = [
-    { include = "zincio", from = "src"}
+    { include = "zinc", from = "src"}
 ]
 
 [tool.poetry.urls]

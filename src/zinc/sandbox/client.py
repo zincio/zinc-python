@@ -52,9 +52,9 @@ class SandboxClient:
 
         Examples
         --------
-        from zincio import SandboxKeyCreate, ZincioApi
+        from zinc import SandboxKeyCreate, ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.sandbox.create_sandbox_key(
@@ -95,9 +95,9 @@ class SandboxClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.sandbox.claim_sandbox(
@@ -139,9 +139,9 @@ class SandboxClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.sandbox.get_sandbox_status()
@@ -165,9 +165,9 @@ class SandboxClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.sandbox.get_quickstart()
@@ -216,9 +216,9 @@ class AsyncSandboxClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi, SandboxKeyCreate
+        from zinc import AsyncZincClient, SandboxKeyCreate
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -267,9 +267,9 @@ class AsyncSandboxClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -319,9 +319,9 @@ class AsyncSandboxClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -355,9 +355,9 @@ class AsyncSandboxClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 

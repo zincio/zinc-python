@@ -3,7 +3,7 @@
 [![fern shield](https://img.shields.io/badge/%F0%9F%8C%BF-Built%20with%20Fern-brightgreen)](https://buildwithfern.com?utm_source=github&utm_medium=github&utm_campaign=readme&utm_source=https%3A%2F%2Fgithub.com%2Fzincio%2Fzinc-python)
 [![pypi](https://img.shields.io/pypi/v/zinc)](https://pypi.python.org/pypi/zinc)
 
-**`zinc`** is the official TypeScript SDK for the [Zinc API](https://www.zinc.com/docs) —
+**`zinc`** is the official SDK for the [Zinc API](https://www.zinc.com/docs) —
 search, buy, track, and return products from major online retailers
 (Amazon, Walmart, and more) through a single, type-safe API.
 
@@ -11,14 +11,19 @@ Keywords: e-commerce API, place an order, buy products programmatically,
 Amazon ordering API, checkout automation, order tracking, returns,
 product search, AI agent commerce, autonomous purchasing, MPP / HTTP 402.
 
-Every method is fully typed. Instantiate `ZincClient` once and call
-resource methods like `zinc.orders.createOrder(...)` or `zinc.search.search(...)`.
+Every method is fully typed. Instantiate `ZincClient` once and call resource
+methods on it — placing an order, searching for a product, and tracking a
+shipment are each a single call. (Method names follow each language's
+convention: `createOrder` in TypeScript, `create_order` in Python.)
 
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Reference](#reference)
+- [Authentication](#authentication)
+- [Test Mode](#test-mode)
+- [Faq](#faq)
 - [Usage](#usage)
 - [Environments](#environments)
 - [Async Client](#async-client)
@@ -40,14 +45,64 @@ pip install zinc
 
 A full reference for this library is available [here](https://github.com/zincio/zinc-python/blob/HEAD/./reference.md).
 
+## Authentication
+
+Most endpoints require a Zinc API key (prefixed `zn_`), sent as the
+`Authorization` header. The value is forwarded **verbatim**, so pass the
+`Bearer ` prefix yourself:
+
+```python
+import os
+from zinc import ZincClient
+
+client = ZincClient(
+    api_key=f"Bearer {os.environ['ZINC_API_KEY']}",  # "zn_..."
+    # base_url defaults to https://api.zinc.com
+)
+```
+
+The `client.agent.*` endpoints need **no Zinc account** — they are paid
+per-call via MPP (HTTP 402), so an agent can order without one. They raise
+`PaymentRequiredError` until payment is attached.
+
+
+## Test mode
+
+Use a **test API key** (`zn_test_...`) to hit the sandbox — same client,
+same base URL; the key prefix routes you to test data:
+
+```python
+client = ZincClient(api_key=f"Bearer {os.environ['ZINC_TEST_KEY']}")
+```
+
+`client.orders.list_test_products()` returns product URLs that trigger
+specific sandbox scenarios.
+
+
+## FAQ
+
+**Which version should I use?** The package version mirrors the Zinc
+API version (CalVer, e.g. `2026.7.17` = API `2026-07-17`). Pin an exact
+version or take the latest.
+
+**Do I need an account to place orders as an agent?** No.
+`client.agent.create_mpp_order(...)` settles payment via MPP (HTTP 402) —
+no API key required.
+
+**How is `max_price` interpreted?** In cents. It's a ceiling; the order
+is not finalized above it.
+
+**Where are the full API docs?** https://www.zinc.com/docs
+
+
 ## Usage
 
 Instantiate and use the client with the following:
 
 ```python
-from zincio import ZincioApi, OrderProduct, Address
+from zinc import ZincClient, OrderProduct, Address
 
-client = ZincioApi(
+client = ZincClient(
     api_key="<value>",
 )
 
@@ -74,11 +129,11 @@ client.orders.create_order(
 This SDK allows you to configure different environments for API requests.
 
 ```python
-from zincio import ZincioApi
-from zincio.environment import ZincioApiEnvironment
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
 
-client = ZincioApi(
-    environment=ZincioApiEnvironment.PRODUCTION,
+client = ZincClient(
+    environment=ZincClientEnvironment.PRODUCTION,
 )
 ```
 
@@ -89,9 +144,9 @@ The SDK also exports an `async` client so that you can make non-blocking calls t
 ```python
 import asyncio
 
-from zincio import AsyncZincioApi
+from zinc import AsyncZincClient
 
-client = AsyncZincioApi(
+client = AsyncZincClient(
     api_key="<value>",
 )
 
@@ -124,7 +179,7 @@ When the API returns a non-success status code (4xx or 5xx response), a subclass
 will be thrown.
 
 ```python
-from zincio.core.api_error import ApiError
+from zinc.core.api_error import ApiError
 
 try:
     client.orders.create_order(...)
@@ -141,9 +196,9 @@ The SDK provides access to raw response data, including headers, through the `.w
 The `.with_raw_response` property returns a "raw" client that can be used to access the `.headers` and `.data` attributes.
 
 ```python
-from zincio import ZincioApi
+from zinc import ZincClient
 
-client = ZincioApi(...)
+client = ZincClient(...)
 response = client.orders.with_raw_response.create_order(...)
 print(response.headers)  # access the response headers
 print(response.status_code)  # access the response status code
@@ -185,9 +240,9 @@ client.orders.create_order(..., request_options={
 The SDK defaults to a 60 second timeout. You can configure this with a timeout option at the client or request level.
 
 ```python
-from zincio import ZincioApi
+from zinc import ZincClient
 
-client = ZincioApi(..., timeout=20.0)
+client = ZincClient(..., timeout=20.0)
 
 # Override timeout for a specific method
 client.orders.create_order(..., request_options={
@@ -202,9 +257,9 @@ and transports.
 
 ```python
 import httpx
-from zincio import ZincioApi
+from zinc import ZincClient
 
-client = ZincioApi(
+client = ZincClient(
     ...,
     httpx_client=httpx.Client(
         proxy="http://my.test.proxy.example.com",

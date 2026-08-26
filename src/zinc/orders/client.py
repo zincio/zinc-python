@@ -74,9 +74,9 @@ class OrdersClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.orders.validate_bulk_upload()
@@ -119,9 +119,9 @@ class OrdersClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.orders.list_bulk_uploads()
@@ -166,9 +166,9 @@ class OrdersClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.orders.create_bulk_upload()
@@ -208,9 +208,9 @@ class OrdersClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.orders.get_bulk_upload(
@@ -248,9 +248,9 @@ class OrdersClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.orders.download_bulk_results(
@@ -341,9 +341,9 @@ class OrdersClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.orders.list_orders()
@@ -437,9 +437,9 @@ class OrdersClient:
 
         Examples
         --------
-        from zincio import Address, OrderProduct, ZincioApi
+        from zinc import Address, OrderProduct, ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.orders.create_order(
@@ -498,9 +498,9 @@ class OrdersClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.orders.list_test_products()
@@ -534,9 +534,9 @@ class OrdersClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.orders.get_order(
@@ -577,9 +577,9 @@ class OrdersClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.orders.get_order_timeline(
@@ -616,9 +616,9 @@ class OrdersClient:
 
         Examples
         --------
-        from zincio import ZincioApi
+        from zinc import ZincClient
 
-        client = ZincioApi(
+        client = ZincClient(
             api_key="YOUR_API_KEY",
         )
         client.orders.cancel_order(
@@ -686,9 +686,9 @@ class AsyncOrdersClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -739,9 +739,9 @@ class AsyncOrdersClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -794,9 +794,9 @@ class AsyncOrdersClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -844,9 +844,9 @@ class AsyncOrdersClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -892,9 +892,9 @@ class AsyncOrdersClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -993,9 +993,9 @@ class AsyncOrdersClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -1097,9 +1097,9 @@ class AsyncOrdersClient:
         --------
         import asyncio
 
-        from zincio import Address, AsyncZincioApi, OrderProduct
+        from zinc import Address, AsyncZincClient, OrderProduct
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -1166,9 +1166,9 @@ class AsyncOrdersClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -1210,9 +1210,9 @@ class AsyncOrdersClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -1263,9 +1263,9 @@ class AsyncOrdersClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 
@@ -1310,9 +1310,9 @@ class AsyncOrdersClient:
         --------
         import asyncio
 
-        from zincio import AsyncZincioApi
+        from zinc import AsyncZincClient
 
-        client = AsyncZincioApi(
+        client = AsyncZincClient(
             api_key="YOUR_API_KEY",
         )
 

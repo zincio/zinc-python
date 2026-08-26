@@ -4,7 +4,7 @@
 
 import typing_extensions
 
-from zincio.core.serialization import FieldMetadata
+from zinc.core.serialization import FieldMetadata
 
 
 class CircleParams(typing_extensions.TypedDict):

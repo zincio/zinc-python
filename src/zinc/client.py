@@ -7,7 +7,7 @@ import typing
 import httpx
 from .core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from .core.logging import LogConfig, Logger
-from .environment import ZincioApiEnvironment
+from .environment import ZincClientEnvironment
 
 if typing.TYPE_CHECKING:
     from .agent.client import AgentClient, AsyncAgentClient
@@ -23,7 +23,7 @@ if typing.TYPE_CHECKING:
     from .usage.client import AsyncUsageClient, UsageClient
 
 
-class ZincioApi:
+class ZincClient:
     """
     Use this class to access the different functions within the SDK. You can instantiate any number of clients with different configuration that will propagate to these functions.
 
@@ -32,12 +32,12 @@ class ZincioApi:
     base_url : typing.Optional[str]
         The base url to use for requests from the client.
 
-    environment : ZincioApiEnvironment
-        The environment to use for requests from the client. from .environment import ZincioApiEnvironment
+    environment : ZincClientEnvironment
+        The environment to use for requests from the client. from .environment import ZincClientEnvironment
 
 
 
-        Defaults to ZincioApiEnvironment.PRODUCTION
+        Defaults to ZincClientEnvironment.PRODUCTION
 
 
 
@@ -68,9 +68,9 @@ class ZincioApi:
 
     Examples
     --------
-    from zincio import ZincioApi
+    from zinc import ZincClient
 
-    client = ZincioApi(
+    client = ZincClient(
         api_key="YOUR_API_KEY",
     )
     """
@@ -79,7 +79,7 @@ class ZincioApi:
         self,
         *,
         base_url: typing.Optional[str] = None,
-        environment: ZincioApiEnvironment = ZincioApiEnvironment.PRODUCTION,
+        environment: ZincClientEnvironment = ZincClientEnvironment.PRODUCTION,
         api_key: str,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -226,7 +226,7 @@ def _make_default_async_client(
     return httpx.AsyncClient(timeout=timeout)
 
 
-class AsyncZincioApi:
+class AsyncZincClient:
     """
     Use this class to access the different functions within the SDK. You can instantiate any number of clients with different configuration that will propagate to these functions.
 
@@ -235,12 +235,12 @@ class AsyncZincioApi:
     base_url : typing.Optional[str]
         The base url to use for requests from the client.
 
-    environment : ZincioApiEnvironment
-        The environment to use for requests from the client. from .environment import ZincioApiEnvironment
+    environment : ZincClientEnvironment
+        The environment to use for requests from the client. from .environment import ZincClientEnvironment
 
 
 
-        Defaults to ZincioApiEnvironment.PRODUCTION
+        Defaults to ZincClientEnvironment.PRODUCTION
 
 
 
@@ -271,9 +271,9 @@ class AsyncZincioApi:
 
     Examples
     --------
-    from zincio import AsyncZincioApi
+    from zinc import AsyncZincClient
 
-    client = AsyncZincioApi(
+    client = AsyncZincClient(
         api_key="YOUR_API_KEY",
     )
     """
@@ -282,7 +282,7 @@ class AsyncZincioApi:
         self,
         *,
         base_url: typing.Optional[str] = None,
-        environment: ZincioApiEnvironment = ZincioApiEnvironment.PRODUCTION,
+        environment: ZincClientEnvironment = ZincClientEnvironment.PRODUCTION,
         api_key: str,
         headers: typing.Optional[typing.Dict[str, str]] = None,
         timeout: typing.Optional[float] = None,
@@ -409,7 +409,7 @@ class AsyncZincioApi:
         return self._health
 
 
-def _get_base_url(*, base_url: typing.Optional[str] = None, environment: ZincioApiEnvironment) -> str:
+def _get_base_url(*, base_url: typing.Optional[str] = None, environment: ZincClientEnvironment) -> str:
     if base_url is not None:
         return base_url
     elif environment is not None:

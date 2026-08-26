@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from zincio.core.http_client import (
+from zinc.core.http_client import (
     AsyncHttpClient,
     HttpClient,
     _build_url,
@@ -14,7 +14,7 @@ from zincio.core.http_client import (
     get_request_body,
     remove_none_from_dict,
 )
-from zincio.core.request_options import RequestOptions
+from zinc.core.request_options import RequestOptions
 
 
 # Stub clients for testing HttpClient and AsyncHttpClient
@@ -327,7 +327,7 @@ def _make_async_http_client(mock_client: Any) -> AsyncHttpClient:
     )
 
 
-@patch("zincio.core.http_client.time.sleep", return_value=None)
+@patch("zinc.core.http_client.time.sleep", return_value=None)
 def test_sync_retries_on_connect_error(mock_sleep: MagicMock) -> None:
     """Sync: connection error retries on httpx.ConnectError."""
     mock_client = MagicMock()
@@ -344,7 +344,7 @@ def test_sync_retries_on_connect_error(mock_sleep: MagicMock) -> None:
     mock_sleep.assert_called_once()
 
 
-@patch("zincio.core.http_client.time.sleep", return_value=None)
+@patch("zinc.core.http_client.time.sleep", return_value=None)
 def test_sync_retries_on_remote_protocol_error(mock_sleep: MagicMock) -> None:
     """Sync: connection error retries on httpx.RemoteProtocolError."""
     mock_client = MagicMock()
@@ -361,7 +361,7 @@ def test_sync_retries_on_remote_protocol_error(mock_sleep: MagicMock) -> None:
     mock_sleep.assert_called_once()
 
 
-@patch("zincio.core.http_client.time.sleep", return_value=None)
+@patch("zinc.core.http_client.time.sleep", return_value=None)
 def test_sync_connection_error_exhausts_retries(mock_sleep: MagicMock) -> None:
     """Sync: connection error exhausts retries then raises."""
     mock_client = MagicMock()
@@ -380,7 +380,7 @@ def test_sync_connection_error_exhausts_retries(mock_sleep: MagicMock) -> None:
     assert mock_sleep.call_count == 2
 
 
-@patch("zincio.core.http_client.time.sleep", return_value=None)
+@patch("zinc.core.http_client.time.sleep", return_value=None)
 def test_sync_connection_error_respects_max_retries_zero(mock_sleep: MagicMock) -> None:
     """Sync: connection error respects max_retries=0."""
     mock_client = MagicMock()
@@ -400,7 +400,7 @@ def test_sync_connection_error_respects_max_retries_zero(mock_sleep: MagicMock) 
 
 
 @pytest.mark.asyncio
-@patch("zincio.core.http_client.asyncio.sleep", new_callable=AsyncMock)
+@patch("zinc.core.http_client.asyncio.sleep", new_callable=AsyncMock)
 async def test_async_retries_on_connect_error(mock_sleep: AsyncMock) -> None:
     """Async: connection error retries on httpx.ConnectError."""
     mock_client = MagicMock()
@@ -420,7 +420,7 @@ async def test_async_retries_on_connect_error(mock_sleep: AsyncMock) -> None:
 
 
 @pytest.mark.asyncio
-@patch("zincio.core.http_client.asyncio.sleep", new_callable=AsyncMock)
+@patch("zinc.core.http_client.asyncio.sleep", new_callable=AsyncMock)
 async def test_async_retries_on_remote_protocol_error(mock_sleep: AsyncMock) -> None:
     """Async: connection error retries on httpx.RemoteProtocolError."""
     mock_client = MagicMock()
@@ -440,7 +440,7 @@ async def test_async_retries_on_remote_protocol_error(mock_sleep: AsyncMock) -> 
 
 
 @pytest.mark.asyncio
-@patch("zincio.core.http_client.asyncio.sleep", new_callable=AsyncMock)
+@patch("zinc.core.http_client.asyncio.sleep", new_callable=AsyncMock)
 async def test_async_connection_error_exhausts_retries(mock_sleep: AsyncMock) -> None:
     """Async: connection error exhausts retries then raises."""
     mock_client = MagicMock()
@@ -506,7 +506,7 @@ def test_async_http_client_custom_base_max_retries() -> None:
     assert http_client.base_max_retries == 5
 
 
-@patch("zincio.core.http_client.time.sleep", return_value=None)
+@patch("zinc.core.http_client.time.sleep", return_value=None)
 def test_sync_base_max_retries_zero_disables_retries(mock_sleep: MagicMock) -> None:
     """Sync: base_max_retries=0 disables retries when no request_options override."""
     mock_client = MagicMock()
@@ -528,7 +528,7 @@ def test_sync_base_max_retries_zero_disables_retries(mock_sleep: MagicMock) -> N
 
 
 @pytest.mark.asyncio
-@patch("zincio.core.http_client.asyncio.sleep", new_callable=AsyncMock)
+@patch("zinc.core.http_client.asyncio.sleep", new_callable=AsyncMock)
 async def test_async_base_max_retries_zero_disables_retries(mock_sleep: AsyncMock) -> None:
     """Async: base_max_retries=0 disables retries when no request_options override."""
     mock_client = MagicMock()
@@ -549,7 +549,7 @@ async def test_async_base_max_retries_zero_disables_retries(mock_sleep: AsyncMoc
     mock_sleep.assert_not_called()
 
 
-@patch("zincio.core.http_client.time.sleep", return_value=None)
+@patch("zinc.core.http_client.time.sleep", return_value=None)
 def test_sync_request_options_override_base_max_retries(mock_sleep: MagicMock) -> None:
     """Sync: request_options max_retries overrides base_max_retries."""
     mock_client = MagicMock()
@@ -579,7 +579,7 @@ def test_sync_request_options_override_base_max_retries(mock_sleep: MagicMock) -
 
 
 @pytest.mark.asyncio
-@patch("zincio.core.http_client.asyncio.sleep", new_callable=AsyncMock)
+@patch("zinc.core.http_client.asyncio.sleep", new_callable=AsyncMock)
 async def test_async_request_options_override_base_max_retries(mock_sleep: AsyncMock) -> None:
     """Async: request_options max_retries overrides base_max_retries."""
     mock_client = MagicMock()
@@ -610,7 +610,7 @@ async def test_async_request_options_override_base_max_retries(mock_sleep: Async
     assert mock_client.request.call_count == 3
 
 
-@patch("zincio.core.http_client.time.sleep", return_value=None)
+@patch("zinc.core.http_client.time.sleep", return_value=None)
 def test_sync_base_max_retries_used_as_default(mock_sleep: MagicMock) -> None:
     """Sync: base_max_retries is used when request_options has no max_retries."""
     mock_client = MagicMock()
@@ -636,7 +636,7 @@ def test_sync_base_max_retries_used_as_default(mock_sleep: MagicMock) -> None:
 
 
 @pytest.mark.asyncio
-@patch("zincio.core.http_client.asyncio.sleep", new_callable=AsyncMock)
+@patch("zinc.core.http_client.asyncio.sleep", new_callable=AsyncMock)
 async def test_async_base_max_retries_used_as_default(mock_sleep: AsyncMock) -> None:
     """Async: base_max_retries is used when request_options has no max_retries."""
     mock_client = MagicMock()

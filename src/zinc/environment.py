@@ -3,5 +3,5 @@
 import enum
 
 
-class ZincioApiEnvironment(enum.Enum):
+class ZincClientEnvironment(enum.Enum):
     PRODUCTION = "https://api.zinc.com"

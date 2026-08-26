@@ -2,10 +2,16 @@
   "cliVersion": "5.75.6",
   "generatorName": "fernapi/fern-python-sdk",
   "generatorVersion": "5.22.1",
-  "originGitCommit": "e76f84be3228e759acd34adb2eec858335ce1ebe",
+  "generatorConfig": {
+    "package_name": "zinc",
+    "client": {
+      "class_name": "ZincClient"
+    }
+  },
+  "originGitCommit": "15299e46fa59ed247c79da9a9070f44e9981bb16",
   "originGitCommitIsDirty": false,
   "invokedBy": "ci",
-  "requestedVersion": "2026.8.21",
+  "requestedVersion": "2026.8.21.post1",
   "ciProvider": "github",
-  "sdkVersion": "2026.8.21"
+  "sdkVersion": "2026.8.21.post1"
 }
