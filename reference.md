@@ -565,6 +565,14 @@ client.orders.list_orders()
 <dl>
 <dd>
 
+**user_email:** `typing.Optional[str]` — Filter to orders placed by one org teammate, matched as a case-insensitive substring of their email. Only ever narrows within the caller's organization; a solo user can only match their own address.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **include:** `typing.Optional[typing.Union[str, typing.Sequence[str]]]` — Optional expansions. `tracking_events` embeds the full carrier checkpoint timeline (and latest status) on each tracking number; omitted by default to keep list payloads small.
     
 </dd>
@@ -660,6 +668,178 @@ client.orders.create_order(
 <dd>
 
 **request:** `OrderCreate` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.orders.<a href="src/zinc/orders/client.py">export_orders_csv</a>(...) -> str</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Stream the current user's orders as a CSV file.
+
+Takes the same filters as ``GET /orders`` (via the shared
+``_visible_orders_filter``) so an export always contains exactly the rows
+the caller was looking at — but no ``limit``/``offset``: the export covers
+the whole filtered set, paged internally so memory stays flat.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.orders.export_orders_csv()
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**order_id:** `typing.Optional[str]` — Filter by order ID (partial match)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**search:** `typing.Optional[str]` — Partial match on order ID OR tracking number
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**status_filter:** `typing.Optional[str]` — Filter by order status
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**merchant_order_id:** `typing.Optional[str]` — Filter by the retailer's own order number (exact match)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**tracking_status:** `typing.Optional[str]` — Filter to orders having at least one tracking number with this status
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**has_tracking:** `typing.Optional[bool]` — Only orders with (true) or without (false) tracking
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**return_status:** `typing.Optional[str]` — `open` or `closed` return requests; omit for no filter
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**created_after:** `typing.Optional[datetime.datetime]` — Only orders created at/after this instant (inclusive)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**created_before:** `typing.Optional[datetime.datetime]` — Only orders created before this instant (exclusive)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**metadata_key:** `typing.Optional[str]` — Top-level `metadata` key to match; send with `metadata_value`
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**metadata_value:** `typing.Optional[str]` — Exact value `metadata_key` must equal; send with `metadata_key`
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**user_email:** `typing.Optional[str]` — Filter to orders placed by one org teammate, matched as a case-insensitive substring of their email. Only ever narrows within the caller's organization; a solo user can only match their own address.
     
 </dd>
 </dl>
@@ -1045,6 +1225,8 @@ the *shop*, not the listing, and reporting a seller's rating as the
 product's would be misleading; `brand` carries the shop name, and the
 details endpoint reports the shop's rating explicitly. `product_id` is the
 numeric listing id.
+
+**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
 </dd>
 </dl>
 </dd>
@@ -1154,6 +1336,8 @@ Get offers for a product from a retailer.
 
 Not available for Shopify stores: a storefront lists one seller (itself),
 so per-variant price and availability live on the details endpoint instead.
+
+**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
 </dd>
 </dl>
 </dd>
@@ -1211,7 +1395,7 @@ client.products.get_product_offers(
 <dl>
 <dd>
 
-**max_age:** `typing.Optional[int]` — Max response age in seconds (mutually exclusive with newer_than)
+**max_age:** `typing.Optional[int]` — Max response age in seconds, at least 31 (mutually exclusive with newer_than)
     
 </dd>
 </dl>
@@ -1219,7 +1403,7 @@ client.products.get_product_offers(
 <dl>
 <dd>
 
-**newer_than:** `typing.Optional[int]` — Minimum retrieval timestamp (mutually exclusive with max_age)
+**newer_than:** `typing.Optional[int]` — Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
     
 </dd>
 </dl>
@@ -1300,6 +1484,8 @@ says which it was. `variants` is populated only when Etsy exposes a
 listing's inventory matrix — check `has_variations` to tell "no variants"
 from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
 is no category name yet. `async` is not supported for Etsy.
+
+**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
 </dd>
 </dl>
 </dd>
@@ -1357,7 +1543,7 @@ client.products.get_product_details(
 <dl>
 <dd>
 
-**max_age:** `typing.Optional[int]` — Max response age in seconds (mutually exclusive with newer_than)
+**max_age:** `typing.Optional[int]` — Max response age in seconds, at least 31 (mutually exclusive with newer_than)
     
 </dd>
 </dl>
@@ -1365,7 +1551,7 @@ client.products.get_product_details(
 <dl>
 <dd>
 
-**newer_than:** `typing.Optional[int]` — Minimum retrieval timestamp (mutually exclusive with max_age)
+**newer_than:** `typing.Optional[int]` — Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
     
 </dd>
 </dl>
@@ -1415,6 +1601,8 @@ client.products.get_product_details(
 <dd>
 
 Search for products across retailers; returns orderable zn_sku_ listings.
+
+**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
 </dd>
 </dl>
 </dd>
@@ -1456,6 +1644,22 @@ client.search.search(
 <dd>
 
 **q:** `str` — Search term
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**min_price:** `typing.Optional[int]` — Cents. Drop results priced below this.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**max_price:** `typing.Optional[int]` — Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
     
 </dd>
 </dl>
@@ -2078,6 +2282,22 @@ client.agent.search(
 <dl>
 <dd>
 
+**min_price:** `typing.Optional[int]` — Cents. Drop results priced below this.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**max_price:** `typing.Optional[int]` — Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
     
 </dd>
@@ -2258,7 +2478,7 @@ client.agent.product_offers(
 <dl>
 <dd>
 
-**max_age:** `typing.Optional[int]` — Max response age in seconds
+**max_age:** `typing.Optional[int]` — Max response age in seconds, at least 31 (mutually exclusive with newer_than)
     
 </dd>
 </dl>
@@ -2266,7 +2486,7 @@ client.agent.product_offers(
 <dl>
 <dd>
 
-**newer_than:** `typing.Optional[int]` — Minimum retrieval timestamp
+**newer_than:** `typing.Optional[int]` — Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
     
 </dd>
 </dl>
@@ -2364,7 +2584,7 @@ client.agent.product_details(
 <dl>
 <dd>
 
-**max_age:** `typing.Optional[int]` — Max response age in seconds
+**max_age:** `typing.Optional[int]` — Max response age in seconds, at least 31 (mutually exclusive with newer_than)
     
 </dd>
 </dl>
@@ -2372,7 +2592,7 @@ client.agent.product_details(
 <dl>
 <dd>
 
-**newer_than:** `typing.Optional[int]` — Minimum retrieval timestamp
+**newer_than:** `typing.Optional[int]` — Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
     
 </dd>
 </dl>
@@ -2836,6 +3056,223 @@ client.usage.get_my_usage()
 </dl>
 </details>
 
+## Wallet
+<details><summary><code>client.wallet.<a href="src/zinc/wallet/client.py">get_wallet</a>(...) -> WalletResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Get your wallet balance.
+
+All amounts are integer cents. `balance` is the ledger balance;
+`spendable_balance` is what `POST /orders` actually checks against (the two
+differ only for Zinc Connect accounts with in-flight holds). An order needs
+`max_price + order_fee_cents` spendable, so compare against that before
+placing one instead of discovering a shortfall as a 402. Bulk-deal customers
+(`billed_by_invoice: true`) are invoiced monthly and skip the balance check.
+
+Under a `zn_test_` key (or `X-Test-Mode`) this reads the sandbox wallet,
+which sandbox orders never draw down. Funds are added from the dashboard.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.wallet.get_wallet()
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+## Stats
+<details><summary><code>client.stats.<a href="src/zinc/stats/client.py">get_delivery_map</a>() -> DeliveryMapResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Recent delivered orders as anonymized, city-level map points.
+
+Public and unauthenticated — feeds the marketing site's globe. Points are
+ZIP-centroid coordinates rounded to two decimals with a curated category
+emoji; deduplicated and capped. Cached for about an hour.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.stats.get_delivery_map()
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.stats.<a href="src/zinc/stats/client.py">get_lifetime_stats</a>() -> LifetimeStatsResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Zinc's all-time successful-order count and GMV.
+
+Public and unauthenticated. Top-level numbers are v2 (this service);
+``v1`` is the worker-computed legacy snapshot (seed until the first
+compute lands); ``combined`` sums both. Cached for about a day.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.stats.get_lifetime_stats()
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 ## Tracking
 <details><summary><code>client.tracking.<a href="src/zinc/tracking/client.py">get_public_tracking</a>(...) -> PublicTrackingResponse</code></summary>
 <dl>
@@ -3198,6 +3635,549 @@ client.sandbox.get_quickstart()
 
 <dl>
 <dd>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+## Device
+<details><summary><code>client.device.<a href="src/zinc/device/client.py">create_device_code</a>(...) -> DeviceCodeResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Mint a device code. No account needed.
+
+Send your `zn_test_` sandbox key as the bearer and the sandbox comes along:
+when the owner approves, its orders and key move onto their account and
+your sandbox key keeps working, alongside the live key you receive.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient, DeviceCodeCreate
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.device.create_device_code(
+    request=DeviceCodeCreate(),
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request:** `typing.Optional[DeviceCodeCreate]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.device.<a href="src/zinc/device/client.py">describe_device_code</a>(...) -> DeviceCodeInfo</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Public on purpose: it holds only what the agent said about itself, and
+the approval page needs it before the human has signed in.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.device.describe_device_code(
+    user_code="user_code",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**user_code:** `str` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.device.<a href="src/zinc/device/client.py">decide_device_code</a>(...) -> DeviceApproveResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+The human's decision. A machine credential must never make it: an API
+key approving a device code would be a key minting a key.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.device.decide_device_code(
+    user_code="user_code",
+    granted=True,
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**user_code:** `str` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**granted:** `bool` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.device.<a href="src/zinc/device/client.py">redeem_device_code</a>(...) -> ApiKeyExchangeResponse</code></summary>
+<dl>
+<dd>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.device.redeem_device_code(
+    device_code="device_code",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**device_code:** `str` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+## Webhooks
+<details><summary><code>client.webhooks.<a href="src/zinc/webhooks/client.py">get_webhook_endpoint</a>(...) -> WebhookEndpointResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+The URL Zinc delivers this account's webhooks to, and the HMAC secret
+that signs them. Both are null until ``PUT /webhooks/endpoint`` is called.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.webhooks.get_webhook_endpoint()
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.webhooks.<a href="src/zinc/webhooks/client.py">set_webhook_endpoint</a>(...) -> WebhookEndpointResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Register (or replace) the webhook URL for this account.
+
+Every order and return event Zinc emits for the account is POSTed to this
+URL. A signing secret is generated on first registration and returned so
+the caller can verify the ``X-Webhook-Signature`` header; replacing the URL
+keeps the existing secret, so a URL move never invalidates verification.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.webhooks.set_webhook_endpoint(
+    url="https://example.com/zinc/webhook",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**url:** `str` — Absolute http(s) URL that receives order and return events.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.webhooks.<a href="src/zinc/webhooks/client.py">clear_webhook_endpoint</a>(...)</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Stop webhook delivery for this account by clearing the URL.
+
+The signing secret is kept, so re-registering a URL later resumes
+deliveries signed with the same secret the caller already verifies against.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.webhooks.clear_webhook_endpoint()
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
 
 <dl>
 <dd>

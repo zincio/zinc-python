@@ -19,6 +19,11 @@ class SandboxKeyResponse(UniversalBaseModel):
     Sandbox API key (zn_test_...). Send as `Authorization: Bearer <api_key>` — test keys route to the sandbox automatically, no extra headers needed.
     """
 
+    key: str = pydantic.Field()
+    """
+    Same value as `api_key`; every key response carries both names.
+    """
+
     expires_policy: str
     quickstart_url: str
     example_order: typing.Dict[str, typing.Any] = pydantic.Field()

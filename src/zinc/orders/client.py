@@ -10,6 +10,7 @@ from ..types.bulk_batch_list_response import BulkBatchListResponse
 from ..types.bulk_batch_response import BulkBatchResponse
 from ..types.bulk_validate_response import BulkValidateResponse
 from ..types.customer_notifications import CustomerNotifications
+from ..types.fulfillment_preferences import FulfillmentPreferences
 from ..types.order_list_response import OrderListResponse
 from ..types.order_payment import OrderPayment
 from ..types.order_product import OrderProduct
@@ -278,6 +279,7 @@ class OrdersClient:
         created_before: typing.Optional[dt.datetime] = None,
         metadata_key: typing.Optional[str] = None,
         metadata_value: typing.Optional[str] = None,
+        user_email: typing.Optional[str] = None,
         include: typing.Optional[typing.Union[str, typing.Sequence[str]]] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
@@ -326,6 +328,9 @@ class OrdersClient:
         metadata_value : typing.Optional[str]
             Exact value `metadata_key` must equal. Matching is exact, not partial, and case-sensitive. Must be sent together with `metadata_key`.
 
+        user_email : typing.Optional[str]
+            Filter to orders placed by one org teammate, matched as a case-insensitive substring of their email. Only ever narrows within the caller's organization; a solo user can only match their own address.
+
         include : typing.Optional[typing.Union[str, typing.Sequence[str]]]
             Optional expansions. `tracking_events` embeds the full carrier checkpoint timeline (and latest status) on each tracking number; omitted by default to keep list payloads small.
 
@@ -362,6 +367,7 @@ class OrdersClient:
             created_before=created_before,
             metadata_key=metadata_key,
             metadata_value=metadata_value,
+            user_email=user_email,
             include=include,
             authorization=authorization,
             request_options=request_options,
@@ -384,6 +390,7 @@ class OrdersClient:
         gift_message: typing.Optional[str] = OMIT,
         payment: typing.Optional[OrderPayment] = OMIT,
         customer_notifications: typing.Optional[CustomerNotifications] = OMIT,
+        fulfillment: typing.Optional[FulfillmentPreferences] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderResponse:
         """
@@ -426,6 +433,9 @@ class OrdersClient:
 
         customer_notifications : typing.Optional[CustomerNotifications]
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
+
+        fulfillment : typing.Optional[FulfillmentPreferences]
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -473,6 +483,108 @@ class OrdersClient:
             gift_message=gift_message,
             payment=payment,
             customer_notifications=customer_notifications,
+            fulfillment=fulfillment,
+            request_options=request_options,
+        )
+        return _response.data
+
+    def export_orders_csv(
+        self,
+        *,
+        order_id: typing.Optional[str] = None,
+        search: typing.Optional[str] = None,
+        status_filter: typing.Optional[str] = None,
+        merchant_order_id: typing.Optional[str] = None,
+        tracking_status: typing.Optional[str] = None,
+        has_tracking: typing.Optional[bool] = None,
+        return_status: typing.Optional[str] = None,
+        created_after: typing.Optional[dt.datetime] = None,
+        created_before: typing.Optional[dt.datetime] = None,
+        metadata_key: typing.Optional[str] = None,
+        metadata_value: typing.Optional[str] = None,
+        user_email: typing.Optional[str] = None,
+        authorization: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> str:
+        """
+        Stream the current user's orders as a CSV file.
+
+        Takes the same filters as ``GET /orders`` (via the shared
+        ``_visible_orders_filter``) so an export always contains exactly the rows
+        the caller was looking at — but no ``limit``/``offset``: the export covers
+        the whole filtered set, paged internally so memory stays flat.
+
+        Parameters
+        ----------
+        order_id : typing.Optional[str]
+            Filter by order ID (partial match)
+
+        search : typing.Optional[str]
+            Partial match on order ID OR tracking number
+
+        status_filter : typing.Optional[str]
+            Filter by order status
+
+        merchant_order_id : typing.Optional[str]
+            Filter by the retailer's own order number (exact match)
+
+        tracking_status : typing.Optional[str]
+            Filter to orders having at least one tracking number with this status
+
+        has_tracking : typing.Optional[bool]
+            Only orders with (true) or without (false) tracking
+
+        return_status : typing.Optional[str]
+            `open` or `closed` return requests; omit for no filter
+
+        created_after : typing.Optional[dt.datetime]
+            Only orders created at/after this instant (inclusive)
+
+        created_before : typing.Optional[dt.datetime]
+            Only orders created before this instant (exclusive)
+
+        metadata_key : typing.Optional[str]
+            Top-level `metadata` key to match; send with `metadata_value`
+
+        metadata_value : typing.Optional[str]
+            Exact value `metadata_key` must equal; send with `metadata_key`
+
+        user_email : typing.Optional[str]
+            Filter to orders placed by one org teammate, matched as a case-insensitive substring of their email. Only ever narrows within the caller's organization; a solo user can only match their own address.
+
+        authorization : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        str
+            CSV file of the filtered orders.
+
+        Examples
+        --------
+        from zinc import ZincClient
+
+        client = ZincClient(
+            api_key="YOUR_API_KEY",
+        )
+        client.orders.export_orders_csv()
+        """
+        _response = self._raw_client.export_orders_csv(
+            order_id=order_id,
+            search=search,
+            status_filter=status_filter,
+            merchant_order_id=merchant_order_id,
+            tracking_status=tracking_status,
+            has_tracking=has_tracking,
+            return_status=return_status,
+            created_after=created_after,
+            created_before=created_before,
+            metadata_key=metadata_key,
+            metadata_value=metadata_value,
+            user_email=user_email,
+            authorization=authorization,
             request_options=request_options,
         )
         return _response.data
@@ -928,6 +1040,7 @@ class AsyncOrdersClient:
         created_before: typing.Optional[dt.datetime] = None,
         metadata_key: typing.Optional[str] = None,
         metadata_value: typing.Optional[str] = None,
+        user_email: typing.Optional[str] = None,
         include: typing.Optional[typing.Union[str, typing.Sequence[str]]] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
@@ -976,6 +1089,9 @@ class AsyncOrdersClient:
         metadata_value : typing.Optional[str]
             Exact value `metadata_key` must equal. Matching is exact, not partial, and case-sensitive. Must be sent together with `metadata_key`.
 
+        user_email : typing.Optional[str]
+            Filter to orders placed by one org teammate, matched as a case-insensitive substring of their email. Only ever narrows within the caller's organization; a solo user can only match their own address.
+
         include : typing.Optional[typing.Union[str, typing.Sequence[str]]]
             Optional expansions. `tracking_events` embeds the full carrier checkpoint timeline (and latest status) on each tracking number; omitted by default to keep list payloads small.
 
@@ -1020,6 +1136,7 @@ class AsyncOrdersClient:
             created_before=created_before,
             metadata_key=metadata_key,
             metadata_value=metadata_value,
+            user_email=user_email,
             include=include,
             authorization=authorization,
             request_options=request_options,
@@ -1042,6 +1159,7 @@ class AsyncOrdersClient:
         gift_message: typing.Optional[str] = OMIT,
         payment: typing.Optional[OrderPayment] = OMIT,
         customer_notifications: typing.Optional[CustomerNotifications] = OMIT,
+        fulfillment: typing.Optional[FulfillmentPreferences] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderResponse:
         """
@@ -1084,6 +1202,9 @@ class AsyncOrdersClient:
 
         customer_notifications : typing.Optional[CustomerNotifications]
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
+
+        fulfillment : typing.Optional[FulfillmentPreferences]
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1139,6 +1260,116 @@ class AsyncOrdersClient:
             gift_message=gift_message,
             payment=payment,
             customer_notifications=customer_notifications,
+            fulfillment=fulfillment,
+            request_options=request_options,
+        )
+        return _response.data
+
+    async def export_orders_csv(
+        self,
+        *,
+        order_id: typing.Optional[str] = None,
+        search: typing.Optional[str] = None,
+        status_filter: typing.Optional[str] = None,
+        merchant_order_id: typing.Optional[str] = None,
+        tracking_status: typing.Optional[str] = None,
+        has_tracking: typing.Optional[bool] = None,
+        return_status: typing.Optional[str] = None,
+        created_after: typing.Optional[dt.datetime] = None,
+        created_before: typing.Optional[dt.datetime] = None,
+        metadata_key: typing.Optional[str] = None,
+        metadata_value: typing.Optional[str] = None,
+        user_email: typing.Optional[str] = None,
+        authorization: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> str:
+        """
+        Stream the current user's orders as a CSV file.
+
+        Takes the same filters as ``GET /orders`` (via the shared
+        ``_visible_orders_filter``) so an export always contains exactly the rows
+        the caller was looking at — but no ``limit``/``offset``: the export covers
+        the whole filtered set, paged internally so memory stays flat.
+
+        Parameters
+        ----------
+        order_id : typing.Optional[str]
+            Filter by order ID (partial match)
+
+        search : typing.Optional[str]
+            Partial match on order ID OR tracking number
+
+        status_filter : typing.Optional[str]
+            Filter by order status
+
+        merchant_order_id : typing.Optional[str]
+            Filter by the retailer's own order number (exact match)
+
+        tracking_status : typing.Optional[str]
+            Filter to orders having at least one tracking number with this status
+
+        has_tracking : typing.Optional[bool]
+            Only orders with (true) or without (false) tracking
+
+        return_status : typing.Optional[str]
+            `open` or `closed` return requests; omit for no filter
+
+        created_after : typing.Optional[dt.datetime]
+            Only orders created at/after this instant (inclusive)
+
+        created_before : typing.Optional[dt.datetime]
+            Only orders created before this instant (exclusive)
+
+        metadata_key : typing.Optional[str]
+            Top-level `metadata` key to match; send with `metadata_value`
+
+        metadata_value : typing.Optional[str]
+            Exact value `metadata_key` must equal; send with `metadata_key`
+
+        user_email : typing.Optional[str]
+            Filter to orders placed by one org teammate, matched as a case-insensitive substring of their email. Only ever narrows within the caller's organization; a solo user can only match their own address.
+
+        authorization : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        str
+            CSV file of the filtered orders.
+
+        Examples
+        --------
+        import asyncio
+
+        from zinc import AsyncZincClient
+
+        client = AsyncZincClient(
+            api_key="YOUR_API_KEY",
+        )
+
+
+        async def main() -> None:
+            await client.orders.export_orders_csv()
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.export_orders_csv(
+            order_id=order_id,
+            search=search,
+            status_filter=status_filter,
+            merchant_order_id=merchant_order_id,
+            tracking_status=tracking_status,
+            has_tracking=has_tracking,
+            return_status=return_status,
+            created_after=created_after,
+            created_before=created_before,
+            metadata_key=metadata_key,
+            metadata_value=metadata_value,
+            user_email=user_email,
+            authorization=authorization,
             request_options=request_options,
         )
         return _response.data

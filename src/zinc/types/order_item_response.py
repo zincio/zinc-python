@@ -26,6 +26,7 @@ class OrderItemResponse(UniversalBaseModel):
     condition_not_in: typing.Optional[typing.List[ProductCondition]] = None
     status: OrderItemStatus
     cancellation_reason: typing.Optional[str] = None
+    error_type: typing.Optional[str] = None
     created_at: dt.datetime
     updated_at: dt.datetime
 

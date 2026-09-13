@@ -7,19 +7,95 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .get_product_details_products_product_id_get_response import GetProductDetailsProductsProductIdGetResponse
+    from .get_product_details_products_product_id_get_response_all_variants_item import (
+        GetProductDetailsProductsProductIdGetResponseAllVariantsItem,
+    )
+    from .get_product_details_products_product_id_get_response_all_variants_item_variant_specifics_item import (
+        GetProductDetailsProductsProductIdGetResponseAllVariantsItemVariantSpecificsItem,
+    )
+    from .get_product_details_products_product_id_get_response_epids_item import (
+        GetProductDetailsProductsProductIdGetResponseEpidsItem,
+    )
+    from .get_product_details_products_product_id_get_response_offers_item import (
+        GetProductDetailsProductsProductIdGetResponseOffersItem,
+    )
+    from .get_product_details_products_product_id_get_response_package_dimensions import (
+        GetProductDetailsProductsProductIdGetResponsePackageDimensions,
+    )
+    from .get_product_details_products_product_id_get_response_package_dimensions_size import (
+        GetProductDetailsProductsProductIdGetResponsePackageDimensionsSize,
+    )
+    from .get_product_details_products_product_id_get_response_package_dimensions_size_depth import (
+        GetProductDetailsProductsProductIdGetResponsePackageDimensionsSizeDepth,
+    )
+    from .get_product_details_products_product_id_get_response_package_dimensions_size_length import (
+        GetProductDetailsProductsProductIdGetResponsePackageDimensionsSizeLength,
+    )
+    from .get_product_details_products_product_id_get_response_package_dimensions_size_width import (
+        GetProductDetailsProductsProductIdGetResponsePackageDimensionsSizeWidth,
+    )
+    from .get_product_details_products_product_id_get_response_package_dimensions_weight import (
+        GetProductDetailsProductsProductIdGetResponsePackageDimensionsWeight,
+    )
     from .get_product_details_products_product_id_get_response_status import (
         GetProductDetailsProductsProductIdGetResponseStatus,
     )
+    from .get_product_details_products_product_id_get_response_variant_specifics_item import (
+        GetProductDetailsProductsProductIdGetResponseVariantSpecificsItem,
+    )
+    from .get_product_details_products_product_id_get_response_variants_item import (
+        GetProductDetailsProductsProductIdGetResponseVariantsItem,
+    )
+    from .get_product_details_products_product_id_get_response_variants_item_properties_item import (
+        GetProductDetailsProductsProductIdGetResponseVariantsItemPropertiesItem,
+    )
     from .get_product_offers_products_product_id_offers_get_response import (
         GetProductOffersProductsProductIdOffersGetResponse,
+    )
+    from .get_product_offers_products_product_id_offers_get_response_offers_item import (
+        GetProductOffersProductsProductIdOffersGetResponseOffersItem,
+    )
+    from .get_product_offers_products_product_id_offers_get_response_offers_item_condition import (
+        GetProductOffersProductsProductIdOffersGetResponseOffersItemCondition,
+    )
+    from .get_product_offers_products_product_id_offers_get_response_offers_item_handling_days import (
+        GetProductOffersProductsProductIdOffersGetResponseOffersItemHandlingDays,
+    )
+    from .get_product_offers_products_product_id_offers_get_response_offers_item_seller import (
+        GetProductOffersProductsProductIdOffersGetResponseOffersItemSeller,
+    )
+    from .get_product_offers_products_product_id_offers_get_response_offers_item_shipping_options_item import (
+        GetProductOffersProductsProductIdOffersGetResponseOffersItemShippingOptionsItem,
+    )
+    from .get_product_offers_products_product_id_offers_get_response_offers_item_shipping_options_item_delivery_days import (
+        GetProductOffersProductsProductIdOffersGetResponseOffersItemShippingOptionsItemDeliveryDays,
     )
     from .get_product_offers_products_product_id_offers_get_response_status import (
         GetProductOffersProductsProductIdOffersGetResponseStatus,
     )
 _dynamic_imports: typing.Dict[str, str] = {
     "GetProductDetailsProductsProductIdGetResponse": ".get_product_details_products_product_id_get_response",
+    "GetProductDetailsProductsProductIdGetResponseAllVariantsItem": ".get_product_details_products_product_id_get_response_all_variants_item",
+    "GetProductDetailsProductsProductIdGetResponseAllVariantsItemVariantSpecificsItem": ".get_product_details_products_product_id_get_response_all_variants_item_variant_specifics_item",
+    "GetProductDetailsProductsProductIdGetResponseEpidsItem": ".get_product_details_products_product_id_get_response_epids_item",
+    "GetProductDetailsProductsProductIdGetResponseOffersItem": ".get_product_details_products_product_id_get_response_offers_item",
+    "GetProductDetailsProductsProductIdGetResponsePackageDimensions": ".get_product_details_products_product_id_get_response_package_dimensions",
+    "GetProductDetailsProductsProductIdGetResponsePackageDimensionsSize": ".get_product_details_products_product_id_get_response_package_dimensions_size",
+    "GetProductDetailsProductsProductIdGetResponsePackageDimensionsSizeDepth": ".get_product_details_products_product_id_get_response_package_dimensions_size_depth",
+    "GetProductDetailsProductsProductIdGetResponsePackageDimensionsSizeLength": ".get_product_details_products_product_id_get_response_package_dimensions_size_length",
+    "GetProductDetailsProductsProductIdGetResponsePackageDimensionsSizeWidth": ".get_product_details_products_product_id_get_response_package_dimensions_size_width",
+    "GetProductDetailsProductsProductIdGetResponsePackageDimensionsWeight": ".get_product_details_products_product_id_get_response_package_dimensions_weight",
     "GetProductDetailsProductsProductIdGetResponseStatus": ".get_product_details_products_product_id_get_response_status",
+    "GetProductDetailsProductsProductIdGetResponseVariantSpecificsItem": ".get_product_details_products_product_id_get_response_variant_specifics_item",
+    "GetProductDetailsProductsProductIdGetResponseVariantsItem": ".get_product_details_products_product_id_get_response_variants_item",
+    "GetProductDetailsProductsProductIdGetResponseVariantsItemPropertiesItem": ".get_product_details_products_product_id_get_response_variants_item_properties_item",
     "GetProductOffersProductsProductIdOffersGetResponse": ".get_product_offers_products_product_id_offers_get_response",
+    "GetProductOffersProductsProductIdOffersGetResponseOffersItem": ".get_product_offers_products_product_id_offers_get_response_offers_item",
+    "GetProductOffersProductsProductIdOffersGetResponseOffersItemCondition": ".get_product_offers_products_product_id_offers_get_response_offers_item_condition",
+    "GetProductOffersProductsProductIdOffersGetResponseOffersItemHandlingDays": ".get_product_offers_products_product_id_offers_get_response_offers_item_handling_days",
+    "GetProductOffersProductsProductIdOffersGetResponseOffersItemSeller": ".get_product_offers_products_product_id_offers_get_response_offers_item_seller",
+    "GetProductOffersProductsProductIdOffersGetResponseOffersItemShippingOptionsItem": ".get_product_offers_products_product_id_offers_get_response_offers_item_shipping_options_item",
+    "GetProductOffersProductsProductIdOffersGetResponseOffersItemShippingOptionsItemDeliveryDays": ".get_product_offers_products_product_id_offers_get_response_offers_item_shipping_options_item_delivery_days",
     "GetProductOffersProductsProductIdOffersGetResponseStatus": ".get_product_offers_products_product_id_offers_get_response_status",
 }
 
@@ -47,7 +123,26 @@ def __dir__():
 
 __all__ = [
     "GetProductDetailsProductsProductIdGetResponse",
+    "GetProductDetailsProductsProductIdGetResponseAllVariantsItem",
+    "GetProductDetailsProductsProductIdGetResponseAllVariantsItemVariantSpecificsItem",
+    "GetProductDetailsProductsProductIdGetResponseEpidsItem",
+    "GetProductDetailsProductsProductIdGetResponseOffersItem",
+    "GetProductDetailsProductsProductIdGetResponsePackageDimensions",
+    "GetProductDetailsProductsProductIdGetResponsePackageDimensionsSize",
+    "GetProductDetailsProductsProductIdGetResponsePackageDimensionsSizeDepth",
+    "GetProductDetailsProductsProductIdGetResponsePackageDimensionsSizeLength",
+    "GetProductDetailsProductsProductIdGetResponsePackageDimensionsSizeWidth",
+    "GetProductDetailsProductsProductIdGetResponsePackageDimensionsWeight",
     "GetProductDetailsProductsProductIdGetResponseStatus",
+    "GetProductDetailsProductsProductIdGetResponseVariantSpecificsItem",
+    "GetProductDetailsProductsProductIdGetResponseVariantsItem",
+    "GetProductDetailsProductsProductIdGetResponseVariantsItemPropertiesItem",
     "GetProductOffersProductsProductIdOffersGetResponse",
+    "GetProductOffersProductsProductIdOffersGetResponseOffersItem",
+    "GetProductOffersProductsProductIdOffersGetResponseOffersItemCondition",
+    "GetProductOffersProductsProductIdOffersGetResponseOffersItemHandlingDays",
+    "GetProductOffersProductsProductIdOffersGetResponseOffersItemSeller",
+    "GetProductOffersProductsProductIdOffersGetResponseOffersItemShippingOptionsItem",
+    "GetProductOffersProductsProductIdOffersGetResponseOffersItemShippingOptionsItemDeliveryDays",
     "GetProductOffersProductsProductIdOffersGetResponseStatus",
 ]

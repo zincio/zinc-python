@@ -27,16 +27,26 @@ class SearchClient:
         self,
         *,
         q: str,
+        min_price: typing.Optional[int] = None,
+        max_price: typing.Optional[int] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SearchResponse:
         """
         Search for products across retailers; returns orderable zn_sku_ listings.
 
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+
         Parameters
         ----------
         q : str
             Search term
+
+        min_price : typing.Optional[int]
+            Cents. Drop results priced below this.
+
+        max_price : typing.Optional[int]
+            Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
         authorization : typing.Optional[str]
 
@@ -59,7 +69,9 @@ class SearchClient:
             q="q",
         )
         """
-        _response = self._raw_client.search(q=q, authorization=authorization, request_options=request_options)
+        _response = self._raw_client.search(
+            q=q, min_price=min_price, max_price=max_price, authorization=authorization, request_options=request_options
+        )
         return _response.data
 
 
@@ -82,16 +94,26 @@ class AsyncSearchClient:
         self,
         *,
         q: str,
+        min_price: typing.Optional[int] = None,
+        max_price: typing.Optional[int] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SearchResponse:
         """
         Search for products across retailers; returns orderable zn_sku_ listings.
 
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+
         Parameters
         ----------
         q : str
             Search term
+
+        min_price : typing.Optional[int]
+            Cents. Drop results priced below this.
+
+        max_price : typing.Optional[int]
+            Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
         authorization : typing.Optional[str]
 
@@ -122,5 +144,7 @@ class AsyncSearchClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.search(q=q, authorization=authorization, request_options=request_options)
+        _response = await self._raw_client.search(
+            q=q, min_price=min_price, max_price=max_price, authorization=authorization, request_options=request_options
+        )
         return _response.data

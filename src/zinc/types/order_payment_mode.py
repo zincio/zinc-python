@@ -2,4 +2,4 @@
 
 import typing
 
-OrderPaymentMode = typing.Union[typing.Literal["wallet", "connect"], typing.Any]
+OrderPaymentMode = typing.Union[typing.Literal["wallet", "card", "connect"], typing.Any]

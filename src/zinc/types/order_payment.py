@@ -11,14 +11,17 @@ from .order_payment_mode import OrderPaymentMode
 class OrderPayment(UniversalBaseModel):
     """
     Optional payment block. Absent or mode='wallet' ⇒ unchanged prepaid-wallet
-    behavior. mode='connect' charges the end-customer's vaulted card in real time
-    via Stripe Connect (see ConnectService).
+    behavior. mode='card' charges the caller's own saved card for this one order:
+    a hold for max_price + the API fee now, captured for the actual total when the
+    order is placed, released if it never is — the wallet is not involved.
+    mode='connect' charges the end-customer's vaulted card in real time via
+    Stripe Connect (see ConnectService).
     """
 
     mode: typing.Optional[OrderPaymentMode] = None
     payment_method: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Connect mode: the end-customer's vaulted Stripe payment-method id on the customer's connected account.
+    Card mode: one of the caller's saved Stripe payment methods (pm_…) to hold on; omit to use the default. Connect mode: the end-customer's vaulted payment-method id on the connected account.
     """
 
     customer: typing.Optional[str] = pydantic.Field(default=None)

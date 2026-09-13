@@ -9,6 +9,7 @@ from ..core.http_response import AsyncHttpResponse, HttpResponse
 from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
+from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.search_response import SearchResponse
 from pydantic import ValidationError
@@ -22,16 +23,26 @@ class RawSearchClient:
         self,
         *,
         q: str,
+        min_price: typing.Optional[int] = None,
+        max_price: typing.Optional[int] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SearchResponse]:
         """
         Search for products across retailers; returns orderable zn_sku_ listings.
 
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+
         Parameters
         ----------
         q : str
             Search term
+
+        min_price : typing.Optional[int]
+            Cents. Drop results priced below this.
+
+        max_price : typing.Optional[int]
+            Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
         authorization : typing.Optional[str]
 
@@ -48,6 +59,8 @@ class RawSearchClient:
             method="GET",
             params={
                 "q": q,
+                "min_price": min_price,
+                "max_price": max_price,
             },
             headers={
                 "authorization": str(authorization) if authorization is not None else None,
@@ -64,6 +77,17 @@ class RawSearchClient:
                     ),
                 )
                 return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     headers=dict(_response.headers),
@@ -93,16 +117,26 @@ class AsyncRawSearchClient:
         self,
         *,
         q: str,
+        min_price: typing.Optional[int] = None,
+        max_price: typing.Optional[int] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SearchResponse]:
         """
         Search for products across retailers; returns orderable zn_sku_ listings.
 
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+
         Parameters
         ----------
         q : str
             Search term
+
+        min_price : typing.Optional[int]
+            Cents. Drop results priced below this.
+
+        max_price : typing.Optional[int]
+            Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
         authorization : typing.Optional[str]
 
@@ -119,6 +153,8 @@ class AsyncRawSearchClient:
             method="GET",
             params={
                 "q": q,
+                "min_price": min_price,
+                "max_price": max_price,
             },
             headers={
                 "authorization": str(authorization) if authorization is not None else None,
@@ -135,6 +171,17 @@ class AsyncRawSearchClient:
                     ),
                 )
                 return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     headers=dict(_response.headers),

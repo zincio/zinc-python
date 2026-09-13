@@ -11,6 +11,7 @@ from .environment import ZincClientEnvironment
 
 if typing.TYPE_CHECKING:
     from .agent.client import AgentClient, AsyncAgentClient
+    from .device.client import AsyncDeviceClient, DeviceClient
     from .health.client import AsyncHealthClient, HealthClient
     from .managed_accounts.client import AsyncManagedAccountsClient, ManagedAccountsClient
     from .orders.client import AsyncOrdersClient, OrdersClient
@@ -19,8 +20,11 @@ if typing.TYPE_CHECKING:
     from .returns.client import AsyncReturnsClient, ReturnsClient
     from .sandbox.client import AsyncSandboxClient, SandboxClient
     from .search.client import AsyncSearchClient, SearchClient
+    from .stats.client import AsyncStatsClient, StatsClient
     from .tracking.client import AsyncTrackingClient, TrackingClient
     from .usage.client import AsyncUsageClient, UsageClient
+    from .wallet.client import AsyncWalletClient, WalletClient
+    from .webhooks.client import AsyncWebhooksClient, WebhooksClient
 
 
 class ZincClient:
@@ -115,8 +119,12 @@ class ZincClient:
         self._returns: typing.Optional[ReturnsClient] = None
         self._retailers: typing.Optional[RetailersClient] = None
         self._usage: typing.Optional[UsageClient] = None
+        self._wallet: typing.Optional[WalletClient] = None
+        self._stats: typing.Optional[StatsClient] = None
         self._tracking: typing.Optional[TrackingClient] = None
         self._sandbox: typing.Optional[SandboxClient] = None
+        self._device: typing.Optional[DeviceClient] = None
+        self._webhooks: typing.Optional[WebhooksClient] = None
         self._health: typing.Optional[HealthClient] = None
 
     @property
@@ -184,6 +192,22 @@ class ZincClient:
         return self._usage
 
     @property
+    def wallet(self):
+        if self._wallet is None:
+            from .wallet.client import WalletClient  # noqa: E402
+
+            self._wallet = WalletClient(client_wrapper=self._client_wrapper)
+        return self._wallet
+
+    @property
+    def stats(self):
+        if self._stats is None:
+            from .stats.client import StatsClient  # noqa: E402
+
+            self._stats = StatsClient(client_wrapper=self._client_wrapper)
+        return self._stats
+
+    @property
     def tracking(self):
         if self._tracking is None:
             from .tracking.client import TrackingClient  # noqa: E402
@@ -198,6 +222,22 @@ class ZincClient:
 
             self._sandbox = SandboxClient(client_wrapper=self._client_wrapper)
         return self._sandbox
+
+    @property
+    def device(self):
+        if self._device is None:
+            from .device.client import DeviceClient  # noqa: E402
+
+            self._device = DeviceClient(client_wrapper=self._client_wrapper)
+        return self._device
+
+    @property
+    def webhooks(self):
+        if self._webhooks is None:
+            from .webhooks.client import WebhooksClient  # noqa: E402
+
+            self._webhooks = WebhooksClient(client_wrapper=self._client_wrapper)
+        return self._webhooks
 
     @property
     def health(self):
@@ -316,8 +356,12 @@ class AsyncZincClient:
         self._returns: typing.Optional[AsyncReturnsClient] = None
         self._retailers: typing.Optional[AsyncRetailersClient] = None
         self._usage: typing.Optional[AsyncUsageClient] = None
+        self._wallet: typing.Optional[AsyncWalletClient] = None
+        self._stats: typing.Optional[AsyncStatsClient] = None
         self._tracking: typing.Optional[AsyncTrackingClient] = None
         self._sandbox: typing.Optional[AsyncSandboxClient] = None
+        self._device: typing.Optional[AsyncDeviceClient] = None
+        self._webhooks: typing.Optional[AsyncWebhooksClient] = None
         self._health: typing.Optional[AsyncHealthClient] = None
 
     @property
@@ -385,6 +429,22 @@ class AsyncZincClient:
         return self._usage
 
     @property
+    def wallet(self):
+        if self._wallet is None:
+            from .wallet.client import AsyncWalletClient  # noqa: E402
+
+            self._wallet = AsyncWalletClient(client_wrapper=self._client_wrapper)
+        return self._wallet
+
+    @property
+    def stats(self):
+        if self._stats is None:
+            from .stats.client import AsyncStatsClient  # noqa: E402
+
+            self._stats = AsyncStatsClient(client_wrapper=self._client_wrapper)
+        return self._stats
+
+    @property
     def tracking(self):
         if self._tracking is None:
             from .tracking.client import AsyncTrackingClient  # noqa: E402
@@ -399,6 +459,22 @@ class AsyncZincClient:
 
             self._sandbox = AsyncSandboxClient(client_wrapper=self._client_wrapper)
         return self._sandbox
+
+    @property
+    def device(self):
+        if self._device is None:
+            from .device.client import AsyncDeviceClient  # noqa: E402
+
+            self._device = AsyncDeviceClient(client_wrapper=self._client_wrapper)
+        return self._device
+
+    @property
+    def webhooks(self):
+        if self._webhooks is None:
+            from .webhooks.client import AsyncWebhooksClient  # noqa: E402
+
+            self._webhooks = AsyncWebhooksClient(client_wrapper=self._client_wrapper)
+        return self._webhooks
 
     @property
     def health(self):

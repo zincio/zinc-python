@@ -15,6 +15,15 @@ class SearchResponse(UniversalBaseModel):
     status: str
     query: str
     results: typing.Optional[typing.List[Sku]] = None
+    excluded_by_price: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    How many orderable results the min_price/max_price clamp removed; null when no clamp was set.
+    """
+
+    hint: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Set when the result list is empty for a reason the caller can act on.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

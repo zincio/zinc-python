@@ -4,13 +4,380 @@ import typing
 
 import pydantic
 from ...core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .get_product_details_products_product_id_get_response_all_variants_item import (
+    GetProductDetailsProductsProductIdGetResponseAllVariantsItem,
+)
+from .get_product_details_products_product_id_get_response_epids_item import (
+    GetProductDetailsProductsProductIdGetResponseEpidsItem,
+)
+from .get_product_details_products_product_id_get_response_offers_item import (
+    GetProductDetailsProductsProductIdGetResponseOffersItem,
+)
+from .get_product_details_products_product_id_get_response_package_dimensions import (
+    GetProductDetailsProductsProductIdGetResponsePackageDimensions,
+)
 from .get_product_details_products_product_id_get_response_status import (
     GetProductDetailsProductsProductIdGetResponseStatus,
+)
+from .get_product_details_products_product_id_get_response_variant_specifics_item import (
+    GetProductDetailsProductsProductIdGetResponseVariantSpecificsItem,
+)
+from .get_product_details_products_product_id_get_response_variants_item import (
+    GetProductDetailsProductsProductIdGetResponseVariantsItem,
 )
 
 
 class GetProductDetailsProductsProductIdGetResponse(UniversalBaseModel):
-    status: GetProductDetailsProductsProductIdGetResponseStatus
+    """
+    Product details, passed through from the retailer. Common fields are listed first; fields marked with a retailer name are only present in that retailer's payload. Anything the retailer returns that is not listed here is passed through as well.
+    """
+
+    status: GetProductDetailsProductsProductIdGetResponseStatus = pydantic.Field()
+    """
+    `completed` when the payload below is populated. `processing` when `async=true` was passed and the fetch is still running — poll again. `failed` when the retailer returned an error; see `code` and `message`.
+    """
+
+    code: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Only on `status: failed`. Machine-readable error code, e.g. `product_not_found`, `invalid_request`.
+    """
+
+    message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Only on `status: failed`. Human-readable explanation.
+    """
+
+    retailer: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Retailer that served the payload: `amazon`, `walmart`, `bestbuy`, `etsy`, or `shopify` (with the store's hostname in `domain`).
+    """
+
+    product_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Identifier you passed in: ASIN (Amazon), item id (Walmart), bsin (Best Buy), product handle (Shopify), or listing id (Etsy).
+    """
+
+    title: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Product title.
+    """
+
+    brand: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Brand or manufacturer. Shopify: the store's `vendor`. Etsy: not set — see `shop_name`.
+    """
+
+    main_image: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    URL of the primary product image.
+    """
+
+    images: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    URLs of all product images.
+    """
+
+    product_description: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Long-form description (Amazon, Walmart, Best Buy). Shopify and Etsy use `description`.
+    """
+
+    description: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Long-form description (Shopify, Etsy). Plain text on Etsy; may contain HTML on Shopify.
+    """
+
+    price: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Price in cents (minor units of `currency_code` on Etsy). Amazon: the buy-box price, which is not always present and is often not the cheapest offer — use the offers endpoint for pricing. Best Buy: the `New` condition price. Shopify: the default variant's price.
+    """
+
+    stars: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Average product rating, 0–5 (Amazon, Walmart, Best Buy). Not set on Etsy — see `shop_review_average`.
+    """
+
+    review_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Number of product reviews (Amazon, Walmart).
+    """
+
+    num_reviews: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Number of product reviews (Best Buy).
+    """
+
+    feature_bullets: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Highlight bullets (Amazon, Walmart, Best Buy).
+    """
+
+    product_details: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Specification lines, e.g. `Item model number: 5438` (Amazon, Walmart, Best Buy).
+    """
+
+    categories: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Category breadcrumb, broadest first (Amazon, Walmart, Best Buy).
+    """
+
+    variant_specifics: typing.Optional[
+        typing.List[GetProductDetailsProductsProductIdGetResponseVariantSpecificsItem]
+    ] = pydantic.Field(default=None)
+    """
+    The variant axes and values that identify *this* product (Amazon, Walmart, Best Buy).
+    """
+
+    all_variants: typing.Optional[typing.List[GetProductDetailsProductsProductIdGetResponseAllVariantsItem]] = (
+        pydantic.Field(default=None)
+    )
+    """
+    Every sibling variant of this product and its identifier (Amazon, Walmart).
+    """
+
+    epids: typing.Optional[typing.List[GetProductDetailsProductsProductIdGetResponseEpidsItem]] = pydantic.Field(
+        default=None
+    )
+    """
+    External product identifiers (Amazon, Walmart, Best Buy).
+    """
+
+    epids_map: typing.Optional[typing.Dict[str, str]] = pydantic.Field(default=None)
+    """
+    The same identifiers keyed by type, e.g. `{"UPC": "048526054381"}` (Amazon, Walmart).
+    """
+
+    timestamp: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Unix time the retailer page was retrieved (Amazon, Walmart).
+    """
+
+    url: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Canonical product URL (Shopify, Etsy).
+    """
+
+    available: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether the product can currently be bought (Shopify, Etsy). Etsy: false while the shop is on vacation even if stock exists — see `shop_is_vacation`.
+    """
+
+    tags: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Merchant-assigned tags (Shopify, Etsy).
+    """
+
+    asin: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Amazon only. The product's ASIN.
+    """
+
+    original_retail_price: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Amazon only. Crossed-out list price in cents, when the retailer shows one.
+    """
+
+    ship_price: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Amazon only. Shipping price in cents.
+    """
+
+    question_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Amazon only. Number of customer questions.
+    """
+
+    package_dimensions: typing.Optional[GetProductDetailsProductsProductIdGetResponsePackageDimensions] = (
+        pydantic.Field(default=None)
+    )
+    """
+    Amazon only. Shipping weight and package size.
+    """
+
+    authors: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Amazon only. Author names, for books.
+    """
+
+    aplus_html: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Amazon only. `present` when the listing has A+ marketing content. The HTML itself is not returned.
+    """
+
+    fresh: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Amazon only. Amazon Fresh item.
+    """
+
+    pantry: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Amazon only. Amazon Pantry item.
+    """
+
+    handmade: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Amazon only. Amazon Handmade item.
+    """
+
+    digital: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Amazon only. Digital-only item (software, video, game codes). Zinc cannot order these.
+    """
+
+    buyapi_hint: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Amazon only. `false` when the item cannot be ordered through Zinc; `true` when it might be.
+    """
+
+    sku: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Best Buy only. Numeric SKU, for cross-referencing with search results (which return the SKU as `product_id`).
+    """
+
+    product_url: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Best Buy only. Canonical product URL.
+    """
+
+    offers: typing.Optional[typing.List[GetProductDetailsProductsProductIdGetResponseOffersItem]] = pydantic.Field(
+        default=None
+    )
+    """
+    Best Buy only. Price per condition (new plus each open-box grade). For Amazon and Walmart offers use the offers endpoint.
+    """
+
+    domain: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Shopify only. Store hostname you passed as `retailer`.
+    """
+
+    handle: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Shopify only. Product handle (same value as `product_id`).
+    """
+
+    shopify_product_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Shopify only. The store's numeric product id.
+    """
+
+    product_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Shopify only. The store's product type.
+    """
+
+    price_min: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Shopify only. Cheapest variant price in cents.
+    """
+
+    price_max: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Shopify only. Most expensive variant price in cents.
+    """
+
+    listing_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Etsy only. Listing id (same as `product_id`).
+    """
+
+    currency_code: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Etsy only. ISO 4217 currency of `price`, e.g. `USD`, `EUR`. Prices are not converted.
+    """
+
+    quantity: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Etsy only. Units the shop has in stock.
+    """
+
+    state: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Etsy only. Listing state: `active`, `inactive`, `sold_out`, `expired`, …
+    """
+
+    materials: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Etsy only. Materials listed by the shop.
+    """
+
+    taxonomy_id: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Etsy only. Etsy's category id. No category name is returned.
+    """
+
+    who_made: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Etsy only. `i_did`, `someone_else`, or `collective`.
+    """
+
+    when_made: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Etsy only. Etsy's production-era bucket, e.g. `made_to_order`, `2020_2026`, `before_2006`.
+    """
+
+    is_supply: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Etsy only. Craft supply, not a finished good.
+    """
+
+    is_customizable: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Etsy only. Buyer can request customization.
+    """
+
+    listing_type: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Etsy only. `physical`, `download`, or `both`. A download has nothing to ship.
+    """
+
+    num_favorers: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Etsy only. Users who favorited the listing.
+    """
+
+    views: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Etsy only. Listing view count.
+    """
+
+    has_variations: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Etsy only. Whether the listing has variants at all. When true but `variants` is empty, Etsy did not expose the inventory matrix.
+    """
+
+    shop_name: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Etsy only. Selling shop's name.
+    """
+
+    shop_url: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Etsy only. Selling shop's URL.
+    """
+
+    shop_review_average: typing.Optional[float] = pydantic.Field(default=None)
+    """
+    Etsy only. The **shop's** average rating over the past year, 0–5. Null when the shop has no recent reviews.
+    """
+
+    shop_review_count: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Etsy only. The shop's review count over the past year.
+    """
+
+    shop_is_vacation: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Etsy only. Shop is on vacation mode.
+    """
+
+    variants: typing.Optional[typing.List[GetProductDetailsProductsProductIdGetResponseVariantsItem]] = pydantic.Field(
+        default=None
+    )
+    """
+    Shopify and Etsy only. Per-variant price and availability. Amazon and Walmart use `variant_specifics` / `all_variants` instead.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

@@ -8,17 +8,73 @@ from importlib import import_module
 if typing.TYPE_CHECKING:
     from .agent_product_details_request_retailer import AgentProductDetailsRequestRetailer
     from .agent_product_details_response import AgentProductDetailsResponse
+    from .agent_product_details_response_all_variants_item import AgentProductDetailsResponseAllVariantsItem
+    from .agent_product_details_response_all_variants_item_variant_specifics_item import (
+        AgentProductDetailsResponseAllVariantsItemVariantSpecificsItem,
+    )
+    from .agent_product_details_response_epids_item import AgentProductDetailsResponseEpidsItem
+    from .agent_product_details_response_offers_item import AgentProductDetailsResponseOffersItem
+    from .agent_product_details_response_package_dimensions import AgentProductDetailsResponsePackageDimensions
+    from .agent_product_details_response_package_dimensions_size import AgentProductDetailsResponsePackageDimensionsSize
+    from .agent_product_details_response_package_dimensions_size_depth import (
+        AgentProductDetailsResponsePackageDimensionsSizeDepth,
+    )
+    from .agent_product_details_response_package_dimensions_size_length import (
+        AgentProductDetailsResponsePackageDimensionsSizeLength,
+    )
+    from .agent_product_details_response_package_dimensions_size_width import (
+        AgentProductDetailsResponsePackageDimensionsSizeWidth,
+    )
+    from .agent_product_details_response_package_dimensions_weight import (
+        AgentProductDetailsResponsePackageDimensionsWeight,
+    )
     from .agent_product_details_response_status import AgentProductDetailsResponseStatus
+    from .agent_product_details_response_variant_specifics_item import AgentProductDetailsResponseVariantSpecificsItem
+    from .agent_product_details_response_variants_item import AgentProductDetailsResponseVariantsItem
+    from .agent_product_details_response_variants_item_properties_item import (
+        AgentProductDetailsResponseVariantsItemPropertiesItem,
+    )
     from .agent_product_offers_request_retailer import AgentProductOffersRequestRetailer
     from .agent_product_offers_response import AgentProductOffersResponse
+    from .agent_product_offers_response_offers_item import AgentProductOffersResponseOffersItem
+    from .agent_product_offers_response_offers_item_condition import AgentProductOffersResponseOffersItemCondition
+    from .agent_product_offers_response_offers_item_handling_days import (
+        AgentProductOffersResponseOffersItemHandlingDays,
+    )
+    from .agent_product_offers_response_offers_item_seller import AgentProductOffersResponseOffersItemSeller
+    from .agent_product_offers_response_offers_item_shipping_options_item import (
+        AgentProductOffersResponseOffersItemShippingOptionsItem,
+    )
+    from .agent_product_offers_response_offers_item_shipping_options_item_delivery_days import (
+        AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays,
+    )
     from .agent_product_offers_response_status import AgentProductOffersResponseStatus
     from .agent_product_search_request_retailer import AgentProductSearchRequestRetailer
 _dynamic_imports: typing.Dict[str, str] = {
     "AgentProductDetailsRequestRetailer": ".agent_product_details_request_retailer",
     "AgentProductDetailsResponse": ".agent_product_details_response",
+    "AgentProductDetailsResponseAllVariantsItem": ".agent_product_details_response_all_variants_item",
+    "AgentProductDetailsResponseAllVariantsItemVariantSpecificsItem": ".agent_product_details_response_all_variants_item_variant_specifics_item",
+    "AgentProductDetailsResponseEpidsItem": ".agent_product_details_response_epids_item",
+    "AgentProductDetailsResponseOffersItem": ".agent_product_details_response_offers_item",
+    "AgentProductDetailsResponsePackageDimensions": ".agent_product_details_response_package_dimensions",
+    "AgentProductDetailsResponsePackageDimensionsSize": ".agent_product_details_response_package_dimensions_size",
+    "AgentProductDetailsResponsePackageDimensionsSizeDepth": ".agent_product_details_response_package_dimensions_size_depth",
+    "AgentProductDetailsResponsePackageDimensionsSizeLength": ".agent_product_details_response_package_dimensions_size_length",
+    "AgentProductDetailsResponsePackageDimensionsSizeWidth": ".agent_product_details_response_package_dimensions_size_width",
+    "AgentProductDetailsResponsePackageDimensionsWeight": ".agent_product_details_response_package_dimensions_weight",
     "AgentProductDetailsResponseStatus": ".agent_product_details_response_status",
+    "AgentProductDetailsResponseVariantSpecificsItem": ".agent_product_details_response_variant_specifics_item",
+    "AgentProductDetailsResponseVariantsItem": ".agent_product_details_response_variants_item",
+    "AgentProductDetailsResponseVariantsItemPropertiesItem": ".agent_product_details_response_variants_item_properties_item",
     "AgentProductOffersRequestRetailer": ".agent_product_offers_request_retailer",
     "AgentProductOffersResponse": ".agent_product_offers_response",
+    "AgentProductOffersResponseOffersItem": ".agent_product_offers_response_offers_item",
+    "AgentProductOffersResponseOffersItemCondition": ".agent_product_offers_response_offers_item_condition",
+    "AgentProductOffersResponseOffersItemHandlingDays": ".agent_product_offers_response_offers_item_handling_days",
+    "AgentProductOffersResponseOffersItemSeller": ".agent_product_offers_response_offers_item_seller",
+    "AgentProductOffersResponseOffersItemShippingOptionsItem": ".agent_product_offers_response_offers_item_shipping_options_item",
+    "AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays": ".agent_product_offers_response_offers_item_shipping_options_item_delivery_days",
     "AgentProductOffersResponseStatus": ".agent_product_offers_response_status",
     "AgentProductSearchRequestRetailer": ".agent_product_search_request_retailer",
 }
@@ -48,9 +104,28 @@ def __dir__():
 __all__ = [
     "AgentProductDetailsRequestRetailer",
     "AgentProductDetailsResponse",
+    "AgentProductDetailsResponseAllVariantsItem",
+    "AgentProductDetailsResponseAllVariantsItemVariantSpecificsItem",
+    "AgentProductDetailsResponseEpidsItem",
+    "AgentProductDetailsResponseOffersItem",
+    "AgentProductDetailsResponsePackageDimensions",
+    "AgentProductDetailsResponsePackageDimensionsSize",
+    "AgentProductDetailsResponsePackageDimensionsSizeDepth",
+    "AgentProductDetailsResponsePackageDimensionsSizeLength",
+    "AgentProductDetailsResponsePackageDimensionsSizeWidth",
+    "AgentProductDetailsResponsePackageDimensionsWeight",
     "AgentProductDetailsResponseStatus",
+    "AgentProductDetailsResponseVariantSpecificsItem",
+    "AgentProductDetailsResponseVariantsItem",
+    "AgentProductDetailsResponseVariantsItemPropertiesItem",
     "AgentProductOffersRequestRetailer",
     "AgentProductOffersResponse",
+    "AgentProductOffersResponseOffersItem",
+    "AgentProductOffersResponseOffersItemCondition",
+    "AgentProductOffersResponseOffersItemHandlingDays",
+    "AgentProductOffersResponseOffersItemSeller",
+    "AgentProductOffersResponseOffersItemShippingOptionsItem",
+    "AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays",
     "AgentProductOffersResponseStatus",
     "AgentProductSearchRequestRetailer",
 ]

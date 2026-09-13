@@ -7,8 +7,10 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .customer_notification_status import CustomerNotificationStatus
 from .order_connect_info import OrderConnectInfo
+from .order_fulfillment import OrderFulfillment
 from .order_item_response import OrderItemResponse
 from .order_job_result import OrderJobResult
+from .order_payment_info import OrderPaymentInfo
 from .order_status import OrderStatus
 from .return_request_summary import ReturnRequestSummary
 from .tracking_number_response import TrackingNumberResponse
@@ -51,9 +53,19 @@ class OrderResponse(UniversalBaseModel):
     Stripe Connect charge details when this order was paid via Connect; null for prepaid-wallet orders.
     """
 
+    payment: typing.Optional[OrderPaymentInfo] = pydantic.Field(default=None)
+    """
+    Card hold details when this order was paid with payment.mode='card'; null for wallet and Connect orders.
+    """
+
     customer_notifications: typing.Optional[CustomerNotificationStatus] = pydantic.Field(default=None)
     """
     End-customer email-notification status when the order opted into the notifications add-on; null when it didn't.
+    """
+
+    fulfillment: typing.Optional[OrderFulfillment] = pydantic.Field(default=None)
+    """
+    `gift`/`items`/`quantity`: the mode this order asked for on each rule (all null = strict). `concessions`: every rule that actually was relaxed, with the worker's code and the item it concerned. Empty concessions means the order was fulfilled exactly as requested.
     """
 
     created_at: dt.datetime

@@ -43,7 +43,7 @@ class PublicRetailer(UniversalBaseModel):
 
     supported_countries: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
     """
-    ISO 3166-1 alpha-2 countries we ship to (defaults to ['US']).
+    ISO 3166-1 alpha-2 countries this retailer has declared it ships to. Empty = no declared restriction.
     """
 
     free_shipping: typing.Optional[bool] = pydantic.Field(default=None)

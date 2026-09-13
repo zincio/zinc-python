@@ -70,6 +70,8 @@ class ProductsClient:
         details endpoint reports the shop's rating explicitly. `product_id` is the
         numeric listing id.
 
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+
         Parameters
         ----------
         query : str
@@ -92,7 +94,7 @@ class ProductsClient:
         Returns
         -------
         ProductSearchResponse
-            Successful Response
+            Normalized search results. Common fields are always present; retailer-specific fields are null or omitted for other retailers.
 
         Examples
         --------
@@ -133,6 +135,8 @@ class ProductsClient:
         Not available for Shopify stores: a storefront lists one seller (itself),
         so per-variant price and availability live on the details endpoint instead.
 
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+
         Parameters
         ----------
         product_id : str
@@ -141,10 +145,10 @@ class ProductsClient:
             Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
 
         max_age : typing.Optional[int]
-            Max response age in seconds (mutually exclusive with newer_than)
+            Max response age in seconds, at least 31 (mutually exclusive with newer_than)
 
         newer_than : typing.Optional[int]
-            Minimum retrieval timestamp (mutually exclusive with max_age)
+            Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
 
         async_ : typing.Optional[bool]
             Return immediately with status=processing
@@ -157,7 +161,7 @@ class ProductsClient:
         Returns
         -------
         GetProductOffersProductsProductIdOffersGetResponse
-            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
+            Seller offers for the product, passed through from the retailer. `status` is always present; `offers` is populated when `status` is `completed`.
 
         Examples
         --------
@@ -228,6 +232,8 @@ class ProductsClient:
         from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
         is no category name yet. `async` is not supported for Etsy.
 
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+
         Parameters
         ----------
         product_id : str
@@ -236,10 +242,10 @@ class ProductsClient:
             Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
 
         max_age : typing.Optional[int]
-            Max response age in seconds (mutually exclusive with newer_than)
+            Max response age in seconds, at least 31 (mutually exclusive with newer_than)
 
         newer_than : typing.Optional[int]
-            Minimum retrieval timestamp (mutually exclusive with max_age)
+            Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
 
         async_ : typing.Optional[bool]
             Return immediately with status=processing
@@ -252,7 +258,7 @@ class ProductsClient:
         Returns
         -------
         GetProductDetailsProductsProductIdGetResponse
-            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
+            Product details. The payload is the retailer's, passed through unmodified, so the exact field set depends on `retailer` — the schema below lists every field each retailer returns, and the example dropdown shows one real response per retailer. `status` is always present.
 
         Examples
         --------
@@ -336,6 +342,8 @@ class AsyncProductsClient:
         details endpoint reports the shop's rating explicitly. `product_id` is the
         numeric listing id.
 
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+
         Parameters
         ----------
         query : str
@@ -358,7 +366,7 @@ class AsyncProductsClient:
         Returns
         -------
         ProductSearchResponse
-            Successful Response
+            Normalized search results. Common fields are always present; retailer-specific fields are null or omitted for other retailers.
 
         Examples
         --------
@@ -407,6 +415,8 @@ class AsyncProductsClient:
         Not available for Shopify stores: a storefront lists one seller (itself),
         so per-variant price and availability live on the details endpoint instead.
 
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+
         Parameters
         ----------
         product_id : str
@@ -415,10 +425,10 @@ class AsyncProductsClient:
             Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
 
         max_age : typing.Optional[int]
-            Max response age in seconds (mutually exclusive with newer_than)
+            Max response age in seconds, at least 31 (mutually exclusive with newer_than)
 
         newer_than : typing.Optional[int]
-            Minimum retrieval timestamp (mutually exclusive with max_age)
+            Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
 
         async_ : typing.Optional[bool]
             Return immediately with status=processing
@@ -431,7 +441,7 @@ class AsyncProductsClient:
         Returns
         -------
         GetProductOffersProductsProductIdOffersGetResponse
-            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
+            Seller offers for the product, passed through from the retailer. `status` is always present; `offers` is populated when `status` is `completed`.
 
         Examples
         --------
@@ -510,6 +520,8 @@ class AsyncProductsClient:
         from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
         is no category name yet. `async` is not supported for Etsy.
 
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+
         Parameters
         ----------
         product_id : str
@@ -518,10 +530,10 @@ class AsyncProductsClient:
             Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
 
         max_age : typing.Optional[int]
-            Max response age in seconds (mutually exclusive with newer_than)
+            Max response age in seconds, at least 31 (mutually exclusive with newer_than)
 
         newer_than : typing.Optional[int]
-            Minimum retrieval timestamp (mutually exclusive with max_age)
+            Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
 
         async_ : typing.Optional[bool]
             Return immediately with status=processing
@@ -534,7 +546,7 @@ class AsyncProductsClient:
         Returns
         -------
         GetProductDetailsProductsProductIdGetResponse
-            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
+            Product details. The payload is the retailer's, passed through unmodified, so the exact field set depends on `retailer` — the schema below lists every field each retailer returns, and the example dropdown shows one real response per retailer. `status` is always present.
 
         Examples
         --------

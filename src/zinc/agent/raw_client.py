@@ -10,10 +10,12 @@ from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
 from ..core.serialization import convert_and_respect_annotation_metadata
+from ..errors.conflict_error import ConflictError
 from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.address import Address
 from ..types.customer_notifications import CustomerNotifications
+from ..types.fulfillment_preferences import FulfillmentPreferences
 from ..types.order_payment import OrderPayment
 from ..types.order_product import OrderProduct
 from ..types.order_response import OrderResponse
@@ -51,6 +53,7 @@ class RawAgentClient:
         gift_message: typing.Optional[str] = OMIT,
         payment: typing.Optional[OrderPayment] = OMIT,
         customer_notifications: typing.Optional[CustomerNotifications] = OMIT,
+        fulfillment: typing.Optional[FulfillmentPreferences] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[OrderResponse]:
         """
@@ -112,6 +115,9 @@ class RawAgentClient:
         customer_notifications : typing.Optional[CustomerNotifications]
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
+        fulfillment : typing.Optional[FulfillmentPreferences]
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -147,6 +153,9 @@ class RawAgentClient:
                 "customer_notifications": convert_and_respect_annotation_metadata(
                     object_=customer_notifications, annotation=typing.Optional[CustomerNotifications], direction="write"
                 ),
+                "fulfillment": convert_and_respect_annotation_metadata(
+                    object_=fulfillment, annotation=typing.Optional[FulfillmentPreferences], direction="write"
+                ),
             },
             headers={
                 "content-type": "application/json",
@@ -167,6 +176,17 @@ class RawAgentClient:
                 return HttpResponse(response=_response, data=_data)
             if _response.status_code == 402:
                 raise PaymentRequiredError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         typing.Any,
@@ -197,7 +217,12 @@ class RawAgentClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def search(
-        self, *, q: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        *,
+        q: str,
+        min_price: typing.Optional[int] = None,
+        max_price: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SearchResponse]:
         """
         **Beta** — response shape may change. Cross-retailer product search for agents. Returns orderable listings whose
@@ -207,6 +232,12 @@ class RawAgentClient:
         ----------
         q : str
             Search term
+
+        min_price : typing.Optional[int]
+            Cents. Drop results priced below this.
+
+        max_price : typing.Optional[int]
+            Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -221,6 +252,8 @@ class RawAgentClient:
             method="POST",
             params={
                 "q": q,
+                "min_price": min_price,
+                "max_price": max_price,
             },
             request_options=request_options,
         )
@@ -297,7 +330,7 @@ class RawAgentClient:
         Returns
         -------
         HttpResponse[ProductSearchResponse]
-            Successful Response
+            Normalized search results. Common fields are always present; retailer-specific fields are null or omitted for other retailers.
         """
         _response = self._client_wrapper.httpx_client.request(
             "agent/products/search",
@@ -373,10 +406,10 @@ class RawAgentClient:
             Retailer: amazon or walmart
 
         max_age : typing.Optional[int]
-            Max response age in seconds
+            Max response age in seconds, at least 31 (mutually exclusive with newer_than)
 
         newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
+            Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
 
         async_ : typing.Optional[bool]
             Return immediately with status=processing
@@ -387,7 +420,7 @@ class RawAgentClient:
         Returns
         -------
         HttpResponse[AgentProductOffersResponse]
-            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
+            Seller offers for the product, passed through from the retailer. `status` is always present; `offers` is populated when `status` is `completed`.
         """
         _response = self._client_wrapper.httpx_client.request(
             "agent/products/offers",
@@ -464,10 +497,10 @@ class RawAgentClient:
             Retailer: amazon or walmart
 
         max_age : typing.Optional[int]
-            Max response age in seconds
+            Max response age in seconds, at least 31 (mutually exclusive with newer_than)
 
         newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
+            Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
 
         async_ : typing.Optional[bool]
             Return immediately with status=processing
@@ -478,7 +511,7 @@ class RawAgentClient:
         Returns
         -------
         HttpResponse[AgentProductDetailsResponse]
-            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
+            Product details. The payload is the retailer's, passed through unmodified, so the exact field set depends on `retailer` — the schema below lists every field each retailer returns, and the example dropdown shows one real response per retailer. `status` is always present.
         """
         _response = self._client_wrapper.httpx_client.request(
             "agent/products/details",
@@ -555,6 +588,7 @@ class AsyncRawAgentClient:
         gift_message: typing.Optional[str] = OMIT,
         payment: typing.Optional[OrderPayment] = OMIT,
         customer_notifications: typing.Optional[CustomerNotifications] = OMIT,
+        fulfillment: typing.Optional[FulfillmentPreferences] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[OrderResponse]:
         """
@@ -616,6 +650,9 @@ class AsyncRawAgentClient:
         customer_notifications : typing.Optional[CustomerNotifications]
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
+        fulfillment : typing.Optional[FulfillmentPreferences]
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -651,6 +688,9 @@ class AsyncRawAgentClient:
                 "customer_notifications": convert_and_respect_annotation_metadata(
                     object_=customer_notifications, annotation=typing.Optional[CustomerNotifications], direction="write"
                 ),
+                "fulfillment": convert_and_respect_annotation_metadata(
+                    object_=fulfillment, annotation=typing.Optional[FulfillmentPreferences], direction="write"
+                ),
             },
             headers={
                 "content-type": "application/json",
@@ -671,6 +711,17 @@ class AsyncRawAgentClient:
                 return AsyncHttpResponse(response=_response, data=_data)
             if _response.status_code == 402:
                 raise PaymentRequiredError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
                     headers=dict(_response.headers),
                     body=typing.cast(
                         typing.Any,
@@ -701,7 +752,12 @@ class AsyncRawAgentClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def search(
-        self, *, q: str, request_options: typing.Optional[RequestOptions] = None
+        self,
+        *,
+        q: str,
+        min_price: typing.Optional[int] = None,
+        max_price: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SearchResponse]:
         """
         **Beta** — response shape may change. Cross-retailer product search for agents. Returns orderable listings whose
@@ -711,6 +767,12 @@ class AsyncRawAgentClient:
         ----------
         q : str
             Search term
+
+        min_price : typing.Optional[int]
+            Cents. Drop results priced below this.
+
+        max_price : typing.Optional[int]
+            Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -725,6 +787,8 @@ class AsyncRawAgentClient:
             method="POST",
             params={
                 "q": q,
+                "min_price": min_price,
+                "max_price": max_price,
             },
             request_options=request_options,
         )
@@ -801,7 +865,7 @@ class AsyncRawAgentClient:
         Returns
         -------
         AsyncHttpResponse[ProductSearchResponse]
-            Successful Response
+            Normalized search results. Common fields are always present; retailer-specific fields are null or omitted for other retailers.
         """
         _response = await self._client_wrapper.httpx_client.request(
             "agent/products/search",
@@ -877,10 +941,10 @@ class AsyncRawAgentClient:
             Retailer: amazon or walmart
 
         max_age : typing.Optional[int]
-            Max response age in seconds
+            Max response age in seconds, at least 31 (mutually exclusive with newer_than)
 
         newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
+            Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
 
         async_ : typing.Optional[bool]
             Return immediately with status=processing
@@ -891,7 +955,7 @@ class AsyncRawAgentClient:
         Returns
         -------
         AsyncHttpResponse[AgentProductOffersResponse]
-            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
+            Seller offers for the product, passed through from the retailer. `status` is always present; `offers` is populated when `status` is `completed`.
         """
         _response = await self._client_wrapper.httpx_client.request(
             "agent/products/offers",
@@ -968,10 +1032,10 @@ class AsyncRawAgentClient:
             Retailer: amazon or walmart
 
         max_age : typing.Optional[int]
-            Max response age in seconds
+            Max response age in seconds, at least 31 (mutually exclusive with newer_than)
 
         newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
+            Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
 
         async_ : typing.Optional[bool]
             Return immediately with status=processing
@@ -982,7 +1046,7 @@ class AsyncRawAgentClient:
         Returns
         -------
         AsyncHttpResponse[AgentProductDetailsResponse]
-            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
+            Product details. The payload is the retailer's, passed through unmodified, so the exact field set depends on `retailer` — the schema below lists every field each retailer returns, and the example dropdown shows one real response per retailer. `status` is always present.
         """
         _response = await self._client_wrapper.httpx_client.request(
             "agent/products/details",

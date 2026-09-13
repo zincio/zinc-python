@@ -19,6 +19,8 @@ class BulkValidateResponse(UniversalBaseModel):
     estimated_total_cents: int
     wallet_balance_cents: int
     sufficient_funds: bool
+    billed_by_invoice: typing.Optional[bool] = None
+    over_credit_limit: typing.Optional[bool] = None
     rows: typing.Optional[typing.List[BulkRowValidation]] = None
 
     if IS_PYDANTIC_V2:

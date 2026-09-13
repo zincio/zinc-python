@@ -4,13 +4,55 @@ import typing
 
 import pydantic
 from ...core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .get_product_offers_products_product_id_offers_get_response_offers_item import (
+    GetProductOffersProductsProductIdOffersGetResponseOffersItem,
+)
 from .get_product_offers_products_product_id_offers_get_response_status import (
     GetProductOffersProductsProductIdOffersGetResponseStatus,
 )
 
 
 class GetProductOffersProductsProductIdOffersGetResponse(UniversalBaseModel):
-    status: GetProductOffersProductsProductIdOffersGetResponseStatus
+    """
+    Every seller's offer for the product, passed through from the retailer. Shopify stores and Etsy listings have a single seller, so they are rejected here and report price and availability on the details endpoint; Best Buy's per-condition prices are on the details endpoint too.
+    """
+
+    status: GetProductOffersProductsProductIdOffersGetResponseStatus = pydantic.Field()
+    """
+    `completed` when the payload below is populated. `processing` when `async=true` was passed and the fetch is still running — poll again. `failed` when the retailer returned an error; see `code` and `message`.
+    """
+
+    code: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Only on `status: failed`. Machine-readable error code, e.g. `product_not_found`, `invalid_request`.
+    """
+
+    message: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Only on `status: failed`. Human-readable explanation.
+    """
+
+    retailer: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Retailer that served the offers, e.g. `amazon`.
+    """
+
+    asin: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Amazon only. The product's ASIN.
+    """
+
+    offers: typing.Optional[typing.List[GetProductOffersProductsProductIdOffersGetResponseOffersItem]] = pydantic.Field(
+        default=None
+    )
+    """
+    One entry per seller offer. Empty when the product has no buyable offers.
+    """
+
+    timestamp: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Unix time the offers were retrieved.
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

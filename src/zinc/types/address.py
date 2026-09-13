@@ -23,7 +23,11 @@ class Address(UniversalBaseModel):
     address_line2: typing.Optional[str] = None
     city: str
     state: typing.Optional[str] = None
-    postal_code: str
+    postal_code: str = pydantic.Field()
+    """
+    Postal code. For a US address this must be a ZIP: 5 digits, optionally +4 (e.g. '98632' or '27517-8761').
+    """
+
     phone_number: str
     country: typing.Optional[str] = pydantic.Field(default=None)
     """

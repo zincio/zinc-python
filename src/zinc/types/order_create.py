@@ -6,6 +6,7 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .address import Address
 from .customer_notifications import CustomerNotifications
+from .fulfillment_preferences import FulfillmentPreferences
 from .order_payment import OrderPayment
 from .order_product import OrderProduct
 
@@ -65,6 +66,11 @@ class OrderCreate(UniversalBaseModel):
     customer_notifications: typing.Optional[CustomerNotifications] = pydantic.Field(default=None)
     """
     Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
+    """
+
+    fulfillment: typing.Optional[FulfillmentPreferences] = pydantic.Field(default=None)
+    """
+    Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed.
     """
 
     if IS_PYDANTIC_V2:

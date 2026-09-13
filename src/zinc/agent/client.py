@@ -6,6 +6,7 @@ from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.address import Address
 from ..types.customer_notifications import CustomerNotifications
+from ..types.fulfillment_preferences import FulfillmentPreferences
 from ..types.order_payment import OrderPayment
 from ..types.order_product import OrderProduct
 from ..types.order_response import OrderResponse
@@ -54,6 +55,7 @@ class AgentClient:
         gift_message: typing.Optional[str] = OMIT,
         payment: typing.Optional[OrderPayment] = OMIT,
         customer_notifications: typing.Optional[CustomerNotifications] = OMIT,
+        fulfillment: typing.Optional[FulfillmentPreferences] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderResponse:
         """
@@ -115,6 +117,9 @@ class AgentClient:
         customer_notifications : typing.Optional[CustomerNotifications]
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
+        fulfillment : typing.Optional[FulfillmentPreferences]
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -162,11 +167,19 @@ class AgentClient:
             gift_message=gift_message,
             payment=payment,
             customer_notifications=customer_notifications,
+            fulfillment=fulfillment,
             request_options=request_options,
         )
         return _response.data
 
-    def search(self, *, q: str, request_options: typing.Optional[RequestOptions] = None) -> SearchResponse:
+    def search(
+        self,
+        *,
+        q: str,
+        min_price: typing.Optional[int] = None,
+        max_price: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SearchResponse:
         """
         **Beta** — response shape may change. Cross-retailer product search for agents. Returns orderable listings whose
         `url` can be passed straight to POST /agent/orders.
@@ -175,6 +188,12 @@ class AgentClient:
         ----------
         q : str
             Search term
+
+        min_price : typing.Optional[int]
+            Cents. Drop results priced below this.
+
+        max_price : typing.Optional[int]
+            Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -195,7 +214,9 @@ class AgentClient:
             q="q",
         )
         """
-        _response = self._raw_client.search(q=q, request_options=request_options)
+        _response = self._raw_client.search(
+            q=q, min_price=min_price, max_price=max_price, request_options=request_options
+        )
         return _response.data
 
     def product_search(
@@ -230,7 +251,7 @@ class AgentClient:
         Returns
         -------
         ProductSearchResponse
-            Successful Response
+            Normalized search results. Common fields are always present; retailer-specific fields are null or omitted for other retailers.
 
         Examples
         --------
@@ -271,10 +292,10 @@ class AgentClient:
             Retailer: amazon or walmart
 
         max_age : typing.Optional[int]
-            Max response age in seconds
+            Max response age in seconds, at least 31 (mutually exclusive with newer_than)
 
         newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
+            Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
 
         async_ : typing.Optional[bool]
             Return immediately with status=processing
@@ -285,7 +306,7 @@ class AgentClient:
         Returns
         -------
         AgentProductOffersResponse
-            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
+            Seller offers for the product, passed through from the retailer. `status` is always present; `offers` is populated when `status` is `completed`.
 
         Examples
         --------
@@ -331,10 +352,10 @@ class AgentClient:
             Retailer: amazon or walmart
 
         max_age : typing.Optional[int]
-            Max response age in seconds
+            Max response age in seconds, at least 31 (mutually exclusive with newer_than)
 
         newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
+            Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
 
         async_ : typing.Optional[bool]
             Return immediately with status=processing
@@ -345,7 +366,7 @@ class AgentClient:
         Returns
         -------
         AgentProductDetailsResponse
-            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
+            Product details. The payload is the retailer's, passed through unmodified, so the exact field set depends on `retailer` — the schema below lists every field each retailer returns, and the example dropdown shows one real response per retailer. `status` is always present.
 
         Examples
         --------
@@ -402,6 +423,7 @@ class AsyncAgentClient:
         gift_message: typing.Optional[str] = OMIT,
         payment: typing.Optional[OrderPayment] = OMIT,
         customer_notifications: typing.Optional[CustomerNotifications] = OMIT,
+        fulfillment: typing.Optional[FulfillmentPreferences] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderResponse:
         """
@@ -463,6 +485,9 @@ class AsyncAgentClient:
         customer_notifications : typing.Optional[CustomerNotifications]
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
+        fulfillment : typing.Optional[FulfillmentPreferences]
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -518,11 +543,19 @@ class AsyncAgentClient:
             gift_message=gift_message,
             payment=payment,
             customer_notifications=customer_notifications,
+            fulfillment=fulfillment,
             request_options=request_options,
         )
         return _response.data
 
-    async def search(self, *, q: str, request_options: typing.Optional[RequestOptions] = None) -> SearchResponse:
+    async def search(
+        self,
+        *,
+        q: str,
+        min_price: typing.Optional[int] = None,
+        max_price: typing.Optional[int] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SearchResponse:
         """
         **Beta** — response shape may change. Cross-retailer product search for agents. Returns orderable listings whose
         `url` can be passed straight to POST /agent/orders.
@@ -531,6 +564,12 @@ class AsyncAgentClient:
         ----------
         q : str
             Search term
+
+        min_price : typing.Optional[int]
+            Cents. Drop results priced below this.
+
+        max_price : typing.Optional[int]
+            Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -559,7 +598,9 @@ class AsyncAgentClient:
 
         asyncio.run(main())
         """
-        _response = await self._raw_client.search(q=q, request_options=request_options)
+        _response = await self._raw_client.search(
+            q=q, min_price=min_price, max_price=max_price, request_options=request_options
+        )
         return _response.data
 
     async def product_search(
@@ -594,7 +635,7 @@ class AsyncAgentClient:
         Returns
         -------
         ProductSearchResponse
-            Successful Response
+            Normalized search results. Common fields are always present; retailer-specific fields are null or omitted for other retailers.
 
         Examples
         --------
@@ -643,10 +684,10 @@ class AsyncAgentClient:
             Retailer: amazon or walmart
 
         max_age : typing.Optional[int]
-            Max response age in seconds
+            Max response age in seconds, at least 31 (mutually exclusive with newer_than)
 
         newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
+            Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
 
         async_ : typing.Optional[bool]
             Return immediately with status=processing
@@ -657,7 +698,7 @@ class AsyncAgentClient:
         Returns
         -------
         AgentProductOffersResponse
-            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
+            Seller offers for the product, passed through from the retailer. `status` is always present; `offers` is populated when `status` is `completed`.
 
         Examples
         --------
@@ -711,10 +752,10 @@ class AsyncAgentClient:
             Retailer: amazon or walmart
 
         max_age : typing.Optional[int]
-            Max response age in seconds
+            Max response age in seconds, at least 31 (mutually exclusive with newer_than)
 
         newer_than : typing.Optional[int]
-            Minimum retrieval timestamp
+            Minimum retrieval timestamp, as a unix time (mutually exclusive with max_age). Windows shorter than 31s are widened to it.
 
         async_ : typing.Optional[bool]
             Return immediately with status=processing
@@ -725,7 +766,7 @@ class AsyncAgentClient:
         Returns
         -------
         AgentProductDetailsResponse
-            Retailer payload, passed through unmodified. Fields vary by retailer, so only `status` is guaranteed: `completed` for a resolved response, `processing` when `async=true` and the fetch is still running, `failed` when the retailer returned an error (with `code` and `message`).
+            Product details. The payload is the retailer's, passed through unmodified, so the exact field set depends on `retailer` — the schema below lists every field each retailer returns, and the example dropdown shows one real response per retailer. `status` is always present.
 
         Examples
         --------
