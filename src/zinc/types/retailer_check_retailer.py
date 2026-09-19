@@ -4,20 +4,27 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .coverage_info import CoverageInfo
-from .public_retailer import PublicRetailer
 
 
-class PublicRetailerListResponse(UniversalBaseModel):
+class RetailerCheckRetailer(UniversalBaseModel):
     """
-    Public supported-retailer catalog.
+    The storefront a checked URL resolves to, when we have one.
     """
 
-    retailers: typing.List[PublicRetailer]
-    total: int
-    coverage: typing.Optional[CoverageInfo] = pydantic.Field(default=None)
+    retailer: str = pydantic.Field()
     """
-    States that the list is the curated set, not the limit of what Zinc can buy from. Additive; existing fields are unchanged.
+    Storefront slug, e.g. 'amazon-de'
+    """
+
+    brand: str = pydantic.Field()
+    """
+    Brand slug, e.g. 'amazon'
+    """
+
+    display_name: typing.Optional[str] = None
+    country: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The market this storefront is, or null when unscoped.
     """
 
     if IS_PYDANTIC_V2:

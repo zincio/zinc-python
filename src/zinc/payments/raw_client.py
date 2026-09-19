@@ -6,75 +6,54 @@ from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
+from ..core.jsonable_encoder import encode_path_param
 from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
-from ..types.public_retailer_list_response import PublicRetailerListResponse
-from ..types.retailer_check_response import RetailerCheckResponse
+from ..types.checkout_session_response import CheckoutSessionResponse
+from ..types.pending_payment_response import PendingPaymentResponse
 from pydantic import ValidationError
 
 
-class RawRetailersClient:
+class RawPaymentsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    def list_retailers(
-        self,
-        *,
-        limit: typing.Optional[int] = None,
-        offset: typing.Optional[int] = None,
-        name: typing.Optional[str] = None,
-        include: typing.Optional[str] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> HttpResponse[PublicRetailerListResponse]:
+    def get_pending_payment(
+        self, payment_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[PendingPaymentResponse]:
         """
-        List the retailers Zinc supports — the public "what do you support?" catalog.
+        Where a card payment stands; poll it after a 402 ``payment_required``.
 
-        No authentication required. One flat object per retailer brand: identifier,
-        domain, countries shipped to, and the free-shipping policy. International
-        marketplaces (e.g. amazon.com / amazon.de) are grouped under one brand with
-        the country listed in `supported_countries`. Optionally filter by name.
+        ``requires_action`` until the buyer pays on ``pay_url``; then ``authorized``
+        and, as soon as the order is created from the parked draft, ``placed`` with
+        ``order_id``. The poll itself does the creating when it gets there before
+        the webhook, so a buyer who pays and comes straight back sees the order.
 
         Parameters
         ----------
-        limit : typing.Optional[int]
-            Number of retailers to return
-
-        offset : typing.Optional[int]
-            Number of retailers to skip
-
-        name : typing.Optional[str]
-            Filter by name (case-insensitive partial match)
-
-        include : typing.Optional[str]
-            Pass `all` to include the long tail Zinc has ordered from but not curated (hundreds of brands). Omit for the curated set. This selects how much of the catalog to return; it is not a filter on an entry's `support` tier.
+        payment_id : str
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        HttpResponse[PublicRetailerListResponse]
+        HttpResponse[PendingPaymentResponse]
             Successful Response
         """
         _response = self._client_wrapper.httpx_client.request(
-            "retailers",
+            f"payments/{encode_path_param(payment_id)}",
             method="GET",
-            params={
-                "limit": limit,
-                "offset": offset,
-                "name": name,
-                "include": include,
-            },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    PublicRetailerListResponse,
+                    PendingPaymentResponse,
                     parse_obj_as(
-                        type_=PublicRetailerListResponse,  # type: ignore
+                        type_=PendingPaymentResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -99,59 +78,39 @@ class RawRetailersClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    def check_retailer(
-        self, *, url: str, country: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
-    ) -> HttpResponse[RetailerCheckResponse]:
+    def create_checkout_session(
+        self, payment_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> HttpResponse[CheckoutSessionResponse]:
         """
-        Can Zinc buy from this store, and ship it to this country?
+        The Stripe-hosted payment page for a pending payment.
 
-        No authentication. This is the question `GET /retailers` cannot answer: the
-        list is the curated set, while the order path accepts most stores, so a
-        caller holding an arbitrary URL has no way to find out from the list alone.
-
-        `orderable` is the answer. `support` says how much we know:
-
-        | tier | meaning |
-        |---|---|
-        | `verified` | curated, and its daily test order is passing |
-        | `active` | real orders succeeded here in the last 90 days |
-        | `observed` | Zinc has attempted orders here |
-        | `untested` | never seen — and Zinc will still attempt it |
-        | `unsupported` | Zinc refuses; `unsupported_reason` says why |
-
-        Read-only: asking never adds a store to the catalog.
+        Called by pay.zinc.com when the buyer clicks through, not by the 402 itself,
+        so a link nobody opens never creates a Stripe session. Idempotent per
+        payment: a session already open is returned again.
 
         Parameters
         ----------
-        url : str
-            A product or store URL, e.g. https://shop.aloyoga.com/products/x
-
-        country : typing.Optional[str]
-            Destination country as an ISO 3166-1 alpha-2 code (e.g. 'US', 'GB'). Case-insensitive. Longer spellings such as 'USA' are rejected — the error names the code to use. Omit to skip the shipping check. Runs the same gate `POST /orders` applies, so the two cannot disagree.
+        payment_id : str
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        HttpResponse[RetailerCheckResponse]
+        HttpResponse[CheckoutSessionResponse]
             Successful Response
         """
         _response = self._client_wrapper.httpx_client.request(
-            "retailers/check",
-            method="GET",
-            params={
-                "url": url,
-                "country": country,
-            },
+            f"payments/{encode_path_param(payment_id)}/checkout-session",
+            method="POST",
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    RetailerCheckResponse,
+                    CheckoutSessionResponse,
                     parse_obj_as(
-                        type_=RetailerCheckResponse,  # type: ignore
+                        type_=CheckoutSessionResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -177,66 +136,44 @@ class RawRetailersClient:
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
 
-class AsyncRawRetailersClient:
+class AsyncRawPaymentsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
 
-    async def list_retailers(
-        self,
-        *,
-        limit: typing.Optional[int] = None,
-        offset: typing.Optional[int] = None,
-        name: typing.Optional[str] = None,
-        include: typing.Optional[str] = None,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> AsyncHttpResponse[PublicRetailerListResponse]:
+    async def get_pending_payment(
+        self, payment_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[PendingPaymentResponse]:
         """
-        List the retailers Zinc supports — the public "what do you support?" catalog.
+        Where a card payment stands; poll it after a 402 ``payment_required``.
 
-        No authentication required. One flat object per retailer brand: identifier,
-        domain, countries shipped to, and the free-shipping policy. International
-        marketplaces (e.g. amazon.com / amazon.de) are grouped under one brand with
-        the country listed in `supported_countries`. Optionally filter by name.
+        ``requires_action`` until the buyer pays on ``pay_url``; then ``authorized``
+        and, as soon as the order is created from the parked draft, ``placed`` with
+        ``order_id``. The poll itself does the creating when it gets there before
+        the webhook, so a buyer who pays and comes straight back sees the order.
 
         Parameters
         ----------
-        limit : typing.Optional[int]
-            Number of retailers to return
-
-        offset : typing.Optional[int]
-            Number of retailers to skip
-
-        name : typing.Optional[str]
-            Filter by name (case-insensitive partial match)
-
-        include : typing.Optional[str]
-            Pass `all` to include the long tail Zinc has ordered from but not curated (hundreds of brands). Omit for the curated set. This selects how much of the catalog to return; it is not a filter on an entry's `support` tier.
+        payment_id : str
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        AsyncHttpResponse[PublicRetailerListResponse]
+        AsyncHttpResponse[PendingPaymentResponse]
             Successful Response
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "retailers",
+            f"payments/{encode_path_param(payment_id)}",
             method="GET",
-            params={
-                "limit": limit,
-                "offset": offset,
-                "name": name,
-                "include": include,
-            },
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    PublicRetailerListResponse,
+                    PendingPaymentResponse,
                     parse_obj_as(
-                        type_=PublicRetailerListResponse,  # type: ignore
+                        type_=PendingPaymentResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -261,59 +198,39 @@ class AsyncRawRetailersClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
-    async def check_retailer(
-        self, *, url: str, country: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
-    ) -> AsyncHttpResponse[RetailerCheckResponse]:
+    async def create_checkout_session(
+        self, payment_id: str, *, request_options: typing.Optional[RequestOptions] = None
+    ) -> AsyncHttpResponse[CheckoutSessionResponse]:
         """
-        Can Zinc buy from this store, and ship it to this country?
+        The Stripe-hosted payment page for a pending payment.
 
-        No authentication. This is the question `GET /retailers` cannot answer: the
-        list is the curated set, while the order path accepts most stores, so a
-        caller holding an arbitrary URL has no way to find out from the list alone.
-
-        `orderable` is the answer. `support` says how much we know:
-
-        | tier | meaning |
-        |---|---|
-        | `verified` | curated, and its daily test order is passing |
-        | `active` | real orders succeeded here in the last 90 days |
-        | `observed` | Zinc has attempted orders here |
-        | `untested` | never seen — and Zinc will still attempt it |
-        | `unsupported` | Zinc refuses; `unsupported_reason` says why |
-
-        Read-only: asking never adds a store to the catalog.
+        Called by pay.zinc.com when the buyer clicks through, not by the 402 itself,
+        so a link nobody opens never creates a Stripe session. Idempotent per
+        payment: a session already open is returned again.
 
         Parameters
         ----------
-        url : str
-            A product or store URL, e.g. https://shop.aloyoga.com/products/x
-
-        country : typing.Optional[str]
-            Destination country as an ISO 3166-1 alpha-2 code (e.g. 'US', 'GB'). Case-insensitive. Longer spellings such as 'USA' are rejected — the error names the code to use. Omit to skip the shipping check. Runs the same gate `POST /orders` applies, so the two cannot disagree.
+        payment_id : str
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
         Returns
         -------
-        AsyncHttpResponse[RetailerCheckResponse]
+        AsyncHttpResponse[CheckoutSessionResponse]
             Successful Response
         """
         _response = await self._client_wrapper.httpx_client.request(
-            "retailers/check",
-            method="GET",
-            params={
-                "url": url,
-                "country": country,
-            },
+            f"payments/{encode_path_param(payment_id)}/checkout-session",
+            method="POST",
             request_options=request_options,
         )
         try:
             if 200 <= _response.status_code < 300:
                 _data = typing.cast(
-                    RetailerCheckResponse,
+                    CheckoutSessionResponse,
                     parse_obj_as(
-                        type_=RetailerCheckResponse,  # type: ignore
+                        type_=CheckoutSessionResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

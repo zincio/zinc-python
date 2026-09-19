@@ -380,6 +380,7 @@ class OrdersClient:
         products: typing.Sequence[OrderProduct],
         shipping_address: Address,
         max_price: int,
+        zinc_client: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = OMIT,
         retailer_credentials_id: typing.Optional[str] = OMIT,
@@ -404,6 +405,9 @@ class OrdersClient:
 
         max_price : int
             Maximum price (in cents) allowed for an order before it is finalized.
+
+        zinc_client : typing.Optional[str]
+            Which assistant the buyer is using (claude, chatgpt, codex, …). Only used when the order needs a payment page, so it can send the buyer back afterwards.
 
         authorization : typing.Optional[str]
 
@@ -473,6 +477,7 @@ class OrdersClient:
             products=products,
             shipping_address=shipping_address,
             max_price=max_price,
+            zinc_client=zinc_client,
             authorization=authorization,
             idempotency_key=idempotency_key,
             retailer_credentials_id=retailer_credentials_id,
@@ -1149,6 +1154,7 @@ class AsyncOrdersClient:
         products: typing.Sequence[OrderProduct],
         shipping_address: Address,
         max_price: int,
+        zinc_client: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = OMIT,
         retailer_credentials_id: typing.Optional[str] = OMIT,
@@ -1173,6 +1179,9 @@ class AsyncOrdersClient:
 
         max_price : int
             Maximum price (in cents) allowed for an order before it is finalized.
+
+        zinc_client : typing.Optional[str]
+            Which assistant the buyer is using (claude, chatgpt, codex, …). Only used when the order needs a payment page, so it can send the buyer back afterwards.
 
         authorization : typing.Optional[str]
 
@@ -1250,6 +1259,7 @@ class AsyncOrdersClient:
             products=products,
             shipping_address=shipping_address,
             max_price=max_price,
+            zinc_client=zinc_client,
             authorization=authorization,
             idempotency_key=idempotency_key,
             retailer_credentials_id=retailer_credentials_id,

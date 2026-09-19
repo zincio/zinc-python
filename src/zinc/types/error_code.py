@@ -18,6 +18,7 @@ ErrorCode = typing.Union[
         "access_denied",
         "payment_failed",
         "payment_method_required",
+        "payment_required",
         "invalid_payment_method",
         "invalid_shipping_address",
         "url_unreachable",

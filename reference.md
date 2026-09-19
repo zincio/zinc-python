@@ -675,6 +675,14 @@ client.orders.create_order(
 <dl>
 <dd>
 
+**zinc_client:** `typing.Optional[str]` — Which assistant the buyer is using (claude, chatgpt, codex, …). Only used when the order needs a payment page, so it can send the buyer back afterwards.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **authorization:** `typing.Optional[str]` 
     
 </dd>
@@ -2956,6 +2964,111 @@ client.retailers.list_retailers()
 <dl>
 <dd>
 
+**include:** `typing.Optional[str]` — Pass `all` to include the long tail Zinc has ordered from but not curated (hundreds of brands). Omit for the curated set. This selects how much of the catalog to return; it is not a filter on an entry's `support` tier.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.retailers.<a href="src/zinc/retailers/client.py">check_retailer</a>(...) -> RetailerCheckResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Can Zinc buy from this store, and ship it to this country?
+
+No authentication. This is the question `GET /retailers` cannot answer: the
+list is the curated set, while the order path accepts most stores, so a
+caller holding an arbitrary URL has no way to find out from the list alone.
+
+`orderable` is the answer. `support` says how much we know:
+
+| tier | meaning |
+|---|---|
+| `verified` | curated, and its daily test order is passing |
+| `active` | real orders succeeded here in the last 90 days |
+| `observed` | Zinc has attempted orders here |
+| `untested` | never seen — and Zinc will still attempt it |
+| `unsupported` | Zinc refuses; `unsupported_reason` says why |
+
+Read-only: asking never adds a store to the catalog.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.retailers.check_retailer(
+    url="url",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**url:** `str` — A product or store URL, e.g. https://shop.aloyoga.com/products/x
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**country:** `typing.Optional[str]` — Destination country as an ISO 3166-1 alpha-2 code (e.g. 'US', 'GB'). Case-insensitive. Longer spellings such as 'USA' are rejected — the error names the code to use. Omit to skip the shipping check. Runs the same gate `POST /orders` applies, so the two cannot disagree.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
     
 </dd>
@@ -3328,6 +3441,162 @@ client.tracking.get_public_tracking(
 <dd>
 
 **order_id:** `str` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+## Payments
+<details><summary><code>client.payments.<a href="src/zinc/payments/client.py">get_pending_payment</a>(...) -> PendingPaymentResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Where a card payment stands; poll it after a 402 ``payment_required``.
+
+``requires_action`` until the buyer pays on ``pay_url``; then ``authorized``
+and, as soon as the order is created from the parked draft, ``placed`` with
+``order_id``. The poll itself does the creating when it gets there before
+the webhook, so a buyer who pays and comes straight back sees the order.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.payments.get_pending_payment(
+    payment_id="payment_id",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**payment_id:** `str` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.payments.<a href="src/zinc/payments/client.py">create_checkout_session</a>(...) -> CheckoutSessionResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+The Stripe-hosted payment page for a pending payment.
+
+Called by pay.zinc.com when the buyer clicks through, not by the 402 itself,
+so a link nobody opens never creates a Stripe session. Idempotent per
+payment: a session already open is returned again.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.payments.create_checkout_session(
+    payment_id="payment_id",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**payment_id:** `str` 
     
 </dd>
 </dl>

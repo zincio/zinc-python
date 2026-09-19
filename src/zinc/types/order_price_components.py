@@ -52,6 +52,11 @@ class OrderPriceComponents(UniversalBaseModel):
     Order-level adjustments, each `{description, amount, category}`. Null — not `[]` — when the producer didn't supply them, which is every BizAPI-placed order today, so null-check before iterating.
     """
 
+    breakdown_recorded: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    False when `subtotal`/`tax`/`shipping` are placeholders rather than observed figures — an order an operator recorded by hand without itemizing the whole of what they paid. Those fields read `0` in that case, which must NOT be shown as '$0.00 tax': nothing was recorded. `total` is authoritative either way. Null on results written before this flag existed; treat null as true.
+    """
+
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
     else:

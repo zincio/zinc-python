@@ -16,6 +16,11 @@ class RetailerCredentialsResponse(UniversalBaseModel):
     short_id: str
     email: str
     retailer: typing.Optional[str] = None
+    retailer_id: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    The storefront this credential logs in to. NULL when its `retailer` slug has no catalog row — the two are kept in step automatically, so a NULL here means the slug is not (yet) a known storefront.
+    """
+
     has_totp: typing.Optional[bool] = pydantic.Field(default=None)
     """
     Whether TOTP 2FA is configured for this account.

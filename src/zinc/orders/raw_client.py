@@ -522,6 +522,7 @@ class RawOrdersClient:
         products: typing.Sequence[OrderProduct],
         shipping_address: Address,
         max_price: int,
+        zinc_client: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = OMIT,
         retailer_credentials_id: typing.Optional[str] = OMIT,
@@ -546,6 +547,9 @@ class RawOrdersClient:
 
         max_price : int
             Maximum price (in cents) allowed for an order before it is finalized.
+
+        zinc_client : typing.Optional[str]
+            Which assistant the buyer is using (claude, chatgpt, codex, …). Only used when the order needs a payment page, so it can send the buyer back afterwards.
 
         authorization : typing.Optional[str]
 
@@ -617,6 +621,7 @@ class RawOrdersClient:
             },
             headers={
                 "content-type": "application/json",
+                "x-zinc-client": str(zinc_client) if zinc_client is not None else None,
                 "authorization": str(authorization) if authorization is not None else None,
             },
             request_options=request_options,
@@ -1489,6 +1494,7 @@ class AsyncRawOrdersClient:
         products: typing.Sequence[OrderProduct],
         shipping_address: Address,
         max_price: int,
+        zinc_client: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = OMIT,
         retailer_credentials_id: typing.Optional[str] = OMIT,
@@ -1513,6 +1519,9 @@ class AsyncRawOrdersClient:
 
         max_price : int
             Maximum price (in cents) allowed for an order before it is finalized.
+
+        zinc_client : typing.Optional[str]
+            Which assistant the buyer is using (claude, chatgpt, codex, …). Only used when the order needs a payment page, so it can send the buyer back afterwards.
 
         authorization : typing.Optional[str]
 
@@ -1584,6 +1593,7 @@ class AsyncRawOrdersClient:
             },
             headers={
                 "content-type": "application/json",
+                "x-zinc-client": str(zinc_client) if zinc_client is not None else None,
                 "authorization": str(authorization) if authorization is not None else None,
             },
             request_options=request_options,

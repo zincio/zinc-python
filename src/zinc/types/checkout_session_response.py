@@ -4,20 +4,12 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .coverage_info import CoverageInfo
-from .public_retailer import PublicRetailer
 
 
-class PublicRetailerListResponse(UniversalBaseModel):
+class CheckoutSessionResponse(UniversalBaseModel):
+    url: str = pydantic.Field()
     """
-    Public supported-retailer catalog.
-    """
-
-    retailers: typing.List[PublicRetailer]
-    total: int
-    coverage: typing.Optional[CoverageInfo] = pydantic.Field(default=None)
-    """
-    States that the list is the curated set, not the limit of what Zinc can buy from. Additive; existing fields are unchanged.
+    Stripe-hosted payment page for this pending payment.
     """
 
     if IS_PYDANTIC_V2:

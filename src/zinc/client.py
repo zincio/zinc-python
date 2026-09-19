@@ -15,6 +15,7 @@ if typing.TYPE_CHECKING:
     from .health.client import AsyncHealthClient, HealthClient
     from .managed_accounts.client import AsyncManagedAccountsClient, ManagedAccountsClient
     from .orders.client import AsyncOrdersClient, OrdersClient
+    from .payments.client import AsyncPaymentsClient, PaymentsClient
     from .products.client import AsyncProductsClient, ProductsClient
     from .retailers.client import AsyncRetailersClient, RetailersClient
     from .returns.client import AsyncReturnsClient, ReturnsClient
@@ -122,6 +123,7 @@ class ZincClient:
         self._wallet: typing.Optional[WalletClient] = None
         self._stats: typing.Optional[StatsClient] = None
         self._tracking: typing.Optional[TrackingClient] = None
+        self._payments: typing.Optional[PaymentsClient] = None
         self._sandbox: typing.Optional[SandboxClient] = None
         self._device: typing.Optional[DeviceClient] = None
         self._webhooks: typing.Optional[WebhooksClient] = None
@@ -214,6 +216,14 @@ class ZincClient:
 
             self._tracking = TrackingClient(client_wrapper=self._client_wrapper)
         return self._tracking
+
+    @property
+    def payments(self):
+        if self._payments is None:
+            from .payments.client import PaymentsClient  # noqa: E402
+
+            self._payments = PaymentsClient(client_wrapper=self._client_wrapper)
+        return self._payments
 
     @property
     def sandbox(self):
@@ -359,6 +369,7 @@ class AsyncZincClient:
         self._wallet: typing.Optional[AsyncWalletClient] = None
         self._stats: typing.Optional[AsyncStatsClient] = None
         self._tracking: typing.Optional[AsyncTrackingClient] = None
+        self._payments: typing.Optional[AsyncPaymentsClient] = None
         self._sandbox: typing.Optional[AsyncSandboxClient] = None
         self._device: typing.Optional[AsyncDeviceClient] = None
         self._webhooks: typing.Optional[AsyncWebhooksClient] = None
@@ -451,6 +462,14 @@ class AsyncZincClient:
 
             self._tracking = AsyncTrackingClient(client_wrapper=self._client_wrapper)
         return self._tracking
+
+    @property
+    def payments(self):
+        if self._payments is None:
+            from .payments.client import AsyncPaymentsClient  # noqa: E402
+
+            self._payments = AsyncPaymentsClient(client_wrapper=self._client_wrapper)
+        return self._payments
 
     @property
     def sandbox(self):

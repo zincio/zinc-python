@@ -4,20 +4,21 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .coverage_info import CoverageInfo
-from .public_retailer import PublicRetailer
 
 
-class PublicRetailerListResponse(UniversalBaseModel):
+class CoveragePlatform(UniversalBaseModel):
     """
-    Public supported-retailer catalog.
+    A storefront platform Zinc will attempt checkout on, sight unseen.
     """
 
-    retailers: typing.List[PublicRetailer]
-    total: int
-    coverage: typing.Optional[CoverageInfo] = pydantic.Field(default=None)
+    platform: str = pydantic.Field()
     """
-    States that the list is the curated set, not the limit of what Zinc can buy from. Additive; existing fields are unchanged.
+    Storefront platform, e.g. 'shopify'.
+    """
+
+    orderable: bool = pydantic.Field()
+    """
+    Zinc attempts checkout at stores on this platform, including ones it has never seen. For one store's tier, call GET /retailers/check.
     """
 
     if IS_PYDANTIC_V2:

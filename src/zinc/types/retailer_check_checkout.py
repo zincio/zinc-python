@@ -4,20 +4,21 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .coverage_info import CoverageInfo
-from .public_retailer import PublicRetailer
 
 
-class PublicRetailerListResponse(UniversalBaseModel):
+class RetailerCheckCheckout(UniversalBaseModel):
     """
-    Public supported-retailer catalog.
+    How a customer can pay at this store.
     """
 
-    retailers: typing.List[PublicRetailer]
-    total: int
-    coverage: typing.Optional[CoverageInfo] = pydantic.Field(default=None)
+    guest_checkout: bool = pydantic.Field()
     """
-    States that the list is the curated set, not the limit of what Zinc can buy from. Additive; existing fields are unchanged.
+    Zinc can check out without a customer account — the store allows guests, or Zinc holds a shared account for it. When false, an order here must carry `retailer_credentials_id`.
+    """
+
+    use_your_account: bool = pydantic.Field()
+    """
+    The customer can supply their own retailer login.
     """
 
     if IS_PYDANTIC_V2:

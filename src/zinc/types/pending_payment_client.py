@@ -4,20 +4,22 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .coverage_info import CoverageInfo
-from .public_retailer import PublicRetailer
 
 
-class PublicRetailerListResponse(UniversalBaseModel):
+class PendingPaymentClient(UniversalBaseModel):
     """
-    Public supported-retailer catalog.
+    The assistant the buyer came from, so the payment page can send them
+    back once the order is placed.
     """
 
-    retailers: typing.List[PublicRetailer]
-    total: int
-    coverage: typing.Optional[CoverageInfo] = pydantic.Field(default=None)
+    name: str = pydantic.Field()
     """
-    States that the list is the curated set, not the limit of what Zinc can buy from. Additive; existing fields are unchanged.
+    Display name, e.g. 'Claude'.
+    """
+
+    url: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Where 'back' goes when the tab cannot close itself; null when the client has no web home we know of.
     """
 
     if IS_PYDANTIC_V2:

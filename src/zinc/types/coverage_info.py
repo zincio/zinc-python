@@ -4,21 +4,24 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
-from .coverage_info import CoverageInfo
-from .public_retailer import PublicRetailer
+from .coverage_platform import CoveragePlatform
 
 
-class PublicRetailerListResponse(UniversalBaseModel):
+class CoverageInfo(UniversalBaseModel):
     """
-    Public supported-retailer catalog.
+    What the catalog does and does not tell you.
+
+    Sits on `GET /retailers` because that list reads as the whole answer and is
+    not: it is the curated set, while the order path accepts most stores.
     """
 
-    retailers: typing.List[PublicRetailer]
-    total: int
-    coverage: typing.Optional[CoverageInfo] = pydantic.Field(default=None)
+    policy: str = pydantic.Field()
     """
-    States that the list is the curated set, not the limit of what Zinc can buy from. Additive; existing fields are unchanged.
+    'open': listed retailers are not the limit.
     """
+
+    summary: str
+    platforms: typing.Optional[typing.List[CoveragePlatform]] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

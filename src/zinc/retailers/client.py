@@ -5,6 +5,7 @@ import typing
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.public_retailer_list_response import PublicRetailerListResponse
+from ..types.retailer_check_response import RetailerCheckResponse
 from .raw_client import AsyncRawRetailersClient, RawRetailersClient
 
 
@@ -29,6 +30,7 @@ class RetailersClient:
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         name: typing.Optional[str] = None,
+        include: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> PublicRetailerListResponse:
         """
@@ -50,6 +52,9 @@ class RetailersClient:
         name : typing.Optional[str]
             Filter by name (case-insensitive partial match)
 
+        include : typing.Optional[str]
+            Pass `all` to include the long tail Zinc has ordered from but not curated (hundreds of brands). Omit for the curated set. This selects how much of the catalog to return; it is not a filter on an entry's `support` tier.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -68,8 +73,60 @@ class RetailersClient:
         client.retailers.list_retailers()
         """
         _response = self._raw_client.list_retailers(
-            limit=limit, offset=offset, name=name, request_options=request_options
+            limit=limit, offset=offset, name=name, include=include, request_options=request_options
         )
+        return _response.data
+
+    def check_retailer(
+        self, *, url: str, country: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
+    ) -> RetailerCheckResponse:
+        """
+        Can Zinc buy from this store, and ship it to this country?
+
+        No authentication. This is the question `GET /retailers` cannot answer: the
+        list is the curated set, while the order path accepts most stores, so a
+        caller holding an arbitrary URL has no way to find out from the list alone.
+
+        `orderable` is the answer. `support` says how much we know:
+
+        | tier | meaning |
+        |---|---|
+        | `verified` | curated, and its daily test order is passing |
+        | `active` | real orders succeeded here in the last 90 days |
+        | `observed` | Zinc has attempted orders here |
+        | `untested` | never seen — and Zinc will still attempt it |
+        | `unsupported` | Zinc refuses; `unsupported_reason` says why |
+
+        Read-only: asking never adds a store to the catalog.
+
+        Parameters
+        ----------
+        url : str
+            A product or store URL, e.g. https://shop.aloyoga.com/products/x
+
+        country : typing.Optional[str]
+            Destination country as an ISO 3166-1 alpha-2 code (e.g. 'US', 'GB'). Case-insensitive. Longer spellings such as 'USA' are rejected — the error names the code to use. Omit to skip the shipping check. Runs the same gate `POST /orders` applies, so the two cannot disagree.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RetailerCheckResponse
+            Successful Response
+
+        Examples
+        --------
+        from zinc import ZincClient
+
+        client = ZincClient(
+            api_key="YOUR_API_KEY",
+        )
+        client.retailers.check_retailer(
+            url="url",
+        )
+        """
+        _response = self._raw_client.check_retailer(url=url, country=country, request_options=request_options)
         return _response.data
 
 
@@ -94,6 +151,7 @@ class AsyncRetailersClient:
         limit: typing.Optional[int] = None,
         offset: typing.Optional[int] = None,
         name: typing.Optional[str] = None,
+        include: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> PublicRetailerListResponse:
         """
@@ -114,6 +172,9 @@ class AsyncRetailersClient:
 
         name : typing.Optional[str]
             Filter by name (case-insensitive partial match)
+
+        include : typing.Optional[str]
+            Pass `all` to include the long tail Zinc has ordered from but not curated (hundreds of brands). Omit for the curated set. This selects how much of the catalog to return; it is not a filter on an entry's `support` tier.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -141,6 +202,66 @@ class AsyncRetailersClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.list_retailers(
-            limit=limit, offset=offset, name=name, request_options=request_options
+            limit=limit, offset=offset, name=name, include=include, request_options=request_options
         )
+        return _response.data
+
+    async def check_retailer(
+        self, *, url: str, country: typing.Optional[str] = None, request_options: typing.Optional[RequestOptions] = None
+    ) -> RetailerCheckResponse:
+        """
+        Can Zinc buy from this store, and ship it to this country?
+
+        No authentication. This is the question `GET /retailers` cannot answer: the
+        list is the curated set, while the order path accepts most stores, so a
+        caller holding an arbitrary URL has no way to find out from the list alone.
+
+        `orderable` is the answer. `support` says how much we know:
+
+        | tier | meaning |
+        |---|---|
+        | `verified` | curated, and its daily test order is passing |
+        | `active` | real orders succeeded here in the last 90 days |
+        | `observed` | Zinc has attempted orders here |
+        | `untested` | never seen — and Zinc will still attempt it |
+        | `unsupported` | Zinc refuses; `unsupported_reason` says why |
+
+        Read-only: asking never adds a store to the catalog.
+
+        Parameters
+        ----------
+        url : str
+            A product or store URL, e.g. https://shop.aloyoga.com/products/x
+
+        country : typing.Optional[str]
+            Destination country as an ISO 3166-1 alpha-2 code (e.g. 'US', 'GB'). Case-insensitive. Longer spellings such as 'USA' are rejected — the error names the code to use. Omit to skip the shipping check. Runs the same gate `POST /orders` applies, so the two cannot disagree.
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        RetailerCheckResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from zinc import AsyncZincClient
+
+        client = AsyncZincClient(
+            api_key="YOUR_API_KEY",
+        )
+
+
+        async def main() -> None:
+            await client.retailers.check_retailer(
+                url="url",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.check_retailer(url=url, country=country, request_options=request_options)
         return _response.data
