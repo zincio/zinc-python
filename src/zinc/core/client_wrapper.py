@@ -33,12 +33,12 @@ class BaseClientWrapper:
         import platform
 
         headers: typing.Dict[str, str] = {
-            "User-Agent": "zinc/2026.9.18",
+            "User-Agent": "zinc/2026.9.30",
             "X-Fern-Language": "Python",
             "X-Fern-Runtime": f"python/{platform.python_version()}",
             "X-Fern-Platform": f"{platform.system().lower()}/{platform.release()}",
             "X-Fern-SDK-Name": "zinc",
-            "X-Fern-SDK-Version": "2026.9.18",
+            "X-Fern-SDK-Version": "2026.9.30",
             **(self.get_custom_headers() or {}),
         }
         headers["Authorization"] = self.api_key

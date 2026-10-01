@@ -5,6 +5,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .field_error import FieldError
+from .line_rejection import LineRejection
 
 
 class ErrorDetails(UniversalBaseModel):
@@ -19,8 +20,10 @@ class ErrorDetails(UniversalBaseModel):
 
     code: str
     message: str
+    url: typing.Optional[str] = None
     address_validation_reasons: typing.Optional[typing.List[str]] = None
     field_errors: typing.Optional[typing.List[FieldError]] = None
+    line_rejections: typing.Optional[typing.List[LineRejection]] = None
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

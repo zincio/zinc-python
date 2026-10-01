@@ -5,6 +5,8 @@ import typing
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.search_response import SearchResponse
+from ..types.search_retailer import SearchRetailer
+from ..types.search_sort import SearchSort
 from .raw_client import AsyncRawSearchClient, RawSearchClient
 
 
@@ -29,6 +31,9 @@ class SearchClient:
         q: str,
         min_price: typing.Optional[int] = None,
         max_price: typing.Optional[int] = None,
+        retailer: typing.Optional[typing.Sequence[SearchRetailer]] = None,
+        sort: typing.Optional[SearchSort] = None,
+        limit: typing.Optional[int] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SearchResponse:
@@ -47,6 +52,15 @@ class SearchClient:
 
         max_price : typing.Optional[int]
             Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
+
+        retailer : typing.Optional[typing.Sequence[SearchRetailer]]
+            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`.
+
+        sort : typing.Optional[SearchSort]
+            Result order. `relevance` (default) blends query match, source rank and rating, and mixes retailers. The explicit sorts order the 20 most relevant results (or `limit`, if larger) that match at least half the query, so accessories that merely name the product don't lead; results with no price (or no rating, for `rating`) sort last.
+
+        limit : typing.Optional[int]
+            Return at most this many results (1-50). One search is one billed call either way.
 
         authorization : typing.Optional[str]
 
@@ -70,7 +84,14 @@ class SearchClient:
         )
         """
         _response = self._raw_client.search(
-            q=q, min_price=min_price, max_price=max_price, authorization=authorization, request_options=request_options
+            q=q,
+            min_price=min_price,
+            max_price=max_price,
+            retailer=retailer,
+            sort=sort,
+            limit=limit,
+            authorization=authorization,
+            request_options=request_options,
         )
         return _response.data
 
@@ -96,6 +117,9 @@ class AsyncSearchClient:
         q: str,
         min_price: typing.Optional[int] = None,
         max_price: typing.Optional[int] = None,
+        retailer: typing.Optional[typing.Sequence[SearchRetailer]] = None,
+        sort: typing.Optional[SearchSort] = None,
+        limit: typing.Optional[int] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SearchResponse:
@@ -114,6 +138,15 @@ class AsyncSearchClient:
 
         max_price : typing.Optional[int]
             Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
+
+        retailer : typing.Optional[typing.Sequence[SearchRetailer]]
+            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`.
+
+        sort : typing.Optional[SearchSort]
+            Result order. `relevance` (default) blends query match, source rank and rating, and mixes retailers. The explicit sorts order the 20 most relevant results (or `limit`, if larger) that match at least half the query, so accessories that merely name the product don't lead; results with no price (or no rating, for `rating`) sort last.
+
+        limit : typing.Optional[int]
+            Return at most this many results (1-50). One search is one billed call either way.
 
         authorization : typing.Optional[str]
 
@@ -145,6 +178,13 @@ class AsyncSearchClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.search(
-            q=q, min_price=min_price, max_price=max_price, authorization=authorization, request_options=request_options
+            q=q,
+            min_price=min_price,
+            max_price=max_price,
+            retailer=retailer,
+            sort=sort,
+            limit=limit,
+            authorization=authorization,
+            request_options=request_options,
         )
         return _response.data

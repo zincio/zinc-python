@@ -6,6 +6,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .tracking_checkpoint_response import TrackingCheckpointResponse
+from .tracking_number_response_item_mapping import TrackingNumberResponseItemMapping
 from .tracking_status import TrackingStatus
 
 
@@ -45,6 +46,16 @@ class TrackingNumberResponse(UniversalBaseModel):
     checkpoints: typing.Optional[typing.List[TrackingCheckpointResponse]] = pydantic.Field(default=None)
     """
     Carrier scan events, most recent first. Empty unless the checkpoint timeline was requested.
+    """
+
+    order_item_ids: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Ids of the `items[]` this package carries, best effort. Null when unknown (never an empty list). Populated when the order has one item, or once a single-package order is delivered; see `item_mapping` for how much to trust it.
+    """
+
+    item_mapping: typing.Optional[TrackingNumberResponseItemMapping] = pydantic.Field(default=None)
+    """
+    Confidence of `order_item_ids`: `exact` means the package cannot carry anything else; `inferred` means at least one entry is a best-effort guess. Null when `order_item_ids` is null.
     """
 
     created_at: dt.datetime

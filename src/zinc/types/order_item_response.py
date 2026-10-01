@@ -27,6 +27,11 @@ class OrderItemResponse(UniversalBaseModel):
     status: OrderItemStatus
     cancellation_reason: typing.Optional[str] = None
     error_type: typing.Optional[str] = None
+    tracking_number_ids: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Ids of the `tracking_numbers[]` known to carry this item, best effort. Null when unknown (never an empty list). The reverse of `tracking_numbers[].order_item_ids`.
+    """
+
     created_at: dt.datetime
     updated_at: dt.datetime
 

@@ -44,6 +44,7 @@ if typing.TYPE_CHECKING:
     from .lifetime_totals import LifetimeTotals
     from .lifetime_v1stats import LifetimeV1Stats
     from .lifetime_v1stats_source import LifetimeV1StatsSource
+    from .line_rejection import LineRejection
     from .margin_spec import MarginSpec
     from .margin_spec_type import MarginSpecType
     from .order_cart_item import OrderCartItem
@@ -102,11 +103,14 @@ if typing.TYPE_CHECKING:
     from .sandbox_key_response import SandboxKeyResponse
     from .sandbox_status_response import SandboxStatusResponse
     from .search_response import SearchResponse
+    from .search_retailer import SearchRetailer
+    from .search_sort import SearchSort
     from .sku import Sku
     from .starter_credit import StarterCredit
     from .starter_pick import StarterPick
     from .tracking_checkpoint_response import TrackingCheckpointResponse
     from .tracking_number_response import TrackingNumberResponse
+    from .tracking_number_response_item_mapping import TrackingNumberResponseItemMapping
     from .tracking_status import TrackingStatus
     from .usage_metric import UsageMetric
     from .user_usage_response import UserUsageResponse
@@ -154,6 +158,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "LifetimeTotals": ".lifetime_totals",
     "LifetimeV1Stats": ".lifetime_v1stats",
     "LifetimeV1StatsSource": ".lifetime_v1stats_source",
+    "LineRejection": ".line_rejection",
     "MarginSpec": ".margin_spec",
     "MarginSpecType": ".margin_spec_type",
     "OrderCartItem": ".order_cart_item",
@@ -212,11 +217,14 @@ _dynamic_imports: typing.Dict[str, str] = {
     "SandboxKeyResponse": ".sandbox_key_response",
     "SandboxStatusResponse": ".sandbox_status_response",
     "SearchResponse": ".search_response",
+    "SearchRetailer": ".search_retailer",
+    "SearchSort": ".search_sort",
     "Sku": ".sku",
     "StarterCredit": ".starter_credit",
     "StarterPick": ".starter_pick",
     "TrackingCheckpointResponse": ".tracking_checkpoint_response",
     "TrackingNumberResponse": ".tracking_number_response",
+    "TrackingNumberResponseItemMapping": ".tracking_number_response_item_mapping",
     "TrackingStatus": ".tracking_status",
     "UsageMetric": ".usage_metric",
     "UserUsageResponse": ".user_usage_response",
@@ -288,6 +296,7 @@ __all__ = [
     "LifetimeTotals",
     "LifetimeV1Stats",
     "LifetimeV1StatsSource",
+    "LineRejection",
     "MarginSpec",
     "MarginSpecType",
     "OrderCartItem",
@@ -346,11 +355,14 @@ __all__ = [
     "SandboxKeyResponse",
     "SandboxStatusResponse",
     "SearchResponse",
+    "SearchRetailer",
+    "SearchSort",
     "Sku",
     "StarterCredit",
     "StarterPick",
     "TrackingCheckpointResponse",
     "TrackingNumberResponse",
+    "TrackingNumberResponseItemMapping",
     "TrackingStatus",
     "UsageMetric",
     "UserUsageResponse",

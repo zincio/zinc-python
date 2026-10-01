@@ -20,6 +20,10 @@ class Sku(UniversalBaseModel):
     stars: typing.Optional[float] = None
     num_reviews: typing.Optional[int] = None
     available: typing.Optional[bool] = None
+    free_shipping: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    True when the retailer listing advertises free shipping; null when unknown (never false — providers only flag the free case).
+    """
 
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2

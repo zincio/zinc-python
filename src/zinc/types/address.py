@@ -19,8 +19,16 @@ class Address(UniversalBaseModel):
 
     first_name: str
     last_name: str
-    address_line1: str
-    address_line2: typing.Optional[str] = None
+    address_line1: str = pydantic.Field()
+    """
+    Street address. At most 60 characters — retailers reject a longer line outright rather than truncating it.
+    """
+
+    address_line2: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Apartment, suite, unit, etc. At most 60 characters — retailers reject a longer line outright rather than truncating it.
+    """
+
     city: str
     state: typing.Optional[str] = None
     postal_code: str = pydantic.Field()

@@ -37,7 +37,7 @@ class OrderPriceComponents(UniversalBaseModel):
 
     converted_payment_total: typing.Optional[int] = pydantic.Field(default=None)
     """
-    `total` converted to the currency actually charged.
+    `total` converted to `payment_currency`, the currency actually charged. On an order billed in USD from a non-USD `currency`, this is the USD amount charged, including the FX markup; `total` stays in the retailer's currency. Equal to `total` when no conversion was charged.
     """
 
     currency: typing.Optional[str] = None

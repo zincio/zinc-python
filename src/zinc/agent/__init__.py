@@ -33,6 +33,8 @@ if typing.TYPE_CHECKING:
         AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays,
         AgentProductOffersResponseStatus,
         AgentProductSearchRequestRetailer,
+        AgentSearchRequestRetailerItem,
+        AgentSearchRequestSort,
     )
 _dynamic_imports: typing.Dict[str, str] = {
     "AgentProductDetailsRequestRetailer": ".types",
@@ -61,6 +63,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays": ".types",
     "AgentProductOffersResponseStatus": ".types",
     "AgentProductSearchRequestRetailer": ".types",
+    "AgentSearchRequestRetailerItem": ".types",
+    "AgentSearchRequestSort": ".types",
 }
 
 
@@ -112,4 +116,6 @@ __all__ = [
     "AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays",
     "AgentProductOffersResponseStatus",
     "AgentProductSearchRequestRetailer",
+    "AgentSearchRequestRetailerItem",
+    "AgentSearchRequestSort",
 ]

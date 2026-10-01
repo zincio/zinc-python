@@ -1675,6 +1675,30 @@ client.search.search(
 <dl>
 <dd>
 
+**retailer:** `typing.Optional[typing.List[SearchRetailer]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**sort:** `typing.Optional[SearchSort]` — Result order. `relevance` (default) blends query match, source rank and rating, and mixes retailers. The explicit sorts order the 20 most relevant results (or `limit`, if larger) that match at least half the query, so accessories that merely name the product don't lead; results with no price (or no rating, for `rating`) sort last.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**limit:** `typing.Optional[int]` — Return at most this many results (1-50). One search is one billed call either way.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **authorization:** `typing.Optional[str]` 
     
 </dd>
@@ -2299,6 +2323,30 @@ client.agent.search(
 <dd>
 
 **max_price:** `typing.Optional[int]` — Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**retailer:** `typing.Optional[typing.Union[AgentSearchRequestRetailerItem, typing.Sequence[AgentSearchRequestRetailerItem]]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**sort:** `typing.Optional[AgentSearchRequestSort]` — Result order. `relevance` (default) blends query match, source rank and rating, and mixes retailers. The explicit sorts order the 20 most relevant results (or `limit`, if larger) that match at least half the query, so accessories that merely name the product don't lead; results with no price (or no rating, for `rating`) sort last.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**limit:** `typing.Optional[int]` — Return at most this many results (1-50). One search is one billed call either way.
     
 </dd>
 </dl>

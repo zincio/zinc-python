@@ -26,6 +26,8 @@ from .types.agent_product_details_response import AgentProductDetailsResponse
 from .types.agent_product_offers_request_retailer import AgentProductOffersRequestRetailer
 from .types.agent_product_offers_response import AgentProductOffersResponse
 from .types.agent_product_search_request_retailer import AgentProductSearchRequestRetailer
+from .types.agent_search_request_retailer_item import AgentSearchRequestRetailerItem
+from .types.agent_search_request_sort import AgentSearchRequestSort
 from pydantic import ValidationError
 
 # this is used as the default value for optional parameters
@@ -222,6 +224,11 @@ class RawAgentClient:
         q: str,
         min_price: typing.Optional[int] = None,
         max_price: typing.Optional[int] = None,
+        retailer: typing.Optional[
+            typing.Union[AgentSearchRequestRetailerItem, typing.Sequence[AgentSearchRequestRetailerItem]]
+        ] = None,
+        sort: typing.Optional[AgentSearchRequestSort] = None,
+        limit: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[SearchResponse]:
         """
@@ -239,6 +246,15 @@ class RawAgentClient:
         max_price : typing.Optional[int]
             Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
+        retailer : typing.Optional[typing.Union[AgentSearchRequestRetailerItem, typing.Sequence[AgentSearchRequestRetailerItem]]]
+            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`.
+
+        sort : typing.Optional[AgentSearchRequestSort]
+            Result order. `relevance` (default) blends query match, source rank and rating, and mixes retailers. The explicit sorts order the 20 most relevant results (or `limit`, if larger) that match at least half the query, so accessories that merely name the product don't lead; results with no price (or no rating, for `rating`) sort last.
+
+        limit : typing.Optional[int]
+            Return at most this many results (1-50). One search is one billed call either way.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -254,6 +270,9 @@ class RawAgentClient:
                 "q": q,
                 "min_price": min_price,
                 "max_price": max_price,
+                "retailer": retailer,
+                "sort": sort,
+                "limit": limit,
             },
             request_options=request_options,
         )
@@ -757,6 +776,11 @@ class AsyncRawAgentClient:
         q: str,
         min_price: typing.Optional[int] = None,
         max_price: typing.Optional[int] = None,
+        retailer: typing.Optional[
+            typing.Union[AgentSearchRequestRetailerItem, typing.Sequence[AgentSearchRequestRetailerItem]]
+        ] = None,
+        sort: typing.Optional[AgentSearchRequestSort] = None,
+        limit: typing.Optional[int] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[SearchResponse]:
         """
@@ -774,6 +798,15 @@ class AsyncRawAgentClient:
         max_price : typing.Optional[int]
             Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
+        retailer : typing.Optional[typing.Union[AgentSearchRequestRetailerItem, typing.Sequence[AgentSearchRequestRetailerItem]]]
+            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`.
+
+        sort : typing.Optional[AgentSearchRequestSort]
+            Result order. `relevance` (default) blends query match, source rank and rating, and mixes retailers. The explicit sorts order the 20 most relevant results (or `limit`, if larger) that match at least half the query, so accessories that merely name the product don't lead; results with no price (or no rating, for `rating`) sort last.
+
+        limit : typing.Optional[int]
+            Return at most this many results (1-50). One search is one billed call either way.
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -789,6 +822,9 @@ class AsyncRawAgentClient:
                 "q": q,
                 "min_price": min_price,
                 "max_price": max_price,
+                "retailer": retailer,
+                "sort": sort,
+                "limit": limit,
             },
             request_options=request_options,
         )
