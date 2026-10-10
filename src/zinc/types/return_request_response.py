@@ -20,6 +20,11 @@ class ReturnRequestResponse(UniversalBaseModel):
     items: typing.Optional[typing.List[ReturnRequestItem]] = None
     label_urls: typing.Optional[typing.List[str]] = None
     merchant_return_id: typing.Optional[str] = None
+    credited_amount: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Total wallet credit issued for this return, in cents. 0 until a credit is issued (and on returns resolved without one). Credits are append-only, so this is the running total across every credit and reversal on the return, not the last one.
+    """
+
     created_at: dt.datetime
     updated_at: dt.datetime
 

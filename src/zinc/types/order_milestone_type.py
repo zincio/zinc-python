@@ -8,6 +8,7 @@ OrderMilestoneType = typing.Union[
         "order_placed",
         "tracking_acquired",
         "shipped",
+        "available_for_pickup",
         "delivered",
         "undeliverable",
         "order_failed",

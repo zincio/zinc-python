@@ -25,6 +25,11 @@ class FulfillmentPreferences(UniversalBaseModel):
     member (``prefer``, ``nearest``); a per-concern knob is that concern's value
     widening from a bare mode into an object (``items: {mode: "best_effort",
     min_items: 2}``) — never a new top-level order field.
+
+    The one exception to "only loosens" is ``excluded_merchants``: a per-order
+    seller blocklist, here rather than top-level because it is rare and only
+    some placement paths can honour it (BizAPI today; ignored elsewhere). It is
+    not a ``FulfillmentConcern`` and never produces a concession.
     """
 
     gift: typing.Optional[FulfillmentMode] = pydantic.Field(default=None)
@@ -40,6 +45,11 @@ class FulfillmentPreferences(UniversalBaseModel):
     quantity: typing.Optional[FulfillmentMode] = pydantic.Field(default=None)
     """
     `best_effort`: if the retailer caps an item below the requested quantity, buy the cap instead of failing with `quantity_limit_exceeded`. Omit to require the full quantity.
+    """
+
+    excluded_merchants: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Merchants this order must never be bought from: a display name as shown on the retailer's storefront (matched ignoring case and spacing) or an Amazon Business `amzn1.` merchant id. At most 20 entries. Added to any blocklist already on your account; it can only bar more merchants, never allow a barred one. Currently applied to Amazon Business orders only and ignored elsewhere.
     """
 
     if IS_PYDANTIC_V2:

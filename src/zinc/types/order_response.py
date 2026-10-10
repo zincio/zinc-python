@@ -55,7 +55,7 @@ class OrderResponse(UniversalBaseModel):
 
     payment: typing.Optional[OrderPaymentInfo] = pydantic.Field(default=None)
     """
-    Card hold details when this order was paid with payment.mode='card'; null for wallet and Connect orders.
+    Card hold details when this order was paid by card outside the wallet and Connect; null for wallet and Connect orders.
     """
 
     customer_notifications: typing.Optional[CustomerNotificationStatus] = pydantic.Field(default=None)

@@ -271,6 +271,7 @@ class OrdersClient:
         order_id: typing.Optional[str] = None,
         search: typing.Optional[str] = None,
         merchant_order_id: typing.Optional[str] = None,
+        shipping_name: typing.Optional[str] = None,
         status_filter: typing.Optional[str] = None,
         tracking_status: typing.Optional[str] = None,
         has_tracking: typing.Optional[bool] = None,
@@ -303,6 +304,9 @@ class OrdersClient:
 
         merchant_order_id : typing.Optional[str]
             Filter by the retailer's own order number (e.g. an Amazon `113-…` ID), matched exactly against any of the order's order-placing jobs. Exact, not partial — dashes in the term are matched both as typed and stripped.
+
+        shipping_name : typing.Optional[str]
+            Filter by the shipping recipient's name, matched as a case-insensitive substring of `first_name last_name`.
 
         status_filter : typing.Optional[str]
             Filter by order status
@@ -359,6 +363,7 @@ class OrdersClient:
             order_id=order_id,
             search=search,
             merchant_order_id=merchant_order_id,
+            shipping_name=shipping_name,
             status_filter=status_filter,
             tracking_status=tracking_status,
             has_tracking=has_tracking,
@@ -378,10 +383,9 @@ class OrdersClient:
         self,
         *,
         products: typing.Sequence[OrderProduct],
-        shipping_address: Address,
         max_price: int,
-        zinc_client: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
+        shipping_address: typing.Optional[Address] = OMIT,
         idempotency_key: typing.Optional[str] = OMIT,
         retailer_credentials_id: typing.Optional[str] = OMIT,
         metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
@@ -401,21 +405,19 @@ class OrdersClient:
         ----------
         products : typing.Sequence[OrderProduct]
 
-        shipping_address : Address
-
         max_price : int
             Maximum price (in cents) allowed for an order before it is finalized.
 
-        zinc_client : typing.Optional[str]
-            Which assistant the buyer is using (claude, chatgpt, codex, …). Only used when the order needs a payment page, so it can send the buyer back afterwards.
-
         authorization : typing.Optional[str]
+
+        shipping_address : typing.Optional[Address]
+            Where to ship. Required for wallet and Connect orders.
 
         idempotency_key : typing.Optional[str]
             Optional idempotency key to prevent duplicate orders. If not provided, one will be generated.
 
         retailer_credentials_id : typing.Optional[str]
-            Optional short ID (e.g., 'zn_acct_XXXXXXXX') of specific retailer credentials to use for this order. If not provided, credentials will be selected automatically.
+            Optional short ID (e.g. 'zn_acct_XXXXXXXX') of one of your own saved retailer accounts to place this order on. The item is then paid for by the payment method saved on that account, and your wallet is charged the API fee only — so the balance needed to place the order is the fee, not max_price + fee. Omit it and the order is placed on a Zinc account and funded from your wallet; Zinc never substitutes one of your saved accounts, so send this field on every order that has to run on yours.
 
         metadata : typing.Optional[typing.Dict[str, typing.Any]]
             Optional metadata to attach to the order. Can contain arbitrary key-value pairs.
@@ -439,7 +441,7 @@ class OrdersClient:
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         fulfillment : typing.Optional[FulfillmentPreferences]
-            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed.
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants` tightens instead: merchants this order must not be bought from.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -451,7 +453,7 @@ class OrdersClient:
 
         Examples
         --------
-        from zinc import Address, OrderProduct, ZincClient
+        from zinc import OrderProduct, ZincClient
 
         client = ZincClient(
             api_key="YOUR_API_KEY",
@@ -462,23 +464,14 @@ class OrdersClient:
                     url="https://www.amazon.com/dp/B07JGBW826",
                 )
             ],
-            shipping_address=Address(
-                first_name="first_name",
-                last_name="last_name",
-                address_line1="address_line1",
-                city="city",
-                postal_code="postal_code",
-                phone_number="phone_number",
-            ),
             max_price=1,
         )
         """
         _response = self._raw_client.create_order(
             products=products,
-            shipping_address=shipping_address,
             max_price=max_price,
-            zinc_client=zinc_client,
             authorization=authorization,
+            shipping_address=shipping_address,
             idempotency_key=idempotency_key,
             retailer_credentials_id=retailer_credentials_id,
             metadata=metadata,
@@ -500,6 +493,7 @@ class OrdersClient:
         search: typing.Optional[str] = None,
         status_filter: typing.Optional[str] = None,
         merchant_order_id: typing.Optional[str] = None,
+        shipping_name: typing.Optional[str] = None,
         tracking_status: typing.Optional[str] = None,
         has_tracking: typing.Optional[bool] = None,
         return_status: typing.Optional[str] = None,
@@ -532,6 +526,9 @@ class OrdersClient:
 
         merchant_order_id : typing.Optional[str]
             Filter by the retailer's own order number (exact match)
+
+        shipping_name : typing.Optional[str]
+            Shipping recipient's name (case-insensitive partial match)
 
         tracking_status : typing.Optional[str]
             Filter to orders having at least one tracking number with this status
@@ -581,6 +578,7 @@ class OrdersClient:
             search=search,
             status_filter=status_filter,
             merchant_order_id=merchant_order_id,
+            shipping_name=shipping_name,
             tracking_status=tracking_status,
             has_tracking=has_tracking,
             return_status=return_status,
@@ -1037,6 +1035,7 @@ class AsyncOrdersClient:
         order_id: typing.Optional[str] = None,
         search: typing.Optional[str] = None,
         merchant_order_id: typing.Optional[str] = None,
+        shipping_name: typing.Optional[str] = None,
         status_filter: typing.Optional[str] = None,
         tracking_status: typing.Optional[str] = None,
         has_tracking: typing.Optional[bool] = None,
@@ -1069,6 +1068,9 @@ class AsyncOrdersClient:
 
         merchant_order_id : typing.Optional[str]
             Filter by the retailer's own order number (e.g. an Amazon `113-…` ID), matched exactly against any of the order's order-placing jobs. Exact, not partial — dashes in the term are matched both as typed and stripped.
+
+        shipping_name : typing.Optional[str]
+            Filter by the shipping recipient's name, matched as a case-insensitive substring of `first_name last_name`.
 
         status_filter : typing.Optional[str]
             Filter by order status
@@ -1133,6 +1135,7 @@ class AsyncOrdersClient:
             order_id=order_id,
             search=search,
             merchant_order_id=merchant_order_id,
+            shipping_name=shipping_name,
             status_filter=status_filter,
             tracking_status=tracking_status,
             has_tracking=has_tracking,
@@ -1152,10 +1155,9 @@ class AsyncOrdersClient:
         self,
         *,
         products: typing.Sequence[OrderProduct],
-        shipping_address: Address,
         max_price: int,
-        zinc_client: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
+        shipping_address: typing.Optional[Address] = OMIT,
         idempotency_key: typing.Optional[str] = OMIT,
         retailer_credentials_id: typing.Optional[str] = OMIT,
         metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
@@ -1175,21 +1177,19 @@ class AsyncOrdersClient:
         ----------
         products : typing.Sequence[OrderProduct]
 
-        shipping_address : Address
-
         max_price : int
             Maximum price (in cents) allowed for an order before it is finalized.
 
-        zinc_client : typing.Optional[str]
-            Which assistant the buyer is using (claude, chatgpt, codex, …). Only used when the order needs a payment page, so it can send the buyer back afterwards.
-
         authorization : typing.Optional[str]
+
+        shipping_address : typing.Optional[Address]
+            Where to ship. Required for wallet and Connect orders.
 
         idempotency_key : typing.Optional[str]
             Optional idempotency key to prevent duplicate orders. If not provided, one will be generated.
 
         retailer_credentials_id : typing.Optional[str]
-            Optional short ID (e.g., 'zn_acct_XXXXXXXX') of specific retailer credentials to use for this order. If not provided, credentials will be selected automatically.
+            Optional short ID (e.g. 'zn_acct_XXXXXXXX') of one of your own saved retailer accounts to place this order on. The item is then paid for by the payment method saved on that account, and your wallet is charged the API fee only — so the balance needed to place the order is the fee, not max_price + fee. Omit it and the order is placed on a Zinc account and funded from your wallet; Zinc never substitutes one of your saved accounts, so send this field on every order that has to run on yours.
 
         metadata : typing.Optional[typing.Dict[str, typing.Any]]
             Optional metadata to attach to the order. Can contain arbitrary key-value pairs.
@@ -1213,7 +1213,7 @@ class AsyncOrdersClient:
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         fulfillment : typing.Optional[FulfillmentPreferences]
-            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed.
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants` tightens instead: merchants this order must not be bought from.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1227,7 +1227,7 @@ class AsyncOrdersClient:
         --------
         import asyncio
 
-        from zinc import Address, AsyncZincClient, OrderProduct
+        from zinc import AsyncZincClient, OrderProduct
 
         client = AsyncZincClient(
             api_key="YOUR_API_KEY",
@@ -1241,14 +1241,6 @@ class AsyncOrdersClient:
                         url="https://www.amazon.com/dp/B07JGBW826",
                     )
                 ],
-                shipping_address=Address(
-                    first_name="first_name",
-                    last_name="last_name",
-                    address_line1="address_line1",
-                    city="city",
-                    postal_code="postal_code",
-                    phone_number="phone_number",
-                ),
                 max_price=1,
             )
 
@@ -1257,10 +1249,9 @@ class AsyncOrdersClient:
         """
         _response = await self._raw_client.create_order(
             products=products,
-            shipping_address=shipping_address,
             max_price=max_price,
-            zinc_client=zinc_client,
             authorization=authorization,
+            shipping_address=shipping_address,
             idempotency_key=idempotency_key,
             retailer_credentials_id=retailer_credentials_id,
             metadata=metadata,
@@ -1282,6 +1273,7 @@ class AsyncOrdersClient:
         search: typing.Optional[str] = None,
         status_filter: typing.Optional[str] = None,
         merchant_order_id: typing.Optional[str] = None,
+        shipping_name: typing.Optional[str] = None,
         tracking_status: typing.Optional[str] = None,
         has_tracking: typing.Optional[bool] = None,
         return_status: typing.Optional[str] = None,
@@ -1314,6 +1306,9 @@ class AsyncOrdersClient:
 
         merchant_order_id : typing.Optional[str]
             Filter by the retailer's own order number (exact match)
+
+        shipping_name : typing.Optional[str]
+            Shipping recipient's name (case-insensitive partial match)
 
         tracking_status : typing.Optional[str]
             Filter to orders having at least one tracking number with this status
@@ -1371,6 +1366,7 @@ class AsyncOrdersClient:
             search=search,
             status_filter=status_filter,
             merchant_order_id=merchant_order_id,
+            shipping_name=shipping_name,
             tracking_status=tracking_status,
             has_tracking=has_tracking,
             return_status=return_status,

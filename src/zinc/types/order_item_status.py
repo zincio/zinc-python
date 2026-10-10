@@ -3,6 +3,16 @@
 import typing
 
 OrderItemStatus = typing.Union[
-    typing.Literal["pending", "processing", "ordered", "shipped", "delivered", "cancelled", "failed", "skipped"],
+    typing.Literal[
+        "pending",
+        "processing",
+        "ordered",
+        "shipped",
+        "available_for_pickup",
+        "delivered",
+        "cancelled",
+        "failed",
+        "skipped",
+    ],
     typing.Any,
 ]

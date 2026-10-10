@@ -43,6 +43,11 @@ class TrackingNumberResponse(UniversalBaseModel):
     Carrier-reported delivery estimate for this shipment, as a destination-local calendar date. Refreshed on every carrier poll; null when the carrier hasn't reported one.
     """
 
+    delivery_proof_url: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    URL of the carrier's proof-of-delivery photo, when one was captured. Typically appears once the shipment is delivered; null when none is available.
+    """
+
     checkpoints: typing.Optional[typing.List[TrackingCheckpointResponse]] = pydantic.Field(default=None)
     """
     Carrier scan events, most recent first. Empty unless the checkpoint timeline was requested.

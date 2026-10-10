@@ -44,9 +44,11 @@ class RawProductsClient:
         through with `next_page` to collect more — `next_page` reflects whether Best
         Buy has further results, not how many came back in this response.
 
-        **Shopify stores are their own retailer**: pass the store's domain as
-        `retailer` (e.g. `retailer=yetch.studio`; any Shopify-powered storefront
-        works). Results are the store's own top matches (~10) and there is no
+        **Shopify stores are their own retailer**: pass the store's Zinc retailer
+        slug as `retailer` (e.g. `retailer=yetch`; its domain, `yetch.studio`, also
+        works). The store must be in Zinc's catalog: an uncatalogued store is
+        rejected with a 422, and `GET /retailers/check?url=...` returns a
+        catalogued store's slug. Results are the store's own top matches (~10) and there is no
         pagination, so `next_page` is always null and `page` must be omitted or 1.
         `product_id` is the store-scoped product handle to pass to the details
         endpoint with the same `retailer`.
@@ -75,7 +77,7 @@ class RawProductsClient:
             Search term
 
         retailer : str
-            Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
 
         page : typing.Optional[int]
             Page number for pagination
@@ -172,7 +174,7 @@ class RawProductsClient:
         product_id : str
 
         retailer : str
-            Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
 
         max_age : typing.Optional[int]
             Max response age in seconds, at least 31 (mutually exclusive with newer_than)
@@ -270,11 +272,12 @@ class RawProductsClient:
         Unlike `/search`, a Best Buy detail response is complete: detail pages are
         fully server-rendered, so nothing is withheld for client-side loading.
 
-        **Shopify is addressed by (store, handle)**: pass the store's domain as
-        `retailer` (e.g. `retailer=yetch.studio`) and the product handle — the slug
-        in `/products/{handle}`, returned as `product_id` by search — as the path
-        parameter. The response includes per-variant price and availability.
-        `async` is not supported for Shopify stores.
+        **Shopify is addressed by (store, handle)**: pass the store's retailer slug
+        as `retailer` (e.g. `retailer=yetch`) and the product handle — the slug
+        in `/products/{handle}`, returned as `product_id` by search — as
+        `product_id`. The response includes per-variant price and availability,
+        `retailer` (the store's slug) and `platform: "shopify"`. `async` is not
+        supported for Shopify stores.
 
         **Etsy is addressed by the numeric listing id** (returned as `product_id` by
         search). `price` is in minor units of `currency_code`, not converted to USD.
@@ -301,7 +304,7 @@ class RawProductsClient:
         product_id : str
 
         retailer : str
-            Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
 
         max_age : typing.Optional[int]
             Max response age in seconds, at least 31 (mutually exclusive with newer_than)
@@ -402,9 +405,11 @@ class AsyncRawProductsClient:
         through with `next_page` to collect more — `next_page` reflects whether Best
         Buy has further results, not how many came back in this response.
 
-        **Shopify stores are their own retailer**: pass the store's domain as
-        `retailer` (e.g. `retailer=yetch.studio`; any Shopify-powered storefront
-        works). Results are the store's own top matches (~10) and there is no
+        **Shopify stores are their own retailer**: pass the store's Zinc retailer
+        slug as `retailer` (e.g. `retailer=yetch`; its domain, `yetch.studio`, also
+        works). The store must be in Zinc's catalog: an uncatalogued store is
+        rejected with a 422, and `GET /retailers/check?url=...` returns a
+        catalogued store's slug. Results are the store's own top matches (~10) and there is no
         pagination, so `next_page` is always null and `page` must be omitted or 1.
         `product_id` is the store-scoped product handle to pass to the details
         endpoint with the same `retailer`.
@@ -433,7 +438,7 @@ class AsyncRawProductsClient:
             Search term
 
         retailer : str
-            Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
 
         page : typing.Optional[int]
             Page number for pagination
@@ -530,7 +535,7 @@ class AsyncRawProductsClient:
         product_id : str
 
         retailer : str
-            Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
 
         max_age : typing.Optional[int]
             Max response age in seconds, at least 31 (mutually exclusive with newer_than)
@@ -628,11 +633,12 @@ class AsyncRawProductsClient:
         Unlike `/search`, a Best Buy detail response is complete: detail pages are
         fully server-rendered, so nothing is withheld for client-side loading.
 
-        **Shopify is addressed by (store, handle)**: pass the store's domain as
-        `retailer` (e.g. `retailer=yetch.studio`) and the product handle — the slug
-        in `/products/{handle}`, returned as `product_id` by search — as the path
-        parameter. The response includes per-variant price and availability.
-        `async` is not supported for Shopify stores.
+        **Shopify is addressed by (store, handle)**: pass the store's retailer slug
+        as `retailer` (e.g. `retailer=yetch`) and the product handle — the slug
+        in `/products/{handle}`, returned as `product_id` by search — as
+        `product_id`. The response includes per-variant price and availability,
+        `retailer` (the store's slug) and `platform: "shopify"`. `async` is not
+        supported for Shopify stores.
 
         **Etsy is addressed by the numeric listing id** (returned as `product_id` by
         search). `price` is in minor units of `currency_code`, not converted to USD.
@@ -659,7 +665,7 @@ class AsyncRawProductsClient:
         product_id : str
 
         retailer : str
-            Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
 
         max_age : typing.Optional[int]
             Max response age in seconds, at least 31 (mutually exclusive with newer_than)

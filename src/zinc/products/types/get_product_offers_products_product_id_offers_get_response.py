@@ -34,7 +34,7 @@ class GetProductOffersProductsProductIdOffersGetResponse(UniversalBaseModel):
 
     retailer: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Retailer that served the offers, e.g. `amazon`.
+    Zinc retailer slug that served the offers, e.g. `amazon`.
     """
 
     asin: typing.Optional[str] = pydantic.Field(default=None)

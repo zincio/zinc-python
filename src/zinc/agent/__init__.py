@@ -7,7 +7,6 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .types import (
-        AgentProductDetailsRequestRetailer,
         AgentProductDetailsResponse,
         AgentProductDetailsResponseAllVariantsItem,
         AgentProductDetailsResponseAllVariantsItemVariantSpecificsItem,
@@ -23,7 +22,6 @@ if typing.TYPE_CHECKING:
         AgentProductDetailsResponseVariantSpecificsItem,
         AgentProductDetailsResponseVariantsItem,
         AgentProductDetailsResponseVariantsItemPropertiesItem,
-        AgentProductOffersRequestRetailer,
         AgentProductOffersResponse,
         AgentProductOffersResponseOffersItem,
         AgentProductOffersResponseOffersItemCondition,
@@ -32,12 +30,10 @@ if typing.TYPE_CHECKING:
         AgentProductOffersResponseOffersItemShippingOptionsItem,
         AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays,
         AgentProductOffersResponseStatus,
-        AgentProductSearchRequestRetailer,
         AgentSearchRequestRetailerItem,
         AgentSearchRequestSort,
     )
 _dynamic_imports: typing.Dict[str, str] = {
-    "AgentProductDetailsRequestRetailer": ".types",
     "AgentProductDetailsResponse": ".types",
     "AgentProductDetailsResponseAllVariantsItem": ".types",
     "AgentProductDetailsResponseAllVariantsItemVariantSpecificsItem": ".types",
@@ -53,7 +49,6 @@ _dynamic_imports: typing.Dict[str, str] = {
     "AgentProductDetailsResponseVariantSpecificsItem": ".types",
     "AgentProductDetailsResponseVariantsItem": ".types",
     "AgentProductDetailsResponseVariantsItemPropertiesItem": ".types",
-    "AgentProductOffersRequestRetailer": ".types",
     "AgentProductOffersResponse": ".types",
     "AgentProductOffersResponseOffersItem": ".types",
     "AgentProductOffersResponseOffersItemCondition": ".types",
@@ -62,7 +57,6 @@ _dynamic_imports: typing.Dict[str, str] = {
     "AgentProductOffersResponseOffersItemShippingOptionsItem": ".types",
     "AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays": ".types",
     "AgentProductOffersResponseStatus": ".types",
-    "AgentProductSearchRequestRetailer": ".types",
     "AgentSearchRequestRetailerItem": ".types",
     "AgentSearchRequestSort": ".types",
 }
@@ -90,7 +84,6 @@ def __dir__():
 
 
 __all__ = [
-    "AgentProductDetailsRequestRetailer",
     "AgentProductDetailsResponse",
     "AgentProductDetailsResponseAllVariantsItem",
     "AgentProductDetailsResponseAllVariantsItemVariantSpecificsItem",
@@ -106,7 +99,6 @@ __all__ = [
     "AgentProductDetailsResponseVariantSpecificsItem",
     "AgentProductDetailsResponseVariantsItem",
     "AgentProductDetailsResponseVariantsItemPropertiesItem",
-    "AgentProductOffersRequestRetailer",
     "AgentProductOffersResponse",
     "AgentProductOffersResponseOffersItem",
     "AgentProductOffersResponseOffersItemCondition",
@@ -115,7 +107,6 @@ __all__ = [
     "AgentProductOffersResponseOffersItemShippingOptionsItem",
     "AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays",
     "AgentProductOffersResponseStatus",
-    "AgentProductSearchRequestRetailer",
     "AgentSearchRequestRetailerItem",
     "AgentSearchRequestSort",
 ]

@@ -13,11 +13,8 @@ from ..types.order_response import OrderResponse
 from ..types.product_search_response import ProductSearchResponse
 from ..types.search_response import SearchResponse
 from .raw_client import AsyncRawAgentClient, RawAgentClient
-from .types.agent_product_details_request_retailer import AgentProductDetailsRequestRetailer
 from .types.agent_product_details_response import AgentProductDetailsResponse
-from .types.agent_product_offers_request_retailer import AgentProductOffersRequestRetailer
 from .types.agent_product_offers_response import AgentProductOffersResponse
-from .types.agent_product_search_request_retailer import AgentProductSearchRequestRetailer
 from .types.agent_search_request_retailer_item import AgentSearchRequestRetailerItem
 from .types.agent_search_request_sort import AgentSearchRequestSort
 
@@ -96,7 +93,7 @@ class AgentClient:
             Optional idempotency key to prevent duplicate orders. If not provided, one will be generated.
 
         retailer_credentials_id : typing.Optional[str]
-            Optional short ID (e.g., 'zn_acct_XXXXXXXX') of specific retailer credentials to use for this order. If not provided, credentials will be selected automatically.
+            Optional short ID (e.g. 'zn_acct_XXXXXXXX') of one of your own saved retailer accounts to place this order on. The item is then paid for by the payment method saved on that account, and your wallet is charged the API fee only — so the balance needed to place the order is the fee, not max_price + fee. Omit it and the order is placed on a Zinc account and funded from your wallet; Zinc never substitutes one of your saved accounts, so send this field on every order that has to run on yours.
 
         metadata : typing.Optional[typing.Dict[str, typing.Any]]
             Optional metadata to attach to the order. Can contain arbitrary key-value pairs.
@@ -120,7 +117,7 @@ class AgentClient:
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         fulfillment : typing.Optional[FulfillmentPreferences]
-            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed.
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants` tightens instead: merchants this order must not be bought from.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -245,27 +242,59 @@ class AgentClient:
         self,
         *,
         query: str,
-        retailer: AgentProductSearchRequestRetailer,
+        retailer: str,
         page: typing.Optional[int] = None,
         free_shipping: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ProductSearchResponse:
         """
-        Per-retailer product search for agents (amazon | walmart).
+        Per-retailer product search for agents.
+
+        **Best Buy returns a partial page.** Best Buy server-renders only about 4 of
+        the ~24 products on a search page and loads the rest in the browser, so each
+        page yields roughly 4 results rather than a full page. Ranking, pricing and
+        availability are Best Buy's own; there are simply fewer items per page. Page
+        through with `next_page` to collect more — `next_page` reflects whether Best
+        Buy has further results, not how many came back in this response.
+
+        **Shopify stores are their own retailer**: pass the store's Zinc retailer
+        slug as `retailer` (e.g. `retailer=yetch`; its domain, `yetch.studio`, also
+        works). The store must be in Zinc's catalog: an uncatalogued store is
+        rejected with a 422, and `GET /retailers/check?url=...` returns a
+        catalogued store's slug. Results are the store's own top matches (~10) and there is no
+        pagination, so `next_page` is always null and `page` must be omitted or 1.
+        `product_id` is the store-scoped product handle to pass to the details
+        endpoint with the same `retailer`.
+
+        **Etsy search covers US shops, priced in USD.** Etsy sellers price in their
+        own currency and a single page routinely mixes several, which makes `price`
+        incomparable across a result set — so search is narrowed to US-located
+        shops and any remaining non-USD listing is dropped. `currency_code` is set
+        on every result and is always `USD` here, and prices are never converted,
+        so the number is what the seller charges. Because the currency check runs
+        after Etsy paginates, **a page can come back short while more results still
+        exist** — page on with `next_page`. (Details is neither narrowed nor
+        filtered: it returns any listing, in its own currency.)
+
+        Etsy results carry no `stars`/`num_reviews` — Etsy publishes a rating for
+        the *shop*, not the listing, and reporting a seller's rating as the
+        product's would be misleading; `brand` carries the shop name, and the
+        details endpoint reports the shop's rating explicitly. `product_id` is the
+        numeric listing id.
 
         Parameters
         ----------
         query : str
             Search term
 
-        retailer : AgentProductSearchRequestRetailer
-            Retailer: amazon or walmart
+        retailer : str
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
 
         page : typing.Optional[int]
             Page number for pagination
 
         free_shipping : typing.Optional[bool]
-            Only return items that ship for free (Walmart: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so Amazon results are returned unfiltered. Applied per-page after pagination; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results.
+            Only return items that ship for free (Walmart and Best Buy: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results. Rejected for Shopify stores: their search data carries no shipping information, so the filter cannot be honored.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -284,7 +313,7 @@ class AgentClient:
         )
         client.agent.product_search(
             query="query",
-            retailer="amazon",
+            retailer="retailer",
         )
         """
         _response = self._raw_client.product_search(
@@ -296,7 +325,7 @@ class AgentClient:
         self,
         *,
         product_id: str,
-        retailer: AgentProductOffersRequestRetailer,
+        retailer: str,
         max_age: typing.Optional[int] = None,
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
@@ -305,13 +334,16 @@ class AgentClient:
         """
         Offers/pricing for a specific product on a retailer.
 
+        Not available for Shopify stores: a storefront lists one seller (itself),
+        so per-variant price and availability live on the details endpoint instead.
+
         Parameters
         ----------
         product_id : str
             Product identifier (e.g. ASIN)
 
-        retailer : AgentProductOffersRequestRetailer
-            Retailer: amazon or walmart
+        retailer : str
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
 
         max_age : typing.Optional[int]
             Max response age in seconds, at least 31 (mutually exclusive with newer_than)
@@ -339,7 +371,7 @@ class AgentClient:
         )
         client.agent.product_offers(
             product_id="product_id",
-            retailer="amazon",
+            retailer="retailer",
         )
         """
         _response = self._raw_client.product_offers(
@@ -356,7 +388,7 @@ class AgentClient:
         self,
         *,
         product_id: str,
-        retailer: AgentProductDetailsRequestRetailer,
+        retailer: str,
         max_age: typing.Optional[int] = None,
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
@@ -365,13 +397,46 @@ class AgentClient:
         """
         Full product details for a specific product on a retailer.
 
+        **Best Buy is addressed by `bsin`**, not by the numeric SKU — the bsin is the
+        trailing id in a Best Buy product URL (`/product/{slug}/{bsin}`). Search
+        results return the SKU as `product_id` and also carry the bsin, so pass the
+        bsin here. The response repeats the SKU as `sku` for cross-referencing.
+
+        Unlike `/search`, a Best Buy detail response is complete: detail pages are
+        fully server-rendered, so nothing is withheld for client-side loading.
+
+        **Shopify is addressed by (store, handle)**: pass the store's retailer slug
+        as `retailer` (e.g. `retailer=yetch`) and the product handle — the slug
+        in `/products/{handle}`, returned as `product_id` by search — as
+        `product_id`. The response includes per-variant price and availability,
+        `retailer` (the store's slug) and `platform: "shopify"`. `async` is not
+        supported for Shopify stores.
+
+        **Etsy is addressed by the numeric listing id** (returned as `product_id` by
+        search). `price` is in minor units of `currency_code`, not converted to USD.
+
+        Etsy ratings are the **shop's**, reported as `shop_review_average` /
+        `shop_review_count`, and both cover only the **past year** — an established
+        shop with no recent sales reports 0, and an unrated shop reports a null
+        average rather than 0.0 stars. `stars` and `num_reviews` are deliberately
+        not set: they mean a product's rating everywhere else in this API, and a
+        seller's rating is a different claim.
+
+        `listing_type` is `physical`, `download` or `both` — a download has nothing
+        to ship. `available` accounts for the shop being on vacation as well as
+        stock, so it can be false on an in-stock active listing; `shop_is_vacation`
+        says which it was. `variants` is populated only when Etsy exposes a
+        listing's inventory matrix — check `has_variations` to tell "no variants"
+        from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
+        is no category name yet. `async` is not supported for Etsy.
+
         Parameters
         ----------
         product_id : str
             Product identifier (e.g. ASIN)
 
-        retailer : AgentProductDetailsRequestRetailer
-            Retailer: amazon or walmart
+        retailer : str
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
 
         max_age : typing.Optional[int]
             Max response age in seconds, at least 31 (mutually exclusive with newer_than)
@@ -399,7 +464,7 @@ class AgentClient:
         )
         client.agent.product_details(
             product_id="product_id",
-            retailer="amazon",
+            retailer="retailer",
         )
         """
         _response = self._raw_client.product_details(
@@ -484,7 +549,7 @@ class AsyncAgentClient:
             Optional idempotency key to prevent duplicate orders. If not provided, one will be generated.
 
         retailer_credentials_id : typing.Optional[str]
-            Optional short ID (e.g., 'zn_acct_XXXXXXXX') of specific retailer credentials to use for this order. If not provided, credentials will be selected automatically.
+            Optional short ID (e.g. 'zn_acct_XXXXXXXX') of one of your own saved retailer accounts to place this order on. The item is then paid for by the payment method saved on that account, and your wallet is charged the API fee only — so the balance needed to place the order is the fee, not max_price + fee. Omit it and the order is placed on a Zinc account and funded from your wallet; Zinc never substitutes one of your saved accounts, so send this field on every order that has to run on yours.
 
         metadata : typing.Optional[typing.Dict[str, typing.Any]]
             Optional metadata to attach to the order. Can contain arbitrary key-value pairs.
@@ -508,7 +573,7 @@ class AsyncAgentClient:
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         fulfillment : typing.Optional[FulfillmentPreferences]
-            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed.
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants` tightens instead: merchants this order must not be bought from.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -649,27 +714,59 @@ class AsyncAgentClient:
         self,
         *,
         query: str,
-        retailer: AgentProductSearchRequestRetailer,
+        retailer: str,
         page: typing.Optional[int] = None,
         free_shipping: typing.Optional[bool] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ProductSearchResponse:
         """
-        Per-retailer product search for agents (amazon | walmart).
+        Per-retailer product search for agents.
+
+        **Best Buy returns a partial page.** Best Buy server-renders only about 4 of
+        the ~24 products on a search page and loads the rest in the browser, so each
+        page yields roughly 4 results rather than a full page. Ranking, pricing and
+        availability are Best Buy's own; there are simply fewer items per page. Page
+        through with `next_page` to collect more — `next_page` reflects whether Best
+        Buy has further results, not how many came back in this response.
+
+        **Shopify stores are their own retailer**: pass the store's Zinc retailer
+        slug as `retailer` (e.g. `retailer=yetch`; its domain, `yetch.studio`, also
+        works). The store must be in Zinc's catalog: an uncatalogued store is
+        rejected with a 422, and `GET /retailers/check?url=...` returns a
+        catalogued store's slug. Results are the store's own top matches (~10) and there is no
+        pagination, so `next_page` is always null and `page` must be omitted or 1.
+        `product_id` is the store-scoped product handle to pass to the details
+        endpoint with the same `retailer`.
+
+        **Etsy search covers US shops, priced in USD.** Etsy sellers price in their
+        own currency and a single page routinely mixes several, which makes `price`
+        incomparable across a result set — so search is narrowed to US-located
+        shops and any remaining non-USD listing is dropped. `currency_code` is set
+        on every result and is always `USD` here, and prices are never converted,
+        so the number is what the seller charges. Because the currency check runs
+        after Etsy paginates, **a page can come back short while more results still
+        exist** — page on with `next_page`. (Details is neither narrowed nor
+        filtered: it returns any listing, in its own currency.)
+
+        Etsy results carry no `stars`/`num_reviews` — Etsy publishes a rating for
+        the *shop*, not the listing, and reporting a seller's rating as the
+        product's would be misleading; `brand` carries the shop name, and the
+        details endpoint reports the shop's rating explicitly. `product_id` is the
+        numeric listing id.
 
         Parameters
         ----------
         query : str
             Search term
 
-        retailer : AgentProductSearchRequestRetailer
-            Retailer: amazon or walmart
+        retailer : str
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
 
         page : typing.Optional[int]
             Page number for pagination
 
         free_shipping : typing.Optional[bool]
-            Only return items that ship for free (Walmart: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so Amazon results are returned unfiltered. Applied per-page after pagination; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results.
+            Only return items that ship for free (Walmart and Best Buy: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results. Rejected for Shopify stores: their search data carries no shipping information, so the filter cannot be honored.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -693,7 +790,7 @@ class AsyncAgentClient:
         async def main() -> None:
             await client.agent.product_search(
                 query="query",
-                retailer="amazon",
+                retailer="retailer",
             )
 
 
@@ -708,7 +805,7 @@ class AsyncAgentClient:
         self,
         *,
         product_id: str,
-        retailer: AgentProductOffersRequestRetailer,
+        retailer: str,
         max_age: typing.Optional[int] = None,
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
@@ -717,13 +814,16 @@ class AsyncAgentClient:
         """
         Offers/pricing for a specific product on a retailer.
 
+        Not available for Shopify stores: a storefront lists one seller (itself),
+        so per-variant price and availability live on the details endpoint instead.
+
         Parameters
         ----------
         product_id : str
             Product identifier (e.g. ASIN)
 
-        retailer : AgentProductOffersRequestRetailer
-            Retailer: amazon or walmart
+        retailer : str
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
 
         max_age : typing.Optional[int]
             Max response age in seconds, at least 31 (mutually exclusive with newer_than)
@@ -756,7 +856,7 @@ class AsyncAgentClient:
         async def main() -> None:
             await client.agent.product_offers(
                 product_id="product_id",
-                retailer="amazon",
+                retailer="retailer",
             )
 
 
@@ -776,7 +876,7 @@ class AsyncAgentClient:
         self,
         *,
         product_id: str,
-        retailer: AgentProductDetailsRequestRetailer,
+        retailer: str,
         max_age: typing.Optional[int] = None,
         newer_than: typing.Optional[int] = None,
         async_: typing.Optional[bool] = None,
@@ -785,13 +885,46 @@ class AsyncAgentClient:
         """
         Full product details for a specific product on a retailer.
 
+        **Best Buy is addressed by `bsin`**, not by the numeric SKU — the bsin is the
+        trailing id in a Best Buy product URL (`/product/{slug}/{bsin}`). Search
+        results return the SKU as `product_id` and also carry the bsin, so pass the
+        bsin here. The response repeats the SKU as `sku` for cross-referencing.
+
+        Unlike `/search`, a Best Buy detail response is complete: detail pages are
+        fully server-rendered, so nothing is withheld for client-side loading.
+
+        **Shopify is addressed by (store, handle)**: pass the store's retailer slug
+        as `retailer` (e.g. `retailer=yetch`) and the product handle — the slug
+        in `/products/{handle}`, returned as `product_id` by search — as
+        `product_id`. The response includes per-variant price and availability,
+        `retailer` (the store's slug) and `platform: "shopify"`. `async` is not
+        supported for Shopify stores.
+
+        **Etsy is addressed by the numeric listing id** (returned as `product_id` by
+        search). `price` is in minor units of `currency_code`, not converted to USD.
+
+        Etsy ratings are the **shop's**, reported as `shop_review_average` /
+        `shop_review_count`, and both cover only the **past year** — an established
+        shop with no recent sales reports 0, and an unrated shop reports a null
+        average rather than 0.0 stars. `stars` and `num_reviews` are deliberately
+        not set: they mean a product's rating everywhere else in this API, and a
+        seller's rating is a different claim.
+
+        `listing_type` is `physical`, `download` or `both` — a download has nothing
+        to ship. `available` accounts for the shop being on vacation as well as
+        stock, so it can be false on an in-stock active listing; `shop_is_vacation`
+        says which it was. `variants` is populated only when Etsy exposes a
+        listing's inventory matrix — check `has_variations` to tell "no variants"
+        from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
+        is no category name yet. `async` is not supported for Etsy.
+
         Parameters
         ----------
         product_id : str
             Product identifier (e.g. ASIN)
 
-        retailer : AgentProductDetailsRequestRetailer
-            Retailer: amazon or walmart
+        retailer : str
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
 
         max_age : typing.Optional[int]
             Max response age in seconds, at least 31 (mutually exclusive with newer_than)
@@ -824,7 +957,7 @@ class AsyncAgentClient:
         async def main() -> None:
             await client.agent.product_details(
                 product_id="product_id",
-                retailer="amazon",
+                retailer="retailer",
             )
 
 

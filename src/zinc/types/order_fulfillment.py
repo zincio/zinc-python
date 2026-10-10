@@ -30,6 +30,11 @@ class OrderFulfillment(UniversalBaseModel):
     `best_effort`: if the retailer caps an item below the requested quantity, buy the cap instead of failing with `quantity_limit_exceeded`. Omit to require the full quantity.
     """
 
+    excluded_merchants: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Merchants this order must never be bought from: a display name as shown on the retailer's storefront (matched ignoring case and spacing) or an Amazon Business `amzn1.` merchant id. At most 20 entries. Added to any blocklist already on your account; it can only bar more merchants, never allow a barred one. Currently applied to Amazon Business orders only and ignored elsewhere.
+    """
+
     concessions: typing.Optional[typing.List[FulfillmentConcession]] = None
 
     if IS_PYDANTIC_V2:

@@ -10,7 +10,7 @@ class FieldError(UniversalBaseModel):
     """
     A single field-level validation failure from a worker.
 
-    Mirrors Sonic's `FieldError` (src/agent/types.py): when a job fails schema
+    When a job fails schema
     validation the worker reports one of these per offending field, so consumers
     can show "state should be 'NY', got 'New York'" instead of a bare count.
     """

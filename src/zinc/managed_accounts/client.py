@@ -88,6 +88,13 @@ class ManagedAccountsClient:
     ) -> RetailerCredentialsResponse:
         """
         Create new retailer credentials for the current user.
+
+        Saving an account does not, on its own, change how orders are placed: an
+        order runs on this account only when it passes the returned `short_id` as
+        `retailer_credentials_id`. Orders that do are paid for by the payment
+        method saved on the account and charged the API fee only; every other
+        order runs on a Zinc account and draws the item cost from the wallet.
+
         If is_global=True (admin only), creates global credentials owned by the system user.
 
         Parameters
@@ -324,6 +331,13 @@ class AsyncManagedAccountsClient:
     ) -> RetailerCredentialsResponse:
         """
         Create new retailer credentials for the current user.
+
+        Saving an account does not, on its own, change how orders are placed: an
+        order runs on this account only when it passes the returned `short_id` as
+        `retailer_credentials_id`. Orders that do are paid for by the payment
+        method saved on the account and charged the API fee only; every other
+        order runs on a Zinc account and draws the item cost from the wallet.
+
         If is_global=True (admin only), creates global credentials owned by the system user.
 
         Parameters

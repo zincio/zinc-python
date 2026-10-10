@@ -501,6 +501,14 @@ client.orders.list_orders()
 <dl>
 <dd>
 
+**shipping_name:** `typing.Optional[str]` — Filter by the shipping recipient's name, matched as a case-insensitive substring of `first_name last_name`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **status_filter:** `typing.Optional[str]` — Filter by order status
     
 </dd>
@@ -628,7 +636,7 @@ Posts an order to a queue for processing
 <dd>
 
 ```python
-from zinc import ZincClient, OrderProduct, Address
+from zinc import ZincClient, OrderProduct
 from zinc.environment import ZincClientEnvironment
 
 client = ZincClient(
@@ -642,14 +650,6 @@ client.orders.create_order(
             url="https://www.amazon.com/dp/B07JGBW826",
         )
     ],
-    shipping_address=Address(
-        first_name="first_name",
-        last_name="last_name",
-        address_line1="address_line1",
-        city="city",
-        postal_code="postal_code",
-        phone_number="phone_number",
-    ),
     max_price=1,
 )
 
@@ -667,7 +667,7 @@ client.orders.create_order(
 <dl>
 <dd>
 
-**request:** `OrderCreate` 
+**products:** `typing.List[OrderProduct]` 
     
 </dd>
 </dl>
@@ -675,7 +675,7 @@ client.orders.create_order(
 <dl>
 <dd>
 
-**zinc_client:** `typing.Optional[str]` — Which assistant the buyer is using (claude, chatgpt, codex, …). Only used when the order needs a payment page, so it can send the buyer back afterwards.
+**max_price:** `int` — Maximum price (in cents) allowed for an order before it is finalized.
     
 </dd>
 </dl>
@@ -684,6 +684,94 @@ client.orders.create_order(
 <dd>
 
 **authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**shipping_address:** `typing.Optional[Address]` — Where to ship. Required for wallet and Connect orders.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — Optional idempotency key to prevent duplicate orders. If not provided, one will be generated.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**retailer_credentials_id:** `typing.Optional[str]` — Optional short ID (e.g. 'zn_acct_XXXXXXXX') of one of your own saved retailer accounts to place this order on. The item is then paid for by the payment method saved on that account, and your wallet is charged the API fee only — so the balance needed to place the order is the fee, not max_price + fee. Omit it and the order is placed on a Zinc account and funded from your wallet; Zinc never substitutes one of your saved accounts, so send this field on every order that has to run on yours.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**metadata:** `typing.Optional[typing.Dict[str, typing.Any]]` — Optional metadata to attach to the order. Can contain arbitrary key-value pairs.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**po_number:** `typing.Optional[str]` — Optional purchase order number for the order.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**handling_days_max:** `typing.Optional[int]` — Optional ceiling on a seller's shipping and handling days. Omit or send null for no limit.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**is_gift:** `typing.Optional[bool]` — Mark the order as a gift, suppressing prices on the packing slip. If the retailer's checkout offers no free gift option, the order FAILS with `gift_option_unavailable` rather than being placed as a normal order — a gift that arrives with prices visible to the recipient is treated as worse than no order.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**gift_message:** `typing.Optional[str]` — Optional note for the recipient, entered into the retailer's gift-message field at checkout. Requires `is_gift` to be true. Max 240 characters. Delivered where the retailer's checkout offers a gift message; the order is still placed without it where one isn't available.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**payment:** `typing.Optional[OrderPayment]` — Optional payment block. Omit for prepaid-wallet billing (default).
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**customer_notifications:** `typing.Optional[CustomerNotifications]` — Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**fulfillment:** `typing.Optional[FulfillmentPreferences]` — Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants` tightens instead: merchants this order must not be bought from.
     
 </dd>
 </dl>
@@ -784,6 +872,14 @@ client.orders.export_orders_csv()
 <dd>
 
 **merchant_order_id:** `typing.Optional[str]` — Filter by the retailer's own order number (exact match)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**shipping_name:** `typing.Optional[str]` — Shipping recipient's name (case-insensitive partial match)
     
 </dd>
 </dl>
@@ -1211,9 +1307,11 @@ availability are Best Buy's own; there are simply fewer items per page. Page
 through with `next_page` to collect more — `next_page` reflects whether Best
 Buy has further results, not how many came back in this response.
 
-**Shopify stores are their own retailer**: pass the store's domain as
-`retailer` (e.g. `retailer=yetch.studio`; any Shopify-powered storefront
-works). Results are the store's own top matches (~10) and there is no
+**Shopify stores are their own retailer**: pass the store's Zinc retailer
+slug as `retailer` (e.g. `retailer=yetch`; its domain, `yetch.studio`, also
+works). The store must be in Zinc's catalog: an uncatalogued store is
+rejected with a 422, and `GET /retailers/check?url=...` returns a
+catalogued store's slug. Results are the store's own top matches (~10) and there is no
 pagination, so `next_page` is always null and `page` must be omitted or 1.
 `product_id` is the store-scoped product handle to pass to the details
 endpoint with the same `retailer`.
@@ -1284,7 +1382,7 @@ client.products.search_products(
 <dl>
 <dd>
 
-**retailer:** `str` — Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -1395,7 +1493,7 @@ client.products.get_product_offers(
 <dl>
 <dd>
 
-**retailer:** `str` — Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -1469,11 +1567,12 @@ bsin here. The response repeats the SKU as `sku` for cross-referencing.
 Unlike `/search`, a Best Buy detail response is complete: detail pages are
 fully server-rendered, so nothing is withheld for client-side loading.
 
-**Shopify is addressed by (store, handle)**: pass the store's domain as
-`retailer` (e.g. `retailer=yetch.studio`) and the product handle — the slug
-in `/products/{handle}`, returned as `product_id` by search — as the path
-parameter. The response includes per-variant price and availability.
-`async` is not supported for Shopify stores.
+**Shopify is addressed by (store, handle)**: pass the store's retailer slug
+as `retailer` (e.g. `retailer=yetch`) and the product handle — the slug
+in `/products/{handle}`, returned as `product_id` by search — as
+`product_id`. The response includes per-variant price and availability,
+`retailer` (the store's slug) and `platform: "shopify"`. `async` is not
+supported for Shopify stores.
 
 **Etsy is addressed by the numeric listing id** (returned as `product_id` by
 search). `price` is in minor units of `currency_code`, not converted to USD.
@@ -1543,7 +1642,7 @@ client.products.get_product_details(
 <dl>
 <dd>
 
-**retailer:** `str` — Retailer identifier: amazon, walmart, bestbuy, etsy, or a Shopify store's domain (e.g. retailer=yetch.studio)
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -1829,6 +1928,13 @@ client.managed_accounts.list_retailer_credentials()
 <dd>
 
 Create new retailer credentials for the current user.
+
+Saving an account does not, on its own, change how orders are placed: an
+order runs on this account only when it passes the returned `short_id` as
+`retailer_credentials_id`. Orders that do are paid for by the payment
+method saved on the account and charged the API fee only; every other
+order runs on a Zinc account and draws the item cost from the wallet.
+
 If is_global=True (admin only), creates global credentials owned by the system user.
 </dd>
 </dl>
@@ -2216,7 +2322,23 @@ client.agent.create_mpp_order(
 <dl>
 <dd>
 
-**request:** `OrderCreate` 
+**products:** `typing.List[OrderProduct]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**shipping_address:** `Address` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**max_price:** `int` — Maximum price (in cents) allowed for an order before it is finalized.
     
 </dd>
 </dl>
@@ -2233,6 +2355,86 @@ client.agent.create_mpp_order(
 <dd>
 
 **authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key:** `typing.Optional[str]` — Optional idempotency key to prevent duplicate orders. If not provided, one will be generated.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**retailer_credentials_id:** `typing.Optional[str]` — Optional short ID (e.g. 'zn_acct_XXXXXXXX') of one of your own saved retailer accounts to place this order on. The item is then paid for by the payment method saved on that account, and your wallet is charged the API fee only — so the balance needed to place the order is the fee, not max_price + fee. Omit it and the order is placed on a Zinc account and funded from your wallet; Zinc never substitutes one of your saved accounts, so send this field on every order that has to run on yours.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**metadata:** `typing.Optional[typing.Dict[str, typing.Any]]` — Optional metadata to attach to the order. Can contain arbitrary key-value pairs.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**po_number:** `typing.Optional[str]` — Optional purchase order number for the order.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**handling_days_max:** `typing.Optional[int]` — Optional ceiling on a seller's shipping and handling days. Omit or send null for no limit.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**is_gift:** `typing.Optional[bool]` — Mark the order as a gift, suppressing prices on the packing slip. If the retailer's checkout offers no free gift option, the order FAILS with `gift_option_unavailable` rather than being placed as a normal order — a gift that arrives with prices visible to the recipient is treated as worse than no order.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**gift_message:** `typing.Optional[str]` — Optional note for the recipient, entered into the retailer's gift-message field at checkout. Requires `is_gift` to be true. Max 240 characters. Delivered where the retailer's checkout offers a gift message; the order is still placed without it where one isn't available.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**payment:** `typing.Optional[OrderPayment]` — Optional payment block. Omit for prepaid-wallet billing (default).
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**customer_notifications:** `typing.Optional[CustomerNotifications]` — Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**fulfillment:** `typing.Optional[FulfillmentPreferences]` — Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants` tightens instead: merchants this order must not be bought from.
     
 </dd>
 </dl>
@@ -2378,7 +2580,39 @@ client.agent.search(
 <dl>
 <dd>
 
-Per-retailer product search for agents (amazon | walmart).
+Per-retailer product search for agents.
+
+**Best Buy returns a partial page.** Best Buy server-renders only about 4 of
+the ~24 products on a search page and loads the rest in the browser, so each
+page yields roughly 4 results rather than a full page. Ranking, pricing and
+availability are Best Buy's own; there are simply fewer items per page. Page
+through with `next_page` to collect more — `next_page` reflects whether Best
+Buy has further results, not how many came back in this response.
+
+**Shopify stores are their own retailer**: pass the store's Zinc retailer
+slug as `retailer` (e.g. `retailer=yetch`; its domain, `yetch.studio`, also
+works). The store must be in Zinc's catalog: an uncatalogued store is
+rejected with a 422, and `GET /retailers/check?url=...` returns a
+catalogued store's slug. Results are the store's own top matches (~10) and there is no
+pagination, so `next_page` is always null and `page` must be omitted or 1.
+`product_id` is the store-scoped product handle to pass to the details
+endpoint with the same `retailer`.
+
+**Etsy search covers US shops, priced in USD.** Etsy sellers price in their
+own currency and a single page routinely mixes several, which makes `price`
+incomparable across a result set — so search is narrowed to US-located
+shops and any remaining non-USD listing is dropped. `currency_code` is set
+on every result and is always `USD` here, and prices are never converted,
+so the number is what the seller charges. Because the currency check runs
+after Etsy paginates, **a page can come back short while more results still
+exist** — page on with `next_page`. (Details is neither narrowed nor
+filtered: it returns any listing, in its own currency.)
+
+Etsy results carry no `stars`/`num_reviews` — Etsy publishes a rating for
+the *shop*, not the listing, and reporting a seller's rating as the
+product's would be misleading; `brand` carries the shop name, and the
+details endpoint reports the shop's rating explicitly. `product_id` is the
+numeric listing id.
 </dd>
 </dl>
 </dd>
@@ -2403,7 +2637,7 @@ client = ZincClient(
 
 client.agent.product_search(
     query="query",
-    retailer="amazon",
+    retailer="retailer",
 )
 
 ```
@@ -2428,7 +2662,7 @@ client.agent.product_search(
 <dl>
 <dd>
 
-**retailer:** `AgentProductSearchRequestRetailer` — Retailer: amazon or walmart
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -2444,7 +2678,7 @@ client.agent.product_search(
 <dl>
 <dd>
 
-**free_shipping:** `typing.Optional[bool]` — Only return items that ship for free (Walmart: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so Amazon results are returned unfiltered. Applied per-page after pagination; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results.
+**free_shipping:** `typing.Optional[bool]` — Only return items that ship for free (Walmart and Best Buy: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results. Rejected for Shopify stores: their search data carries no shipping information, so the filter cannot be honored.
     
 </dd>
 </dl>
@@ -2477,6 +2711,9 @@ client.agent.product_search(
 <dd>
 
 Offers/pricing for a specific product on a retailer.
+
+Not available for Shopify stores: a storefront lists one seller (itself),
+so per-variant price and availability live on the details endpoint instead.
 </dd>
 </dl>
 </dd>
@@ -2501,7 +2738,7 @@ client = ZincClient(
 
 client.agent.product_offers(
     product_id="product_id",
-    retailer="amazon",
+    retailer="retailer",
 )
 
 ```
@@ -2526,7 +2763,7 @@ client.agent.product_offers(
 <dl>
 <dd>
 
-**retailer:** `AgentProductOffersRequestRetailer` — Retailer: amazon or walmart
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -2583,6 +2820,39 @@ client.agent.product_offers(
 <dd>
 
 Full product details for a specific product on a retailer.
+
+**Best Buy is addressed by `bsin`**, not by the numeric SKU — the bsin is the
+trailing id in a Best Buy product URL (`/product/{slug}/{bsin}`). Search
+results return the SKU as `product_id` and also carry the bsin, so pass the
+bsin here. The response repeats the SKU as `sku` for cross-referencing.
+
+Unlike `/search`, a Best Buy detail response is complete: detail pages are
+fully server-rendered, so nothing is withheld for client-side loading.
+
+**Shopify is addressed by (store, handle)**: pass the store's retailer slug
+as `retailer` (e.g. `retailer=yetch`) and the product handle — the slug
+in `/products/{handle}`, returned as `product_id` by search — as
+`product_id`. The response includes per-variant price and availability,
+`retailer` (the store's slug) and `platform: "shopify"`. `async` is not
+supported for Shopify stores.
+
+**Etsy is addressed by the numeric listing id** (returned as `product_id` by
+search). `price` is in minor units of `currency_code`, not converted to USD.
+
+Etsy ratings are the **shop's**, reported as `shop_review_average` /
+`shop_review_count`, and both cover only the **past year** — an established
+shop with no recent sales reports 0, and an unrated shop reports a null
+average rather than 0.0 stars. `stars` and `num_reviews` are deliberately
+not set: they mean a product's rating everywhere else in this API, and a
+seller's rating is a different claim.
+
+`listing_type` is `physical`, `download` or `both` — a download has nothing
+to ship. `available` accounts for the shop being on vacation as well as
+stock, so it can be false on an in-stock active listing; `shop_is_vacation`
+says which it was. `variants` is populated only when Etsy exposes a
+listing's inventory matrix — check `has_variations` to tell "no variants"
+from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
+is no category name yet. `async` is not supported for Etsy.
 </dd>
 </dl>
 </dd>
@@ -2607,7 +2877,7 @@ client = ZincClient(
 
 client.agent.product_details(
     product_id="product_id",
-    retailer="amazon",
+    retailer="retailer",
 )
 
 ```
@@ -2632,7 +2902,7 @@ client.agent.product_details(
 <dl>
 <dd>
 
-**retailer:** `AgentProductDetailsRequestRetailer` — Retailer: amazon or walmart
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -3489,162 +3759,6 @@ client.tracking.get_public_tracking(
 <dd>
 
 **order_id:** `str` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-## Payments
-<details><summary><code>client.payments.<a href="src/zinc/payments/client.py">get_pending_payment</a>(...) -> PendingPaymentResponse</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-Where a card payment stands; poll it after a 402 ``payment_required``.
-
-``requires_action`` until the buyer pays on ``pay_url``; then ``authorized``
-and, as soon as the order is created from the parked draft, ``placed`` with
-``order_id``. The poll itself does the creating when it gets there before
-the webhook, so a buyer who pays and comes straight back sees the order.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from zinc import ZincClient
-from zinc.environment import ZincClientEnvironment
-
-client = ZincClient(
-    api_key="<value>",
-    environment=ZincClientEnvironment.PRODUCTION,
-)
-
-client.payments.get_pending_payment(
-    payment_id="payment_id",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**payment_id:** `str` 
-    
-</dd>
-</dl>
-
-<dl>
-<dd>
-
-**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
-    
-</dd>
-</dl>
-</dd>
-</dl>
-
-
-</dd>
-</dl>
-</details>
-
-<details><summary><code>client.payments.<a href="src/zinc/payments/client.py">create_checkout_session</a>(...) -> CheckoutSessionResponse</code></summary>
-<dl>
-<dd>
-
-#### 📝 Description
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-The Stripe-hosted payment page for a pending payment.
-
-Called by pay.zinc.com when the buyer clicks through, not by the 402 itself,
-so a link nobody opens never creates a Stripe session. Idempotent per
-payment: a session already open is returned again.
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### 🔌 Usage
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-```python
-from zinc import ZincClient
-from zinc.environment import ZincClientEnvironment
-
-client = ZincClient(
-    api_key="<value>",
-    environment=ZincClientEnvironment.PRODUCTION,
-)
-
-client.payments.create_checkout_session(
-    payment_id="payment_id",
-)
-
-```
-</dd>
-</dl>
-</dd>
-</dl>
-
-#### ⚙️ Parameters
-
-<dl>
-<dd>
-
-<dl>
-<dd>
-
-**payment_id:** `str` 
     
 </dd>
 </dl>

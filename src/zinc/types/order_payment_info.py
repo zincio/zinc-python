@@ -9,9 +9,9 @@ from .order_payment_info_mode import OrderPaymentInfoMode
 
 class OrderPaymentInfo(UniversalBaseModel):
     """
-    How a card-funded order is paid, and where its Stripe hold stands.
-    Present only for ``payment.mode == "card"`` orders; ``null`` for wallet and
-    Connect orders (Connect has its own ``connect`` block). All amounts in cents.
+    Card hold details for an order paid by card outside the wallet and
+    Connect, and where that hold stands. ``null`` for wallet and Connect orders
+    (Connect has its own ``connect`` block). All amounts in cents.
 
     ``state`` moves ``authorized`` → ``captured`` when the retailer order is
     placed (``captured_cents`` = actual total + fee), or → ``released`` when the

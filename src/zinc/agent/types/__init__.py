@@ -6,7 +6,6 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
-    from .agent_product_details_request_retailer import AgentProductDetailsRequestRetailer
     from .agent_product_details_response import AgentProductDetailsResponse
     from .agent_product_details_response_all_variants_item import AgentProductDetailsResponseAllVariantsItem
     from .agent_product_details_response_all_variants_item_variant_specifics_item import (
@@ -34,7 +33,6 @@ if typing.TYPE_CHECKING:
     from .agent_product_details_response_variants_item_properties_item import (
         AgentProductDetailsResponseVariantsItemPropertiesItem,
     )
-    from .agent_product_offers_request_retailer import AgentProductOffersRequestRetailer
     from .agent_product_offers_response import AgentProductOffersResponse
     from .agent_product_offers_response_offers_item import AgentProductOffersResponseOffersItem
     from .agent_product_offers_response_offers_item_condition import AgentProductOffersResponseOffersItemCondition
@@ -49,11 +47,9 @@ if typing.TYPE_CHECKING:
         AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays,
     )
     from .agent_product_offers_response_status import AgentProductOffersResponseStatus
-    from .agent_product_search_request_retailer import AgentProductSearchRequestRetailer
     from .agent_search_request_retailer_item import AgentSearchRequestRetailerItem
     from .agent_search_request_sort import AgentSearchRequestSort
 _dynamic_imports: typing.Dict[str, str] = {
-    "AgentProductDetailsRequestRetailer": ".agent_product_details_request_retailer",
     "AgentProductDetailsResponse": ".agent_product_details_response",
     "AgentProductDetailsResponseAllVariantsItem": ".agent_product_details_response_all_variants_item",
     "AgentProductDetailsResponseAllVariantsItemVariantSpecificsItem": ".agent_product_details_response_all_variants_item_variant_specifics_item",
@@ -69,7 +65,6 @@ _dynamic_imports: typing.Dict[str, str] = {
     "AgentProductDetailsResponseVariantSpecificsItem": ".agent_product_details_response_variant_specifics_item",
     "AgentProductDetailsResponseVariantsItem": ".agent_product_details_response_variants_item",
     "AgentProductDetailsResponseVariantsItemPropertiesItem": ".agent_product_details_response_variants_item_properties_item",
-    "AgentProductOffersRequestRetailer": ".agent_product_offers_request_retailer",
     "AgentProductOffersResponse": ".agent_product_offers_response",
     "AgentProductOffersResponseOffersItem": ".agent_product_offers_response_offers_item",
     "AgentProductOffersResponseOffersItemCondition": ".agent_product_offers_response_offers_item_condition",
@@ -78,7 +73,6 @@ _dynamic_imports: typing.Dict[str, str] = {
     "AgentProductOffersResponseOffersItemShippingOptionsItem": ".agent_product_offers_response_offers_item_shipping_options_item",
     "AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays": ".agent_product_offers_response_offers_item_shipping_options_item_delivery_days",
     "AgentProductOffersResponseStatus": ".agent_product_offers_response_status",
-    "AgentProductSearchRequestRetailer": ".agent_product_search_request_retailer",
     "AgentSearchRequestRetailerItem": ".agent_search_request_retailer_item",
     "AgentSearchRequestSort": ".agent_search_request_sort",
 }
@@ -106,7 +100,6 @@ def __dir__():
 
 
 __all__ = [
-    "AgentProductDetailsRequestRetailer",
     "AgentProductDetailsResponse",
     "AgentProductDetailsResponseAllVariantsItem",
     "AgentProductDetailsResponseAllVariantsItemVariantSpecificsItem",
@@ -122,7 +115,6 @@ __all__ = [
     "AgentProductDetailsResponseVariantSpecificsItem",
     "AgentProductDetailsResponseVariantsItem",
     "AgentProductDetailsResponseVariantsItemPropertiesItem",
-    "AgentProductOffersRequestRetailer",
     "AgentProductOffersResponse",
     "AgentProductOffersResponseOffersItem",
     "AgentProductOffersResponseOffersItemCondition",
@@ -131,7 +123,6 @@ __all__ = [
     "AgentProductOffersResponseOffersItemShippingOptionsItem",
     "AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays",
     "AgentProductOffersResponseStatus",
-    "AgentProductSearchRequestRetailer",
     "AgentSearchRequestRetailerItem",
     "AgentSearchRequestSort",
 ]

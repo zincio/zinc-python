@@ -100,7 +100,7 @@ is not finalized above it.
 Instantiate and use the client with the following:
 
 ```python
-from zinc import ZincClient, OrderProduct, Address
+from zinc import ZincClient, OrderProduct
 
 client = ZincClient(
     api_key="<value>",
@@ -112,14 +112,6 @@ client.orders.create_order(
             url="https://www.amazon.com/dp/B07JGBW826",
         )
     ],
-    shipping_address=Address(
-        first_name="first_name",
-        last_name="last_name",
-        address_line1="address_line1",
-        city="city",
-        postal_code="postal_code",
-        phone_number="phone_number",
-    ),
     max_price=1,
 )
 ```
@@ -158,14 +150,6 @@ async def main() -> None:
                 url="https://www.amazon.com/dp/B07JGBW826",
             )
         ],
-        shipping_address=Address(
-            first_name="first_name",
-            last_name="last_name",
-            address_line1="address_line1",
-            city="city",
-            postal_code="postal_code",
-            phone_number="phone_number",
-        ),
         max_price=1,
     )
 

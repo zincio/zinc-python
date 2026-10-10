@@ -35,7 +35,12 @@ class AgentProductDetailsResponse(UniversalBaseModel):
 
     retailer: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Retailer that served the payload: `amazon`, `walmart`, `bestbuy`, `etsy`, or `shopify` (with the store's hostname in `domain`).
+    Zinc retailer slug that served the payload, the value to pass back as `retailer`: `amazon`, `amazon-uk`, `walmart`, `bestbuy`, `etsy`, or a Shopify store's slug (e.g. `yetch`, with `platform: "shopify"` and the store's hostname in `domain`).
+    """
+
+    platform: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Shopify only. The commerce platform the store runs on: `shopify`.
     """
 
     product_id: typing.Optional[str] = pydantic.Field(default=None)
