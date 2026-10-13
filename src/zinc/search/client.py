@@ -5,7 +5,6 @@ import typing
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
 from ..types.search_response import SearchResponse
-from ..types.search_retailer import SearchRetailer
 from ..types.search_sort import SearchSort
 from .raw_client import AsyncRawSearchClient, RawSearchClient
 
@@ -31,7 +30,7 @@ class SearchClient:
         q: str,
         min_price: typing.Optional[int] = None,
         max_price: typing.Optional[int] = None,
-        retailer: typing.Optional[typing.Sequence[SearchRetailer]] = None,
+        retailer: typing.Optional[typing.Sequence[str]] = None,
         sort: typing.Optional[SearchSort] = None,
         limit: typing.Optional[int] = None,
         authorization: typing.Optional[str] = None,
@@ -53,8 +52,8 @@ class SearchClient:
         max_price : typing.Optional[int]
             Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
-        retailer : typing.Optional[typing.Sequence[SearchRetailer]]
-            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`.
+        retailer : typing.Optional[typing.Sequence[str]]
+            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair) and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). A filter of only stores searches those stores directly.
 
         sort : typing.Optional[SearchSort]
             Result order. `relevance` (default) blends query match, source rank and rating, and mixes retailers. The explicit sorts order the 20 most relevant results (or `limit`, if larger) that match at least half the query, so accessories that merely name the product don't lead; results with no price (or no rating, for `rating`) sort last.
@@ -117,7 +116,7 @@ class AsyncSearchClient:
         q: str,
         min_price: typing.Optional[int] = None,
         max_price: typing.Optional[int] = None,
-        retailer: typing.Optional[typing.Sequence[SearchRetailer]] = None,
+        retailer: typing.Optional[typing.Sequence[str]] = None,
         sort: typing.Optional[SearchSort] = None,
         limit: typing.Optional[int] = None,
         authorization: typing.Optional[str] = None,
@@ -139,8 +138,8 @@ class AsyncSearchClient:
         max_price : typing.Optional[int]
             Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
-        retailer : typing.Optional[typing.Sequence[SearchRetailer]]
-            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`.
+        retailer : typing.Optional[typing.Sequence[str]]
+            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair) and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). A filter of only stores searches those stores directly.
 
         sort : typing.Optional[SearchSort]
             Result order. `relevance` (default) blends query match, source rank and rating, and mixes retailers. The explicit sorts order the 20 most relevant results (or `limit`, if larger) that match at least half the query, so accessories that merely name the product don't lead; results with no price (or no rating, for `rating`) sort last.

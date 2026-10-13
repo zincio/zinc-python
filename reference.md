@@ -1774,7 +1774,7 @@ client.search.search(
 <dl>
 <dd>
 
-**retailer:** `typing.Optional[typing.List[SearchRetailer]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`.
+**retailer:** `typing.Optional[typing.List[str]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair) and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). A filter of only stores searches those stores directly.
     
 </dd>
 </dl>
@@ -2532,7 +2532,7 @@ client.agent.search(
 <dl>
 <dd>
 
-**retailer:** `typing.Optional[typing.Union[AgentSearchRequestRetailerItem, typing.Sequence[AgentSearchRequestRetailerItem]]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`.
+**retailer:** `typing.Optional[typing.Union[str, typing.Sequence[str]]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair) and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). A filter of only stores searches those stores directly.
     
 </dd>
 </dl>

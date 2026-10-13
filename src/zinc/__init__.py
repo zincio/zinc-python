@@ -166,7 +166,6 @@ if typing.TYPE_CHECKING:
         AgentProductOffersResponseOffersItemShippingOptionsItem,
         AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays,
         AgentProductOffersResponseStatus,
-        AgentSearchRequestRetailerItem,
         AgentSearchRequestSort,
     )
     from .client import AsyncZincClient, ZincClient
@@ -222,7 +221,6 @@ _dynamic_imports: typing.Dict[str, str] = {
     "AgentProductOffersResponseOffersItemShippingOptionsItem": ".agent",
     "AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays": ".agent",
     "AgentProductOffersResponseStatus": ".agent",
-    "AgentSearchRequestRetailerItem": ".agent",
     "AgentSearchRequestSort": ".agent",
     "ApiKeyExchangeResponse": ".types",
     "AsyncZincClient": ".client",
@@ -430,7 +428,6 @@ __all__ = [
     "AgentProductOffersResponseOffersItemShippingOptionsItem",
     "AgentProductOffersResponseOffersItemShippingOptionsItemDeliveryDays",
     "AgentProductOffersResponseStatus",
-    "AgentSearchRequestRetailerItem",
     "AgentSearchRequestSort",
     "ApiKeyExchangeResponse",
     "AsyncZincClient",
