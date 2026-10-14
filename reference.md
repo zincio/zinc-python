@@ -1309,9 +1309,12 @@ Buy has further results, not how many came back in this response.
 
 **Shopify stores are their own retailer**: pass the store's Zinc retailer
 slug as `retailer` (e.g. `retailer=yetch`; its domain, `yetch.studio`, also
-works). The store must be in Zinc's catalog: an uncatalogued store is
-rejected with a 422, and `GET /retailers/check?url=...` returns a
-catalogued store's slug. Results are the store's own top matches (~10) and there is no
+works). A store not yet in Zinc's catalog is added on your first request
+for it by domain, with a live key: the store is checked (a few seconds),
+catalogued and served, and its slug is in the response. A domain that is
+not a usable Shopify store is a 422 saying why; a 503 with `Retry-After`
+means the check couldn't run just now. In test mode, an uncatalogued store
+is a 422. `GET /retailers/check?url=...` returns a catalogued store's slug. Results are the store's own top matches (~10) and there is no
 pagination, so `next_page` is always null and `page` must be omitted or 1.
 `product_id` is the store-scoped product handle to pass to the details
 endpoint with the same `retailer`.
@@ -1382,7 +1385,7 @@ client.products.search_products(
 <dl>
 <dd>
 
-**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. A Shopify store not yet in Zinc's catalog is added on a live key's first request for it by domain; any other unknown value is a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -1642,7 +1645,7 @@ client.products.get_product_details(
 <dl>
 <dd>
 
-**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. A Shopify store not yet in Zinc's catalog is added on a live key's first request for it by domain; any other unknown value is a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -1774,7 +1777,7 @@ client.search.search(
 <dl>
 <dd>
 
-**retailer:** `typing.Optional[typing.List[str]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair) and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). A filter of only stores searches those stores directly.
+**retailer:** `typing.Optional[typing.List[str]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: many need a `variant` on the order, which `GET /products/{id}?retailer=etsy` lists. With a live key, a Shopify store not yet catalogued is added on first use by its domain.
     
 </dd>
 </dl>
@@ -2532,7 +2535,7 @@ client.agent.search(
 <dl>
 <dd>
 
-**retailer:** `typing.Optional[typing.Union[str, typing.Sequence[str]]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair) and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). A filter of only stores searches those stores directly.
+**retailer:** `typing.Optional[typing.Union[str, typing.Sequence[str]]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: many need a `variant` on the order, which `GET /products/{id}?retailer=etsy` lists.
     
 </dd>
 </dl>

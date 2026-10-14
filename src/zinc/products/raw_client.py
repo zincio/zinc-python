@@ -46,9 +46,12 @@ class RawProductsClient:
 
         **Shopify stores are their own retailer**: pass the store's Zinc retailer
         slug as `retailer` (e.g. `retailer=yetch`; its domain, `yetch.studio`, also
-        works). The store must be in Zinc's catalog: an uncatalogued store is
-        rejected with a 422, and `GET /retailers/check?url=...` returns a
-        catalogued store's slug. Results are the store's own top matches (~10) and there is no
+        works). A store not yet in Zinc's catalog is added on your first request
+        for it by domain, with a live key: the store is checked (a few seconds),
+        catalogued and served, and its slug is in the response. A domain that is
+        not a usable Shopify store is a 422 saying why; a 503 with `Retry-After`
+        means the check couldn't run just now. In test mode, an uncatalogued store
+        is a 422. `GET /retailers/check?url=...` returns a catalogued store's slug. Results are the store's own top matches (~10) and there is no
         pagination, so `next_page` is always null and `page` must be omitted or 1.
         `product_id` is the store-scoped product handle to pass to the details
         endpoint with the same `retailer`.
@@ -77,7 +80,7 @@ class RawProductsClient:
             Search term
 
         retailer : str
-            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. A Shopify store not yet in Zinc's catalog is added on a live key's first request for it by domain; any other unknown value is a 422. Responses carry the slug.
 
         page : typing.Optional[int]
             Page number for pagination
@@ -304,7 +307,7 @@ class RawProductsClient:
         product_id : str
 
         retailer : str
-            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. A Shopify store not yet in Zinc's catalog is added on a live key's first request for it by domain; any other unknown value is a 422. Responses carry the slug.
 
         max_age : typing.Optional[int]
             Max response age in seconds, at least 31 (mutually exclusive with newer_than)
@@ -407,9 +410,12 @@ class AsyncRawProductsClient:
 
         **Shopify stores are their own retailer**: pass the store's Zinc retailer
         slug as `retailer` (e.g. `retailer=yetch`; its domain, `yetch.studio`, also
-        works). The store must be in Zinc's catalog: an uncatalogued store is
-        rejected with a 422, and `GET /retailers/check?url=...` returns a
-        catalogued store's slug. Results are the store's own top matches (~10) and there is no
+        works). A store not yet in Zinc's catalog is added on your first request
+        for it by domain, with a live key: the store is checked (a few seconds),
+        catalogued and served, and its slug is in the response. A domain that is
+        not a usable Shopify store is a 422 saying why; a 503 with `Retry-After`
+        means the check couldn't run just now. In test mode, an uncatalogued store
+        is a 422. `GET /retailers/check?url=...` returns a catalogued store's slug. Results are the store's own top matches (~10) and there is no
         pagination, so `next_page` is always null and `page` must be omitted or 1.
         `product_id` is the store-scoped product handle to pass to the details
         endpoint with the same `retailer`.
@@ -438,7 +444,7 @@ class AsyncRawProductsClient:
             Search term
 
         retailer : str
-            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. A Shopify store not yet in Zinc's catalog is added on a live key's first request for it by domain; any other unknown value is a 422. Responses carry the slug.
 
         page : typing.Optional[int]
             Page number for pagination
@@ -665,7 +671,7 @@ class AsyncRawProductsClient:
         product_id : str
 
         retailer : str
-            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
+            Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. A Shopify store not yet in Zinc's catalog is added on a live key's first request for it by domain; any other unknown value is a 422. Responses carry the slug.
 
         max_age : typing.Optional[int]
             Max response age in seconds, at least 31 (mutually exclusive with newer_than)
