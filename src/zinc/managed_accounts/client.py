@@ -174,6 +174,7 @@ class ManagedAccountsClient:
         totp_secret : typing.Optional[str]
 
         retailer_config : typing.Optional[typing.Dict[str, typing.Any]]
+            Merged into the stored config key by key: a key you send replaces that key, a key set to null is removed, and keys you omit are kept.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -425,6 +426,7 @@ class AsyncManagedAccountsClient:
         totp_secret : typing.Optional[str]
 
         retailer_config : typing.Optional[typing.Dict[str, typing.Any]]
+            Merged into the stored config key by key: a key you send replaces that key, a key set to null is removed, and keys you omit are kept.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.

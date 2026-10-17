@@ -15,6 +15,14 @@ if typing.TYPE_CHECKING:
     from .bulk_row_validation import BulkRowValidation
     from .bulk_upload_request import BulkUploadRequest
     from .bulk_validate_response import BulkValidateResponse
+    from .case_attachment import CaseAttachment
+    from .case_list_response import CaseListResponse
+    from .case_message_response import CaseMessageResponse
+    from .case_message_response_author import CaseMessageResponseAuthor
+    from .case_reason import CaseReason
+    from .case_response import CaseResponse
+    from .case_status import CaseStatus
+    from .case_summary import CaseSummary
     from .components import Components
     from .components_db import ComponentsDb
     from .components_ordering import ComponentsOrdering
@@ -122,6 +130,14 @@ _dynamic_imports: typing.Dict[str, str] = {
     "BulkRowValidation": ".bulk_row_validation",
     "BulkUploadRequest": ".bulk_upload_request",
     "BulkValidateResponse": ".bulk_validate_response",
+    "CaseAttachment": ".case_attachment",
+    "CaseListResponse": ".case_list_response",
+    "CaseMessageResponse": ".case_message_response",
+    "CaseMessageResponseAuthor": ".case_message_response_author",
+    "CaseReason": ".case_reason",
+    "CaseResponse": ".case_response",
+    "CaseStatus": ".case_status",
+    "CaseSummary": ".case_summary",
     "Components": ".components",
     "ComponentsDb": ".components_db",
     "ComponentsOrdering": ".components_ordering",
@@ -253,6 +269,14 @@ __all__ = [
     "BulkRowValidation",
     "BulkUploadRequest",
     "BulkValidateResponse",
+    "CaseAttachment",
+    "CaseListResponse",
+    "CaseMessageResponse",
+    "CaseMessageResponseAuthor",
+    "CaseReason",
+    "CaseResponse",
+    "CaseStatus",
+    "CaseSummary",
     "Components",
     "ComponentsDb",
     "ComponentsOrdering",

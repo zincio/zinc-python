@@ -5,6 +5,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .case_summary import CaseSummary
 from .customer_notification_status import CustomerNotificationStatus
 from .order_connect_info import OrderConnectInfo
 from .order_fulfillment import OrderFulfillment
@@ -48,6 +49,11 @@ class OrderResponse(UniversalBaseModel):
     created_by: typing.Optional[str] = None
     user_id: typing.Optional[int] = None
     returns: typing.Optional[typing.List[ReturnRequestSummary]] = None
+    cases: typing.Optional[typing.List[CaseSummary]] = pydantic.Field(default=None)
+    """
+    Support cases on this order, newest first. See `/cases`.
+    """
+
     connect: typing.Optional[OrderConnectInfo] = pydantic.Field(default=None)
     """
     Stripe Connect charge details when this order was paid via Connect; null for prepaid-wallet orders.

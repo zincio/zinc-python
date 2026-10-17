@@ -32,6 +32,7 @@ ErrorCode = typing.Union[
         "shipping_unavailable",
         "order_not_cancellable",
         "return_not_allowed",
+        "case_not_allowed",
         "external_service_error",
         "stripe_error",
         "stytch_error",

@@ -11,6 +11,7 @@ from .environment import ZincClientEnvironment
 
 if typing.TYPE_CHECKING:
     from .agent.client import AgentClient, AsyncAgentClient
+    from .cases.client import AsyncCasesClient, CasesClient
     from .device.client import AsyncDeviceClient, DeviceClient
     from .health.client import AsyncHealthClient, HealthClient
     from .managed_accounts.client import AsyncManagedAccountsClient, ManagedAccountsClient
@@ -117,6 +118,7 @@ class ZincClient:
         self._managed_accounts: typing.Optional[ManagedAccountsClient] = None
         self._agent: typing.Optional[AgentClient] = None
         self._returns: typing.Optional[ReturnsClient] = None
+        self._cases: typing.Optional[CasesClient] = None
         self._retailers: typing.Optional[RetailersClient] = None
         self._usage: typing.Optional[UsageClient] = None
         self._wallet: typing.Optional[WalletClient] = None
@@ -174,6 +176,14 @@ class ZincClient:
 
             self._returns = ReturnsClient(client_wrapper=self._client_wrapper)
         return self._returns
+
+    @property
+    def cases(self):
+        if self._cases is None:
+            from .cases.client import CasesClient  # noqa: E402
+
+            self._cases = CasesClient(client_wrapper=self._client_wrapper)
+        return self._cases
 
     @property
     def retailers(self):
@@ -354,6 +364,7 @@ class AsyncZincClient:
         self._managed_accounts: typing.Optional[AsyncManagedAccountsClient] = None
         self._agent: typing.Optional[AsyncAgentClient] = None
         self._returns: typing.Optional[AsyncReturnsClient] = None
+        self._cases: typing.Optional[AsyncCasesClient] = None
         self._retailers: typing.Optional[AsyncRetailersClient] = None
         self._usage: typing.Optional[AsyncUsageClient] = None
         self._wallet: typing.Optional[AsyncWalletClient] = None
@@ -411,6 +422,14 @@ class AsyncZincClient:
 
             self._returns = AsyncReturnsClient(client_wrapper=self._client_wrapper)
         return self._returns
+
+    @property
+    def cases(self):
+        if self._cases is None:
+            from .cases.client import AsyncCasesClient  # noqa: E402
+
+            self._cases = AsyncCasesClient(client_wrapper=self._client_wrapper)
+        return self._cases
 
     @property
     def retailers(self):

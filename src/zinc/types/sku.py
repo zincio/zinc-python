@@ -25,6 +25,11 @@ class Sku(UniversalBaseModel):
     True when the retailer listing advertises free shipping; null when unknown (never false — providers only flag the free case).
     """
 
+    has_variants: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Etsy only: true when the listing needs an option chosen (size, color...) before it can be ordered; pass the choice as `variant` on the order. The options themselves aren't listed. Null for other retailers.
+    """
+
     if IS_PYDANTIC_V2:
         model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)  # type: ignore # Pydantic v2
     else:

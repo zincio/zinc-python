@@ -2141,7 +2141,7 @@ client.managed_accounts.update_retailer_credentials(
 <dl>
 <dd>
 
-**retailer_config:** `typing.Optional[typing.Dict[str, typing.Any]]` 
+**retailer_config:** `typing.Optional[typing.Dict[str, typing.Any]]` — Merged into the stored config key by key: a key you send replaces that key, a key set to null is removed, and keys you omit are kept.
     
 </dd>
 </dl>
@@ -3177,6 +3177,508 @@ client.returns.get_return_request(
 <dd>
 
 **return_request_id:** `str` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+## Cases
+<details><summary><code>client.cases.<a href="src/zinc/cases/client.py">list_cases</a>(...) -> CaseListResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Your team's support cases, newest activity first.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.cases.list_cases()
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**limit:** `typing.Optional[int]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**offset:** `typing.Optional[int]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**status:** `typing.Optional[CaseStatus]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**reason:** `typing.Optional[CaseReason]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**order_id:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**search:** `typing.Optional[str]` — Partial match on order ID or case ID
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.cases.<a href="src/zinc/cases/client.py">create_case</a>(...) -> CaseResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Open a support case on an order.
+
+Multipart form: `order_id`, `reason`, `body`, optional `return_request_id`,
+and up to 5 `files` (JPEG, PNG, WebP, HEIC or PDF, 25 MB each). An order has
+at most one open case at a time. `reason=return` is only valid together
+with `return_request_id`.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.cases.create_case(
+    files=["example_files"],
+    order_id="order_id",
+    reason="not_received",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**order_id:** `str` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**reason:** `CaseReason` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**body:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**return_request_id:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**files:** `typing.Optional[typing.List[core.File]]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.cases.<a href="src/zinc/cases/client.py">get_case</a>(...) -> CaseResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+One case with its full thread. Attachment URLs are presigned for 7 days.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.cases.get_case(
+    case_id="case_id",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**case_id:** `str` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.cases.<a href="src/zinc/cases/client.py">post_case_message</a>(...) -> CaseResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Reply on a case. Multipart form: `body` and up to 5 `files`.
+
+Replying on a closed case reopens it, within the case window.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.cases.post_case_message(
+    case_id="case_id",
+    files=["example_files"],
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**case_id:** `str` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**body:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**files:** `typing.Optional[typing.List[core.File]]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.cases.<a href="src/zinc/cases/client.py">close_case</a>(...) -> CaseResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Close a case you no longer need help with. Idempotent.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.cases.close_case(
+    case_id="case_id",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**case_id:** `str` 
     
 </dd>
 </dl>
