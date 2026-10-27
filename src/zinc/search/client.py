@@ -39,7 +39,7 @@ class SearchClient:
         """
         Search for products across retailers; returns orderable zn_sku_ listings.
 
-        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 
         Parameters
         ----------
@@ -53,7 +53,7 @@ class SearchClient:
             Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
         retailer : typing.Optional[typing.Sequence[str]]
-            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: many need a `variant` on the order, which `GET /products/{id}?retailer=etsy` lists. With a live key, a Shopify store not yet catalogued is added on first use by its domain.
+            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: when `has_variants` is true the order needs a `variant`, and the options must be read from the listing page, because Etsy shares them only with the listing's own shop. With a live key, a Shopify store not yet catalogued is added on first use by its domain.
 
         sort : typing.Optional[SearchSort]
             Result order. `relevance` (default) blends query match, source rank and rating, and mixes retailers. The explicit sorts order the 20 most relevant results (or `limit`, if larger) that match at least half the query, so accessories that merely name the product don't lead; results with no price (or no rating, for `rating`) sort last.
@@ -125,7 +125,7 @@ class AsyncSearchClient:
         """
         Search for products across retailers; returns orderable zn_sku_ listings.
 
-        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 
         Parameters
         ----------
@@ -139,7 +139,7 @@ class AsyncSearchClient:
             Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
         retailer : typing.Optional[typing.Sequence[str]]
-            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: many need a `variant` on the order, which `GET /products/{id}?retailer=etsy` lists. With a live key, a Shopify store not yet catalogued is added on first use by its domain.
+            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: when `has_variants` is true the order needs a `variant`, and the options must be read from the listing page, because Etsy shares them only with the listing's own shop. With a live key, a Shopify store not yet catalogued is added on first use by its domain.
 
         sort : typing.Optional[SearchSort]
             Result order. `relevance` (default) blends query match, source rank and rating, and mixes retailers. The explicit sorts order the 20 most relevant results (or `limit`, if larger) that match at least half the query, so accessories that merely name the product don't lead; results with no price (or no rating, for `rating`) sort last.

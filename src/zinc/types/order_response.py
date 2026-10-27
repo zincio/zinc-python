@@ -7,6 +7,7 @@ import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .case_summary import CaseSummary
 from .customer_notification_status import CustomerNotificationStatus
+from .order_buying_account import OrderBuyingAccount
 from .order_connect_info import OrderConnectInfo
 from .order_fulfillment import OrderFulfillment
 from .order_item_response import OrderItemResponse
@@ -35,6 +36,7 @@ class OrderResponse(UniversalBaseModel):
     gift_message: typing.Optional[str] = None
     retailer_credentials_id: typing.Optional[str] = None
     retailer_credentials_uuid: typing.Optional[str] = None
+    buying_account: typing.Optional[OrderBuyingAccount] = None
     job_result: typing.Optional[OrderJobResult] = pydantic.Field(default=None)
     """
     Fulfillment result and price breakdown for a completed or failed order; null while processing.

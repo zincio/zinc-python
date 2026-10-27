@@ -13,6 +13,11 @@ class Sku(UniversalBaseModel):
 
     url: str
     retailer: str
+    product_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    The id to look this listing up by on /products/*: pass it with `retailer` to /products/{product_id} for live details, and to /products/{product_id}/offers (Amazon and Walmart) for live offers. ASIN on Amazon, item id on Walmart, listing id on Etsy, product handle on a Shopify store. Null when /products/* doesn't cover the retailer, or the listing's id isn't known.
+    """
+
     title: typing.Optional[str] = None
     image: typing.Optional[str] = None
     brand: typing.Optional[str] = None

@@ -13,6 +13,7 @@ from ..core.request_options import RequestOptions
 from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.product_search_response import ProductSearchResponse
+from ..types.wishlist_response import WishlistResponse
 from .types.get_product_details_products_product_id_get_response import GetProductDetailsProductsProductIdGetResponse
 from .types.get_product_offers_products_product_id_offers_get_response import (
     GetProductOffersProductsProductIdOffersGetResponse,
@@ -31,6 +32,11 @@ class RawProductsClient:
         retailer: str,
         page: typing.Optional[int] = None,
         free_shipping: typing.Optional[bool] = None,
+        sort: typing.Optional[str] = None,
+        rh: typing.Optional[str] = None,
+        bbn: typing.Optional[str] = None,
+        i: typing.Optional[str] = None,
+        extra_params: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[ProductSearchResponse]:
@@ -72,7 +78,7 @@ class RawProductsClient:
         details endpoint reports the shop's rating explicitly. `product_id` is the
         numeric listing id.
 
-        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 
         Parameters
         ----------
@@ -87,6 +93,21 @@ class RawProductsClient:
 
         free_shipping : typing.Optional[bool]
             Only return items that ship for free (Walmart and Best Buy: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results. Rejected for Shopify stores: their search data carries no shipping information, so the filter cannot be honored.
+
+        sort : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Amazon's sort order, its `s` value: `price-asc-rank`, `price-desc-rank`, `review-rank`, `date-desc-rank` or `exact-aware-popularity-rank`. Omit for Amazon's own relevance order.
+
+        rh : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Filters to apply, as Amazon's `rh` string: comma-separated refinement option `id`s from a previous response's `refinements`. To narrow a search, append an option's `id` to that response's `rh`.
+
+        bbn : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Browse node: an Amazon category id to search within.
+
+        i : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Amazon department (search index), e.g. `electronics` or `stripbooks`.
+
+        extra_params : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Further query-string parameters for Amazon's search page, URL-encoded as one value (`a=1&b=2`).
 
         authorization : typing.Optional[str]
 
@@ -106,6 +127,11 @@ class RawProductsClient:
                 "retailer": retailer,
                 "page": page,
                 "free_shipping": free_shipping,
+                "sort": sort,
+                "rh": rh,
+                "bbn": bbn,
+                "i": i,
+                "extra_params": extra_params,
             },
             headers={
                 "authorization": str(authorization) if authorization is not None else None,
@@ -118,6 +144,97 @@ class RawProductsClient:
                     ProductSearchResponse,
                     parse_obj_as(
                         type_=ProductSearchResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_wishlist(
+        self,
+        *,
+        url: str,
+        pages: typing.Optional[int] = None,
+        authorization: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[WishlistResponse]:
+        """
+        The products on a public Amazon wishlist or gift list.
+
+        Each product carries its ASIN as `product_id` (pass it to the details or
+        offers endpoints with the same `retailer`), the price shown on the list in
+        cents as `buy_box_price`, whether it can be added to cart as `available`,
+        and the list owner's `quantity_requested` / `quantity_purchased`. A long
+        list takes a while to read: `pages` bounds it. A private list, or a url
+        that is not a list, comes back from the upstream as an error.
+
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
+
+        Parameters
+        ----------
+        url : str
+            A public Amazon wishlist or gift list url, on amazon.com, amazon.co.uk or amazon.ca
+
+        pages : typing.Optional[int]
+            Read at most this many pages of the list (default: all)
+
+        authorization : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[WishlistResponse]
+            Successful Response
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "products/wishlists",
+            method="GET",
+            params={
+                "url": url,
+                "pages": pages,
+            },
+            headers={
+                "authorization": str(authorization) if authorization is not None else None,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    WishlistResponse,
+                    parse_obj_as(
+                        type_=WishlistResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -170,7 +287,7 @@ class RawProductsClient:
         Not available for Shopify stores: a storefront lists one seller (itself),
         so per-variant price and availability live on the details endpoint instead.
 
-        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 
         Parameters
         ----------
@@ -295,12 +412,13 @@ class RawProductsClient:
         `listing_type` is `physical`, `download` or `both` — a download has nothing
         to ship. `available` accounts for the shop being on vacation as well as
         stock, so it can be false on an in-stock active listing; `shop_is_vacation`
-        says which it was. `variants` is populated only when Etsy exposes a
-        listing's inventory matrix — check `has_variations` to tell "no variants"
-        from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
-        is no category name yet. `async` is not supported for Etsy.
+        says which it was. `variants` is always empty: Etsy shares a listing's
+        inventory only with its own shop. `has_variations` says whether the listing
+        has options that must be chosen before ordering; read them from the listing
+        page and pass the choice as `variant` on the order. `taxonomy_id` is Etsy's
+        raw category id; there is no category name yet. `async` is not supported for Etsy.
 
-        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 
         Parameters
         ----------
@@ -395,6 +513,11 @@ class AsyncRawProductsClient:
         retailer: str,
         page: typing.Optional[int] = None,
         free_shipping: typing.Optional[bool] = None,
+        sort: typing.Optional[str] = None,
+        rh: typing.Optional[str] = None,
+        bbn: typing.Optional[str] = None,
+        i: typing.Optional[str] = None,
+        extra_params: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[ProductSearchResponse]:
@@ -436,7 +559,7 @@ class AsyncRawProductsClient:
         details endpoint reports the shop's rating explicitly. `product_id` is the
         numeric listing id.
 
-        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 
         Parameters
         ----------
@@ -451,6 +574,21 @@ class AsyncRawProductsClient:
 
         free_shipping : typing.Optional[bool]
             Only return items that ship for free (Walmart and Best Buy: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results. Rejected for Shopify stores: their search data carries no shipping information, so the filter cannot be honored.
+
+        sort : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Amazon's sort order, its `s` value: `price-asc-rank`, `price-desc-rank`, `review-rank`, `date-desc-rank` or `exact-aware-popularity-rank`. Omit for Amazon's own relevance order.
+
+        rh : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Filters to apply, as Amazon's `rh` string: comma-separated refinement option `id`s from a previous response's `refinements`. To narrow a search, append an option's `id` to that response's `rh`.
+
+        bbn : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Browse node: an Amazon category id to search within.
+
+        i : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Amazon department (search index), e.g. `electronics` or `stripbooks`.
+
+        extra_params : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Further query-string parameters for Amazon's search page, URL-encoded as one value (`a=1&b=2`).
 
         authorization : typing.Optional[str]
 
@@ -470,6 +608,11 @@ class AsyncRawProductsClient:
                 "retailer": retailer,
                 "page": page,
                 "free_shipping": free_shipping,
+                "sort": sort,
+                "rh": rh,
+                "bbn": bbn,
+                "i": i,
+                "extra_params": extra_params,
             },
             headers={
                 "authorization": str(authorization) if authorization is not None else None,
@@ -482,6 +625,97 @@ class AsyncRawProductsClient:
                     ProductSearchResponse,
                     parse_obj_as(
                         type_=ProductSearchResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 402:
+                raise PaymentRequiredError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_wishlist(
+        self,
+        *,
+        url: str,
+        pages: typing.Optional[int] = None,
+        authorization: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[WishlistResponse]:
+        """
+        The products on a public Amazon wishlist or gift list.
+
+        Each product carries its ASIN as `product_id` (pass it to the details or
+        offers endpoints with the same `retailer`), the price shown on the list in
+        cents as `buy_box_price`, whether it can be added to cart as `available`,
+        and the list owner's `quantity_requested` / `quantity_purchased`. A long
+        list takes a while to read: `pages` bounds it. A private list, or a url
+        that is not a list, comes back from the upstream as an error.
+
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
+
+        Parameters
+        ----------
+        url : str
+            A public Amazon wishlist or gift list url, on amazon.com, amazon.co.uk or amazon.ca
+
+        pages : typing.Optional[int]
+            Read at most this many pages of the list (default: all)
+
+        authorization : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[WishlistResponse]
+            Successful Response
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "products/wishlists",
+            method="GET",
+            params={
+                "url": url,
+                "pages": pages,
+            },
+            headers={
+                "authorization": str(authorization) if authorization is not None else None,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    WishlistResponse,
+                    parse_obj_as(
+                        type_=WishlistResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )
@@ -534,7 +768,7 @@ class AsyncRawProductsClient:
         Not available for Shopify stores: a storefront lists one seller (itself),
         so per-variant price and availability live on the details endpoint instead.
 
-        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 
         Parameters
         ----------
@@ -659,12 +893,13 @@ class AsyncRawProductsClient:
         `listing_type` is `physical`, `download` or `both` — a download has nothing
         to ship. `available` accounts for the shop being on vacation as well as
         stock, so it can be false on an in-stock active listing; `shop_is_vacation`
-        says which it was. `variants` is populated only when Etsy exposes a
-        listing's inventory matrix — check `has_variations` to tell "no variants"
-        from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
-        is no category name yet. `async` is not supported for Etsy.
+        says which it was. `variants` is always empty: Etsy shares a listing's
+        inventory only with its own shop. `has_variations` says whether the listing
+        has options that must be chosen before ordering; read them from the listing
+        page and pass the choice as `variant` on the order. `taxonomy_id` is Etsy's
+        raw category id; there is no category name yet. `async` is not supported for Etsy.
 
-        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+        **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 
         Parameters
         ----------

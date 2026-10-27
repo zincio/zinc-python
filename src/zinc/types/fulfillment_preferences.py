@@ -26,10 +26,12 @@ class FulfillmentPreferences(UniversalBaseModel):
     widening from a bare mode into an object (``items: {mode: "best_effort",
     min_items: 2}``) — never a new top-level order field.
 
-    The one exception to "only loosens" is ``excluded_merchants``: a per-order
-    seller blocklist, here rather than top-level because it is rare and only
-    some placement paths can honour it (BizAPI today; ignored elsewhere). It is
-    not a ``FulfillmentConcern`` and never produces a concession.
+    The exceptions to "only loosens" are the merchant rules
+    (``excluded_merchants``, ``included_merchants``, ``first_party_only``): a
+    per-order seller blocklist, allowlist and "sold by the retailer itself"
+    flag, here rather than top-level because they are rare and only some
+    placement paths can honour them (BizAPI today; ignored elsewhere). None is
+    a ``FulfillmentConcern`` and none produces a concession.
     """
 
     gift: typing.Optional[FulfillmentMode] = pydantic.Field(default=None)
@@ -49,7 +51,17 @@ class FulfillmentPreferences(UniversalBaseModel):
 
     excluded_merchants: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
     """
-    Merchants this order must never be bought from: a display name as shown on the retailer's storefront (matched ignoring case and spacing) or an Amazon Business `amzn1.` merchant id. At most 20 entries. Added to any blocklist already on your account; it can only bar more merchants, never allow a barred one. Currently applied to Amazon Business orders only and ignored elsewhere.
+    Merchants this order must never be bought from: a display name as shown on the retailer's storefront (matched ignoring case and spacing) or an Amazon Business `amzn1.` merchant id (Amazon Business orders only; refused on other orders). At most 20 entries. Added to any blocklist already on your account; it can only bar more merchants, never allow a barred one. Currently applied to Amazon Business orders only and ignored elsewhere.
+    """
+
+    included_merchants: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Only buy this order from these merchants: same entry format as `excluded_merchants`, at most 20 entries. Offers from any other merchant are skipped; if none of the listed merchants has a qualifying offer the item fails as unavailable. Exclusions still win: a merchant on both lists, or on your account's blocklist, is never used. Other offer rules (New condition, Prime unless it's the Buy Box) still apply. Ignored when `first_party_only` is set. Currently applied to Amazon Business orders only and ignored elsewhere.
+    """
+
+    first_party_only: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    `true`: only buy offers sold by Amazon itself, skipping every third-party seller (including ones fulfilled by Amazon) and Amazon's cross-border, used/returns, pharmacy and gift-card stores. If Amazon doesn't sell the item the item fails as unavailable. Takes the place of every merchant list: `included_merchants`, `excluded_merchants` and any blocklist on your account are not applied to this order. Currently applied to Amazon Business orders only and ignored elsewhere.
     """
 
     if IS_PYDANTIC_V2:

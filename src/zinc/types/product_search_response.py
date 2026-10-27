@@ -5,6 +5,8 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
 from .product_search_result import ProductSearchResult
+from .search_refinement_group import SearchRefinementGroup
+from .search_showing import SearchShowing
 
 
 class ProductSearchResponse(UniversalBaseModel):
@@ -14,9 +16,24 @@ class ProductSearchResponse(UniversalBaseModel):
 
     status: str
     results: typing.Optional[typing.List[ProductSearchResult]] = None
+    refinements: typing.Optional[typing.List[SearchRefinementGroup]] = pydantic.Field(default=None)
+    """
+    Amazon only: the filters (facets) Amazon offers for this search. Null for other retailers.
+    """
+
+    rh: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Amazon only: the filters applied to this search, as Amazon's `rh` string. Append a refinement option's `id` (comma-separated) and pass it back as `rh` to narrow the search.
+    """
+
+    showing: typing.Optional[SearchShowing] = pydantic.Field(default=None)
+    """
+    Amazon only: the result range and page count.
+    """
+
     next_page: typing.Optional[int] = pydantic.Field(default=None)
     """
-    Only set on free_shipping searches: the page to request to keep paging. An empty `results` with a non-null next_page is NOT the end of results — request next_page to continue. None means results are exhausted (or the search was unfiltered).
+    The page to request to keep paging, set while the retailer has more results: on every Etsy and Best Buy search, on a `free_shipping` search for the other named retailers, and never for a Shopify store (its search is a single page). An empty `results` with a non-null next_page is NOT the end of results — request next_page to continue. Null means there is nothing more to page through.
     """
 
     if IS_PYDANTIC_V2:

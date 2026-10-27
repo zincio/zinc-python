@@ -32,7 +32,17 @@ class OrderFulfillment(UniversalBaseModel):
 
     excluded_merchants: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
     """
-    Merchants this order must never be bought from: a display name as shown on the retailer's storefront (matched ignoring case and spacing) or an Amazon Business `amzn1.` merchant id. At most 20 entries. Added to any blocklist already on your account; it can only bar more merchants, never allow a barred one. Currently applied to Amazon Business orders only and ignored elsewhere.
+    Merchants this order must never be bought from: a display name as shown on the retailer's storefront (matched ignoring case and spacing) or an Amazon Business `amzn1.` merchant id (Amazon Business orders only; refused on other orders). At most 20 entries. Added to any blocklist already on your account; it can only bar more merchants, never allow a barred one. Currently applied to Amazon Business orders only and ignored elsewhere.
+    """
+
+    included_merchants: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    """
+    Only buy this order from these merchants: same entry format as `excluded_merchants`, at most 20 entries. Offers from any other merchant are skipped; if none of the listed merchants has a qualifying offer the item fails as unavailable. Exclusions still win: a merchant on both lists, or on your account's blocklist, is never used. Other offer rules (New condition, Prime unless it's the Buy Box) still apply. Ignored when `first_party_only` is set. Currently applied to Amazon Business orders only and ignored elsewhere.
+    """
+
+    first_party_only: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    `true`: only buy offers sold by Amazon itself, skipping every third-party seller (including ones fulfilled by Amazon) and Amazon's cross-border, used/returns, pharmacy and gift-card stores. If Amazon doesn't sell the item the item fails as unavailable. Takes the place of every merchant list: `included_merchants`, `excluded_merchants` and any blocklist on your account are not applied to this order. Currently applied to Amazon Business orders only and ignored elsewhere.
     """
 
     concessions: typing.Optional[typing.List[FulfillmentConcession]] = None

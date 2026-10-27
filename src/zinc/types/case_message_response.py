@@ -18,7 +18,7 @@ class CaseMessageResponse(UniversalBaseModel):
 
     author_name: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Who wrote it: the teammate's name for `customer` messages, `Zinc support` for `zinc`, null for `system` lines.
+    Who wrote it: the teammate's name for `customer` messages, `Zinc support` for `zinc` (`Zinc support (AI assistant)` when our AI assistant wrote it), null for `system` lines.
     """
 
     from_you: typing.Optional[bool] = pydantic.Field(default=None)

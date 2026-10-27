@@ -349,7 +349,7 @@ class GetProductDetailsProductsProductIdGetResponse(UniversalBaseModel):
 
     has_variations: typing.Optional[bool] = pydantic.Field(default=None)
     """
-    Etsy only. Whether the listing has variants at all. When true but `variants` is empty, Etsy did not expose the inventory matrix.
+    Etsy only. Whether the listing has options (size, color...) that must be chosen before it can be ordered. The options themselves aren't returned: Etsy shares a listing's inventory only with its own shop, so `variants` is empty on Etsy.
     """
 
     shop_name: typing.Optional[str] = pydantic.Field(default=None)
@@ -381,7 +381,7 @@ class GetProductDetailsProductsProductIdGetResponse(UniversalBaseModel):
         default=None
     )
     """
-    Shopify and Etsy only. Per-variant price and availability. Amazon and Walmart use `variant_specifics` / `all_variants` instead.
+    Shopify only. Per-variant price and availability. Empty on Etsy, whose options aren't available (see `has_variations`). Amazon and Walmart use `variant_specifics` / `all_variants` instead.
     """
 
     if IS_PYDANTIC_V2:

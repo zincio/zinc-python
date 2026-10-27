@@ -771,7 +771,7 @@ client.orders.create_order(
 <dl>
 <dd>
 
-**fulfillment:** `typing.Optional[FulfillmentPreferences]` — Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants` tightens instead: merchants this order must not be bought from.
+**fulfillment:** `typing.Optional[FulfillmentPreferences]` — Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from.
     
 </dd>
 </dl>
@@ -1335,7 +1335,7 @@ product's would be misleading; `brand` carries the shop name, and the
 details endpoint reports the shop's rating explicitly. `product_id` is the
 numeric listing id.
 
-**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 </dd>
 </dl>
 </dd>
@@ -1409,6 +1409,144 @@ client.products.search_products(
 <dl>
 <dd>
 
+**sort:** `typing.Optional[str]` — Amazon only (any other retailer is a 400). Amazon's sort order, its `s` value: `price-asc-rank`, `price-desc-rank`, `review-rank`, `date-desc-rank` or `exact-aware-popularity-rank`. Omit for Amazon's own relevance order.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**rh:** `typing.Optional[str]` — Amazon only (any other retailer is a 400). Filters to apply, as Amazon's `rh` string: comma-separated refinement option `id`s from a previous response's `refinements`. To narrow a search, append an option's `id` to that response's `rh`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**bbn:** `typing.Optional[str]` — Amazon only (any other retailer is a 400). Browse node: an Amazon category id to search within.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**i:** `typing.Optional[str]` — Amazon only (any other retailer is a 400). Amazon department (search index), e.g. `electronics` or `stripbooks`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**extra_params:** `typing.Optional[str]` — Amazon only (any other retailer is a 400). Further query-string parameters for Amazon's search page, URL-encoded as one value (`a=1&b=2`).
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.products.<a href="src/zinc/products/client.py">get_wishlist</a>(...) -> WishlistResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+The products on a public Amazon wishlist or gift list.
+
+Each product carries its ASIN as `product_id` (pass it to the details or
+offers endpoints with the same `retailer`), the price shown on the list in
+cents as `buy_box_price`, whether it can be added to cart as `available`,
+and the list owner's `quantity_requested` / `quantity_purchased`. A long
+list takes a while to read: `pages` bounds it. A private list, or a url
+that is not a list, comes back from the upstream as an error.
+
+**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.products.get_wishlist(
+    url="url",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**url:** `str` — A public Amazon wishlist or gift list url, on amazon.com, amazon.co.uk or amazon.ca
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**pages:** `typing.Optional[int]` — Read at most this many pages of the list (default: all)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **authorization:** `typing.Optional[str]` 
     
 </dd>
@@ -1446,7 +1584,7 @@ Get offers for a product from a retailer.
 Not available for Shopify stores: a storefront lists one seller (itself),
 so per-variant price and availability live on the details endpoint instead.
 
-**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 </dd>
 </dl>
 </dd>
@@ -1590,12 +1728,13 @@ seller's rating is a different claim.
 `listing_type` is `physical`, `download` or `both` — a download has nothing
 to ship. `available` accounts for the shop being on vacation as well as
 stock, so it can be false on an in-stock active listing; `shop_is_vacation`
-says which it was. `variants` is populated only when Etsy exposes a
-listing's inventory matrix — check `has_variations` to tell "no variants"
-from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
-is no category name yet. `async` is not supported for Etsy.
+says which it was. `variants` is always empty: Etsy shares a listing's
+inventory only with its own shop. `has_variations` says whether the listing
+has options that must be chosen before ordering; read them from the listing
+page and pass the choice as `variant` on the order. `taxonomy_id` is Etsy's
+raw category id; there is no category name yet. `async` is not supported for Etsy.
 
-**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 </dd>
 </dl>
 </dd>
@@ -1712,7 +1851,7 @@ client.products.get_product_details(
 
 Search for products across retailers; returns orderable zn_sku_ listings.
 
-**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free and never touch the live wallet.
+**Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 </dd>
 </dl>
 </dd>
@@ -1777,7 +1916,7 @@ client.search.search(
 <dl>
 <dd>
 
-**retailer:** `typing.Optional[typing.List[str]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: many need a `variant` on the order, which `GET /products/{id}?retailer=etsy` lists. With a live key, a Shopify store not yet catalogued is added on first use by its domain.
+**retailer:** `typing.Optional[typing.List[str]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: when `has_variants` is true the order needs a `variant`, and the options must be read from the listing page, because Etsy shares them only with the listing's own shop. With a live key, a Shopify store not yet catalogued is added on first use by its domain.
     
 </dd>
 </dl>
@@ -2019,6 +2158,14 @@ client.managed_accounts.create_retailer_credentials(
 <dl>
 <dd>
 
+**card_number:** `typing.Optional[str]` — Full number of the account's payment card, for retailers that ask to re-enter it at checkout (encrypted at rest, never returned).
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **retailer_config:** `typing.Optional[typing.Dict[str, typing.Any]]` 
     
 </dd>
@@ -2141,6 +2288,14 @@ client.managed_accounts.update_retailer_credentials(
 <dl>
 <dd>
 
+**card_number:** `typing.Optional[str]` — Full payment card number (encrypted at rest, never returned). Omit or null to keep the stored number; an empty string removes it.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **retailer_config:** `typing.Optional[typing.Dict[str, typing.Any]]` — Merged into the stored config key by key: a key you send replaces that key, a key set to null is removed, and keys you omit are kept.
     
 </dd>
@@ -2256,12 +2411,13 @@ client.managed_accounts.delete_retailer_credentials(
 <dl>
 <dd>
 
-Place an order via the Machine Payments Protocol (MPP).
+Place an order and pay for it in the same request — no Zinc account.
 
-No Zinc account required. Payment is made upfront via MPP.
-Supports multiple payment methods (e.g. Tempo, Stripe).
-If no valid payment credential is provided, returns HTTP 402
-with payment challenges for all configured methods.
+The agent pays ``max_price`` + the API fee upfront over HTTP 402 on any
+configured rail: Link (a Stripe Shared Payment Token over MPP), MPP Tempo,
+or x402 (USDC on Base or Solana). Unused budget is refunded to the original
+payment. If no valid payment proof is provided, returns HTTP 402 with a
+challenge for every configured rail (``?method=`` narrows it to one).
 
 Payment is the gate, but only for a genuine discovery probe: a bodyless
 POST (from a registry like mppscan) is parsed leniently and reaches the 402
@@ -2272,6 +2428,10 @@ challenge is issued or honored. Otherwise an agent could settle an on-chain
 payment against the challenge and then be rejected on the retry, with no way
 to refund the settlement (the MPP layer cannot verify or reverse a payment
 whose retry body no longer matches the challenge).
+
+``X-Test-Mode: true`` runs the same flow on testnets: every rail is swapped
+for a testnet-only twin, and the order is created in the sandbox, where it
+is simulated like any ``zn_test_`` order. Testnet payments are not refunded.
 </dd>
 </dl>
 </dd>
@@ -2365,6 +2525,14 @@ client.agent.create_mpp_order(
 <dl>
 <dd>
 
+**test_mode:** `typing.Optional[str]` — Set to 'true' for test mode: the 402 offers testnet rails only (Tempo testnet, Base Sepolia, Solana devnet), and the order is simulated in the sandbox — no real funds, no retailer order. The X-Api-Key returned is a zn_test_ key.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **idempotency_key:** `typing.Optional[str]` — Optional idempotency key to prevent duplicate orders. If not provided, one will be generated.
     
 </dd>
@@ -2437,7 +2605,7 @@ client.agent.create_mpp_order(
 <dl>
 <dd>
 
-**fulfillment:** `typing.Optional[FulfillmentPreferences]` — Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants` tightens instead: merchants this order must not be bought from.
+**fulfillment:** `typing.Optional[FulfillmentPreferences]` — Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from.
     
 </dd>
 </dl>
@@ -2535,7 +2703,7 @@ client.agent.search(
 <dl>
 <dd>
 
-**retailer:** `typing.Optional[typing.Union[str, typing.Sequence[str]]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: many need a `variant` on the order, which `GET /products/{id}?retailer=etsy` lists.
+**retailer:** `typing.Optional[typing.Union[str, typing.Sequence[str]]]` — Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: when `has_variants` is true the order needs a `variant`, and the options must be read from the listing page, because Etsy shares them only with the listing's own shop.
     
 </dd>
 </dl>
@@ -2682,6 +2850,46 @@ client.agent.product_search(
 <dd>
 
 **free_shipping:** `typing.Optional[bool]` — Only return items that ship for free (Walmart and Best Buy: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results. Rejected for Shopify stores: their search data carries no shipping information, so the filter cannot be honored.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**sort:** `typing.Optional[str]` — Amazon only (any other retailer is a 400). Amazon's sort order, its `s` value: `price-asc-rank`, `price-desc-rank`, `review-rank`, `date-desc-rank` or `exact-aware-popularity-rank`. Omit for Amazon's own relevance order.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**rh:** `typing.Optional[str]` — Amazon only (any other retailer is a 400). Filters to apply, as Amazon's `rh` string: comma-separated refinement option `id`s from a previous response's `refinements`. To narrow a search, append an option's `id` to that response's `rh`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**bbn:** `typing.Optional[str]` — Amazon only (any other retailer is a 400). Browse node: an Amazon category id to search within.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**i:** `typing.Optional[str]` — Amazon only (any other retailer is a 400). Amazon department (search index), e.g. `electronics` or `stripbooks`.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**extra_params:** `typing.Optional[str]` — Amazon only (any other retailer is a 400). Further query-string parameters for Amazon's search page, URL-encoded as one value (`a=1&b=2`).
     
 </dd>
 </dl>
@@ -2852,10 +3060,11 @@ seller's rating is a different claim.
 `listing_type` is `physical`, `download` or `both` — a download has nothing
 to ship. `available` accounts for the shop being on vacation as well as
 stock, so it can be false on an in-stock active listing; `shop_is_vacation`
-says which it was. `variants` is populated only when Etsy exposes a
-listing's inventory matrix — check `has_variations` to tell "no variants"
-from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
-is no category name yet. `async` is not supported for Etsy.
+says which it was. `variants` is always empty: Etsy shares a listing's
+inventory only with its own shop. `has_variations` says whether the listing
+has options that must be chosen before ordering; read them from the listing
+page and pass the choice as `variant` on the order. `taxonomy_id` is Etsy's
+raw category id; there is no category name yet. `async` is not supported for Etsy.
 </dd>
 </dl>
 </dd>

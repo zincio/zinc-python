@@ -8,6 +8,7 @@ ErrorCode = typing.Union[
         "forbidden",
         "invalid_token",
         "token_expired",
+        "account_suspended",
         "not_found",
         "already_exists",
         "validation_error",

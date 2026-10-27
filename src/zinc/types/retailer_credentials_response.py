@@ -26,6 +26,11 @@ class RetailerCredentialsResponse(UniversalBaseModel):
     Whether TOTP 2FA is configured for this account.
     """
 
+    has_card_number: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Whether a full payment card number is stored for this account.
+    """
+
     has_forwarding: typing.Optional[bool] = pydantic.Field(default=None)
     """
     Whether email forwarding has been verified for this account.

@@ -44,6 +44,7 @@ class AgentClient:
         max_price: int,
         method: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
+        test_mode: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = OMIT,
         retailer_credentials_id: typing.Optional[str] = OMIT,
         metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
@@ -57,12 +58,13 @@ class AgentClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderResponse:
         """
-        Place an order via the Machine Payments Protocol (MPP).
+        Place an order and pay for it in the same request — no Zinc account.
 
-        No Zinc account required. Payment is made upfront via MPP.
-        Supports multiple payment methods (e.g. Tempo, Stripe).
-        If no valid payment credential is provided, returns HTTP 402
-        with payment challenges for all configured methods.
+        The agent pays ``max_price`` + the API fee upfront over HTTP 402 on any
+        configured rail: Link (a Stripe Shared Payment Token over MPP), MPP Tempo,
+        or x402 (USDC on Base or Solana). Unused budget is refunded to the original
+        payment. If no valid payment proof is provided, returns HTTP 402 with a
+        challenge for every configured rail (``?method=`` narrows it to one).
 
         Payment is the gate, but only for a genuine discovery probe: a bodyless
         POST (from a registry like mppscan) is parsed leniently and reaches the 402
@@ -73,6 +75,10 @@ class AgentClient:
         payment against the challenge and then be rejected on the retry, with no way
         to refund the settlement (the MPP layer cannot verify or reverse a payment
         whose retry body no longer matches the challenge).
+
+        ``X-Test-Mode: true`` runs the same flow on testnets: every rail is swapped
+        for a testnet-only twin, and the order is created in the sandbox, where it
+        is simulated like any ``zn_test_`` order. Testnet payments are not refunded.
 
         Parameters
         ----------
@@ -87,6 +93,9 @@ class AgentClient:
             Restrict the 402 to a single payment method (e.g. 'stripe', 'tempo', or 'x402'). Omit to advertise every configured method. Use this when your client can satisfy only one rail — it avoids returning multiple WWW-Authenticate challenges, which many HTTP clients mishandle.
 
         authorization : typing.Optional[str]
+
+        test_mode : typing.Optional[str]
+            Set to 'true' for test mode: the 402 offers testnet rails only (Tempo testnet, Base Sepolia, Solana devnet), and the order is simulated in the sandbox — no real funds, no retailer order. The X-Api-Key returned is a zn_test_ key.
 
         idempotency_key : typing.Optional[str]
             Optional idempotency key to prevent duplicate orders. If not provided, one will be generated.
@@ -116,7 +125,7 @@ class AgentClient:
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         fulfillment : typing.Optional[FulfillmentPreferences]
-            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants` tightens instead: merchants this order must not be bought from.
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -156,6 +165,7 @@ class AgentClient:
             max_price=max_price,
             method=method,
             authorization=authorization,
+            test_mode=test_mode,
             idempotency_key=idempotency_key,
             retailer_credentials_id=retailer_credentials_id,
             metadata=metadata,
@@ -197,7 +207,7 @@ class AgentClient:
             Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
         retailer : typing.Optional[typing.Union[str, typing.Sequence[str]]]
-            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: many need a `variant` on the order, which `GET /products/{id}?retailer=etsy` lists.
+            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: when `has_variants` is true the order needs a `variant`, and the options must be read from the listing page, because Etsy shares them only with the listing's own shop.
 
         sort : typing.Optional[AgentSearchRequestSort]
             Result order. `relevance` (default) blends query match, source rank and rating, and mixes retailers. The explicit sorts order the 20 most relevant results (or `limit`, if larger) that match at least half the query, so accessories that merely name the product don't lead; results with no price (or no rating, for `rating`) sort last.
@@ -242,6 +252,11 @@ class AgentClient:
         retailer: str,
         page: typing.Optional[int] = None,
         free_shipping: typing.Optional[bool] = None,
+        sort: typing.Optional[str] = None,
+        rh: typing.Optional[str] = None,
+        bbn: typing.Optional[str] = None,
+        i: typing.Optional[str] = None,
+        extra_params: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ProductSearchResponse:
         """
@@ -293,6 +308,21 @@ class AgentClient:
         free_shipping : typing.Optional[bool]
             Only return items that ship for free (Walmart and Best Buy: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results. Rejected for Shopify stores: their search data carries no shipping information, so the filter cannot be honored.
 
+        sort : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Amazon's sort order, its `s` value: `price-asc-rank`, `price-desc-rank`, `review-rank`, `date-desc-rank` or `exact-aware-popularity-rank`. Omit for Amazon's own relevance order.
+
+        rh : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Filters to apply, as Amazon's `rh` string: comma-separated refinement option `id`s from a previous response's `refinements`. To narrow a search, append an option's `id` to that response's `rh`.
+
+        bbn : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Browse node: an Amazon category id to search within.
+
+        i : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Amazon department (search index), e.g. `electronics` or `stripbooks`.
+
+        extra_params : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Further query-string parameters for Amazon's search page, URL-encoded as one value (`a=1&b=2`).
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -314,7 +344,16 @@ class AgentClient:
         )
         """
         _response = self._raw_client.product_search(
-            query=query, retailer=retailer, page=page, free_shipping=free_shipping, request_options=request_options
+            query=query,
+            retailer=retailer,
+            page=page,
+            free_shipping=free_shipping,
+            sort=sort,
+            rh=rh,
+            bbn=bbn,
+            i=i,
+            extra_params=extra_params,
+            request_options=request_options,
         )
         return _response.data
 
@@ -422,10 +461,11 @@ class AgentClient:
         `listing_type` is `physical`, `download` or `both` — a download has nothing
         to ship. `available` accounts for the shop being on vacation as well as
         stock, so it can be false on an in-stock active listing; `shop_is_vacation`
-        says which it was. `variants` is populated only when Etsy exposes a
-        listing's inventory matrix — check `has_variations` to tell "no variants"
-        from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
-        is no category name yet. `async` is not supported for Etsy.
+        says which it was. `variants` is always empty: Etsy shares a listing's
+        inventory only with its own shop. `has_variations` says whether the listing
+        has options that must be chosen before ordering; read them from the listing
+        page and pass the choice as `variant` on the order. `taxonomy_id` is Etsy's
+        raw category id; there is no category name yet. `async` is not supported for Etsy.
 
         Parameters
         ----------
@@ -498,6 +538,7 @@ class AsyncAgentClient:
         max_price: int,
         method: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
+        test_mode: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = OMIT,
         retailer_credentials_id: typing.Optional[str] = OMIT,
         metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
@@ -511,12 +552,13 @@ class AsyncAgentClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> OrderResponse:
         """
-        Place an order via the Machine Payments Protocol (MPP).
+        Place an order and pay for it in the same request — no Zinc account.
 
-        No Zinc account required. Payment is made upfront via MPP.
-        Supports multiple payment methods (e.g. Tempo, Stripe).
-        If no valid payment credential is provided, returns HTTP 402
-        with payment challenges for all configured methods.
+        The agent pays ``max_price`` + the API fee upfront over HTTP 402 on any
+        configured rail: Link (a Stripe Shared Payment Token over MPP), MPP Tempo,
+        or x402 (USDC on Base or Solana). Unused budget is refunded to the original
+        payment. If no valid payment proof is provided, returns HTTP 402 with a
+        challenge for every configured rail (``?method=`` narrows it to one).
 
         Payment is the gate, but only for a genuine discovery probe: a bodyless
         POST (from a registry like mppscan) is parsed leniently and reaches the 402
@@ -527,6 +569,10 @@ class AsyncAgentClient:
         payment against the challenge and then be rejected on the retry, with no way
         to refund the settlement (the MPP layer cannot verify or reverse a payment
         whose retry body no longer matches the challenge).
+
+        ``X-Test-Mode: true`` runs the same flow on testnets: every rail is swapped
+        for a testnet-only twin, and the order is created in the sandbox, where it
+        is simulated like any ``zn_test_`` order. Testnet payments are not refunded.
 
         Parameters
         ----------
@@ -541,6 +587,9 @@ class AsyncAgentClient:
             Restrict the 402 to a single payment method (e.g. 'stripe', 'tempo', or 'x402'). Omit to advertise every configured method. Use this when your client can satisfy only one rail — it avoids returning multiple WWW-Authenticate challenges, which many HTTP clients mishandle.
 
         authorization : typing.Optional[str]
+
+        test_mode : typing.Optional[str]
+            Set to 'true' for test mode: the 402 offers testnet rails only (Tempo testnet, Base Sepolia, Solana devnet), and the order is simulated in the sandbox — no real funds, no retailer order. The X-Api-Key returned is a zn_test_ key.
 
         idempotency_key : typing.Optional[str]
             Optional idempotency key to prevent duplicate orders. If not provided, one will be generated.
@@ -570,7 +619,7 @@ class AsyncAgentClient:
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         fulfillment : typing.Optional[FulfillmentPreferences]
-            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants` tightens instead: merchants this order must not be bought from.
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -618,6 +667,7 @@ class AsyncAgentClient:
             max_price=max_price,
             method=method,
             authorization=authorization,
+            test_mode=test_mode,
             idempotency_key=idempotency_key,
             retailer_credentials_id=retailer_credentials_id,
             metadata=metadata,
@@ -659,7 +709,7 @@ class AsyncAgentClient:
             Cents. Drop results priced above this. Pass the `max_price` you intend to send to POST /orders and every result returned fits it. Results with no known price are dropped when a clamp is set.
 
         retailer : typing.Optional[typing.Union[str, typing.Sequence[str]]]
-            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: many need a `variant` on the order, which `GET /products/{id}?retailer=etsy` lists.
+            Only return results from these retailers. Repeat the param for several: `?retailer=amazon&retailer=target`. Takes the discovery retailers (amazon, bestbuy, bhphotovideo, chewy, costco, homedepot, kohls, lowes, macys, newegg, staples, target, walmart, wayfair), `etsy`, and up to 3 catalogued Shopify stores by their Zinc retailer slug (e.g. `retailer=yetch`; a store's domain also works). Etsy and stores are searched directly, and only when named here: an unfiltered search never includes them. Etsy results are listings: when `has_variants` is true the order needs a `variant`, and the options must be read from the listing page, because Etsy shares them only with the listing's own shop.
 
         sort : typing.Optional[AgentSearchRequestSort]
             Result order. `relevance` (default) blends query match, source rank and rating, and mixes retailers. The explicit sorts order the 20 most relevant results (or `limit`, if larger) that match at least half the query, so accessories that merely name the product don't lead; results with no price (or no rating, for `rating`) sort last.
@@ -712,6 +762,11 @@ class AsyncAgentClient:
         retailer: str,
         page: typing.Optional[int] = None,
         free_shipping: typing.Optional[bool] = None,
+        sort: typing.Optional[str] = None,
+        rh: typing.Optional[str] = None,
+        bbn: typing.Optional[str] = None,
+        i: typing.Optional[str] = None,
+        extra_params: typing.Optional[str] = None,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> ProductSearchResponse:
         """
@@ -763,6 +818,21 @@ class AsyncAgentClient:
         free_shipping : typing.Optional[bool]
             Only return items that ship for free (Walmart and Best Buy: ship price of 0). Currently a no-op for Amazon: the upstream search data under-reports Prime, so filtering on it would drop valid items — Amazon results are returned unfiltered. Filtering happens after pagination, so per-page counts vary; use `next_page` in the response to keep paging — an empty page with a non-null `next_page` is not the end of results. Rejected for Shopify stores: their search data carries no shipping information, so the filter cannot be honored.
 
+        sort : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Amazon's sort order, its `s` value: `price-asc-rank`, `price-desc-rank`, `review-rank`, `date-desc-rank` or `exact-aware-popularity-rank`. Omit for Amazon's own relevance order.
+
+        rh : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Filters to apply, as Amazon's `rh` string: comma-separated refinement option `id`s from a previous response's `refinements`. To narrow a search, append an option's `id` to that response's `rh`.
+
+        bbn : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Browse node: an Amazon category id to search within.
+
+        i : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Amazon department (search index), e.g. `electronics` or `stripbooks`.
+
+        extra_params : typing.Optional[str]
+            Amazon only (any other retailer is a 400). Further query-string parameters for Amazon's search page, URL-encoded as one value (`a=1&b=2`).
+
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
 
@@ -792,7 +862,16 @@ class AsyncAgentClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.product_search(
-            query=query, retailer=retailer, page=page, free_shipping=free_shipping, request_options=request_options
+            query=query,
+            retailer=retailer,
+            page=page,
+            free_shipping=free_shipping,
+            sort=sort,
+            rh=rh,
+            bbn=bbn,
+            i=i,
+            extra_params=extra_params,
+            request_options=request_options,
         )
         return _response.data
 
@@ -908,10 +987,11 @@ class AsyncAgentClient:
         `listing_type` is `physical`, `download` or `both` — a download has nothing
         to ship. `available` accounts for the shop being on vacation as well as
         stock, so it can be false on an in-stock active listing; `shop_is_vacation`
-        says which it was. `variants` is populated only when Etsy exposes a
-        listing's inventory matrix — check `has_variations` to tell "no variants"
-        from "variants not visible". `taxonomy_id` is Etsy's raw category id; there
-        is no category name yet. `async` is not supported for Etsy.
+        says which it was. `variants` is always empty: Etsy shares a listing's
+        inventory only with its own shop. `has_variations` says whether the listing
+        has options that must be chosen before ordering; read them from the listing
+        page and pass the choice as `variant` on the order. `taxonomy_id` is Etsy's
+        raw category id; there is no category name yet. `async` is not supported for Etsy.
 
         Parameters
         ----------

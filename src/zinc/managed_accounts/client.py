@@ -83,6 +83,7 @@ class ManagedAccountsClient:
         password: typing.Optional[str] = OMIT,
         retailer: typing.Optional[str] = OMIT,
         totp_secret: typing.Optional[str] = OMIT,
+        card_number: typing.Optional[str] = OMIT,
         retailer_config: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RetailerCredentialsResponse:
@@ -111,6 +112,9 @@ class ManagedAccountsClient:
         totp_secret : typing.Optional[str]
             TOTP secret key for 2FA (will be encrypted at rest).
 
+        card_number : typing.Optional[str]
+            Full number of the account's payment card, for retailers that ask to re-enter it at checkout (encrypted at rest, never returned).
+
         retailer_config : typing.Optional[typing.Dict[str, typing.Any]]
 
         request_options : typing.Optional[RequestOptions]
@@ -138,6 +142,7 @@ class ManagedAccountsClient:
             password=password,
             retailer=retailer,
             totp_secret=totp_secret,
+            card_number=card_number,
             retailer_config=retailer_config,
             request_options=request_options,
         )
@@ -152,6 +157,7 @@ class ManagedAccountsClient:
         password: typing.Optional[str] = OMIT,
         retailer: typing.Optional[str] = OMIT,
         totp_secret: typing.Optional[str] = OMIT,
+        card_number: typing.Optional[str] = OMIT,
         retailer_config: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RetailerCredentialsResponse:
@@ -172,6 +178,9 @@ class ManagedAccountsClient:
         retailer : typing.Optional[str]
 
         totp_secret : typing.Optional[str]
+
+        card_number : typing.Optional[str]
+            Full payment card number (encrypted at rest, never returned). Omit or null to keep the stored number; an empty string removes it.
 
         retailer_config : typing.Optional[typing.Dict[str, typing.Any]]
             Merged into the stored config key by key: a key you send replaces that key, a key set to null is removed, and keys you omit are kept.
@@ -202,6 +211,7 @@ class ManagedAccountsClient:
             password=password,
             retailer=retailer,
             totp_secret=totp_secret,
+            card_number=card_number,
             retailer_config=retailer_config,
             request_options=request_options,
         )
@@ -327,6 +337,7 @@ class AsyncManagedAccountsClient:
         password: typing.Optional[str] = OMIT,
         retailer: typing.Optional[str] = OMIT,
         totp_secret: typing.Optional[str] = OMIT,
+        card_number: typing.Optional[str] = OMIT,
         retailer_config: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RetailerCredentialsResponse:
@@ -354,6 +365,9 @@ class AsyncManagedAccountsClient:
 
         totp_secret : typing.Optional[str]
             TOTP secret key for 2FA (will be encrypted at rest).
+
+        card_number : typing.Optional[str]
+            Full number of the account's payment card, for retailers that ask to re-enter it at checkout (encrypted at rest, never returned).
 
         retailer_config : typing.Optional[typing.Dict[str, typing.Any]]
 
@@ -390,6 +404,7 @@ class AsyncManagedAccountsClient:
             password=password,
             retailer=retailer,
             totp_secret=totp_secret,
+            card_number=card_number,
             retailer_config=retailer_config,
             request_options=request_options,
         )
@@ -404,6 +419,7 @@ class AsyncManagedAccountsClient:
         password: typing.Optional[str] = OMIT,
         retailer: typing.Optional[str] = OMIT,
         totp_secret: typing.Optional[str] = OMIT,
+        card_number: typing.Optional[str] = OMIT,
         retailer_config: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> RetailerCredentialsResponse:
@@ -424,6 +440,9 @@ class AsyncManagedAccountsClient:
         retailer : typing.Optional[str]
 
         totp_secret : typing.Optional[str]
+
+        card_number : typing.Optional[str]
+            Full payment card number (encrypted at rest, never returned). Omit or null to keep the stored number; an empty string removes it.
 
         retailer_config : typing.Optional[typing.Dict[str, typing.Any]]
             Merged into the stored config key by key: a key you send replaces that key, a key set to null is removed, and keys you omit are kept.
@@ -462,6 +481,7 @@ class AsyncManagedAccountsClient:
             password=password,
             retailer=retailer,
             totp_secret=totp_secret,
+            card_number=card_number,
             retailer_config=retailer_config,
             request_options=request_options,
         )
