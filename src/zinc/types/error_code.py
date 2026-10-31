@@ -21,6 +21,7 @@ ErrorCode = typing.Union[
         "payment_method_required",
         "payment_required",
         "invalid_payment_method",
+        "card_verification_required",
         "invalid_shipping_address",
         "url_unreachable",
         "non_us_retailer",

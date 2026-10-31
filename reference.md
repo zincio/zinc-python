@@ -1300,12 +1300,8 @@ client.orders.cancel_order(
 
 Search for products on a retailer.
 
-**Best Buy returns a partial page.** Best Buy server-renders only about 4 of
-the ~24 products on a search page and loads the rest in the browser, so each
-page yields roughly 4 results rather than a full page. Ranking, pricing and
-availability are Best Buy's own; there are simply fewer items per page. Page
-through with `next_page` to collect more — `next_page` reflects whether Best
-Buy has further results, not how many came back in this response.
+**Best Buy product data is not available yet**: `retailer=bestbuy` is
+rejected with a 400, in test mode too.
 
 **Shopify stores are their own retailer**: pass the store's Zinc retailer
 slug as `retailer` (e.g. `retailer=yetch`; its domain, `yetch.studio`, also
@@ -1385,7 +1381,7 @@ client.products.search_products(
 <dl>
 <dd>
 
-**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. A Shopify store not yet in Zinc's catalog is added on a live key's first request for it by domain; any other unknown value is a 422. Responses carry the slug.
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, amazon-au, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. A Shopify store not yet in Zinc's catalog is added on a live key's first request for it by domain; any other unknown value is a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -1531,7 +1527,7 @@ client.products.get_wishlist(
 <dl>
 <dd>
 
-**url:** `str` — A public Amazon wishlist or gift list url, on amazon.com, amazon.co.uk or amazon.ca
+**url:** `str` — A public Amazon wishlist or gift list url, on amazon.com, amazon.co.uk, amazon.ca or amazon.com.au
     
 </dd>
 </dl>
@@ -1583,6 +1579,8 @@ Get offers for a product from a retailer.
 
 Not available for Shopify stores: a storefront lists one seller (itself),
 so per-variant price and availability live on the details endpoint instead.
+Not available for Best Buy, whose product data is not available yet: a
+400, in test mode too.
 
 **Billing.** This is a metered data call: $0.01 is drawn from your wallet per successful request, before any order is placed. An empty wallet gets `402` instead. Sandbox (`zn_test_`) calls are free, return synthetic sample data (marked `X-Zinc-Test-Data: synthetic`) and never touch the live wallet, up to 10,000 per account per UTC day; past that they get `429` until midnight UTC.
 </dd>
@@ -1634,7 +1632,7 @@ client.products.get_product_offers(
 <dl>
 <dd>
 
-**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, amazon-au, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -1700,13 +1698,8 @@ client.products.get_product_offers(
 
 Get details for a product from a retailer.
 
-**Best Buy is addressed by `bsin`**, not by the numeric SKU — the bsin is the
-trailing id in a Best Buy product URL (`/product/{slug}/{bsin}`). Search
-results return the SKU as `product_id` and also carry the bsin, so pass the
-bsin here. The response repeats the SKU as `sku` for cross-referencing.
-
-Unlike `/search`, a Best Buy detail response is complete: detail pages are
-fully server-rendered, so nothing is withheld for client-side loading.
+**Best Buy product data is not available yet**: `retailer=bestbuy` is
+rejected with a 400, in test mode too.
 
 **Shopify is addressed by (store, handle)**: pass the store's retailer slug
 as `retailer` (e.g. `retailer=yetch`) and the product handle — the slug
@@ -1784,7 +1777,7 @@ client.products.get_product_details(
 <dl>
 <dd>
 
-**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. A Shopify store not yet in Zinc's catalog is added on a live key's first request for it by domain; any other unknown value is a 422. Responses carry the slug.
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, amazon-au, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. A Shopify store not yet in Zinc's catalog is added on a live key's first request for it by domain; any other unknown value is a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -2753,12 +2746,8 @@ client.agent.search(
 
 Per-retailer product search for agents.
 
-**Best Buy returns a partial page.** Best Buy server-renders only about 4 of
-the ~24 products on a search page and loads the rest in the browser, so each
-page yields roughly 4 results rather than a full page. Ranking, pricing and
-availability are Best Buy's own; there are simply fewer items per page. Page
-through with `next_page` to collect more — `next_page` reflects whether Best
-Buy has further results, not how many came back in this response.
+**Best Buy product data is not available yet**: `retailer=bestbuy` is
+rejected with a 400, in test mode too.
 
 **Shopify stores are their own retailer**: pass the store's Zinc retailer
 slug as `retailer` (e.g. `retailer=yetch`; its domain, `yetch.studio`, also
@@ -2833,7 +2822,7 @@ client.agent.product_search(
 <dl>
 <dd>
 
-**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, amazon-au, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -2925,6 +2914,8 @@ Offers/pricing for a specific product on a retailer.
 
 Not available for Shopify stores: a storefront lists one seller (itself),
 so per-variant price and availability live on the details endpoint instead.
+Not available for Best Buy, whose product data is not available yet: a
+400, in test mode too.
 </dd>
 </dl>
 </dd>
@@ -2974,7 +2965,7 @@ client.agent.product_offers(
 <dl>
 <dd>
 
-**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, amazon-au, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
     
 </dd>
 </dl>
@@ -3032,13 +3023,8 @@ client.agent.product_offers(
 
 Full product details for a specific product on a retailer.
 
-**Best Buy is addressed by `bsin`**, not by the numeric SKU — the bsin is the
-trailing id in a Best Buy product URL (`/product/{slug}/{bsin}`). Search
-results return the SKU as `product_id` and also carry the bsin, so pass the
-bsin here. The response repeats the SKU as `sku` for cross-referencing.
-
-Unlike `/search`, a Best Buy detail response is complete: detail pages are
-fully server-rendered, so nothing is withheld for client-side loading.
+**Best Buy product data is not available yet**: `retailer=bestbuy` is
+rejected with a 400, in test mode too.
 
 **Shopify is addressed by (store, handle)**: pass the store's retailer slug
 as `retailer` (e.g. `retailer=yetch`) and the product handle — the slug
@@ -3114,7 +3100,7 @@ client.agent.product_details(
 <dl>
 <dd>
 
-**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
+**retailer:** `str` — Zinc retailer slug: amazon, amazon-uk, amazon-ca, amazon-de, amazon-mx, amazon-fr, amazon-au, walmart, bestbuy, etsy, or a catalogued Shopify store's slug (e.g. retailer=yetch; GET /retailers/check?url=... returns a store's slug). A store's domain is also accepted, as are the older amazon_uk-style codes. Stores not in Zinc's catalog are rejected with a 422. Responses carry the slug.
     
 </dd>
 </dl>
