@@ -76,6 +76,11 @@ class OrderResponse(UniversalBaseModel):
     `gift`/`items`/`quantity`: the mode this order asked for on each rule (all null = strict). `concessions`: every rule that actually was relaxed, with the worker's code and the item it concerned. Empty concessions means the order was fulfilled exactly as requested.
     """
 
+    status_checked_at: typing.Optional[dt.datetime] = pydantic.Field(default=None)
+    """
+    When Zinc last got an answer about this order's status or tracking from the retailer or a carrier (UTC). An answer of 'no tracking yet' counts; failed attempts do not. Null until the first successful check.
+    """
+
     created_at: dt.datetime
     updated_at: dt.datetime
 

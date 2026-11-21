@@ -12,13 +12,15 @@ class OrderPayment(UniversalBaseModel):
     """
     Optional payment block. Absent or mode='wallet' draws the order from the
     prepaid wallet. mode='connect' charges the end-customer's saved card through
-    Stripe Connect and keeps your margin (see ConnectService).
+    Stripe Connect and keeps your margin (see ConnectService). mode='link' pays
+    the retailer with a one-time card from your connected Link wallet, after you
+    approve the spend in Link; the wallet is charged the API fee only.
     """
 
     mode: typing.Optional[OrderPaymentMode] = None
     payment_method: typing.Optional[str] = pydantic.Field(default=None)
     """
-    Connect mode: the end-customer's vaulted payment-method id on the connected account. Required for connect mode.
+    Connect mode: the end-customer's vaulted payment-method id on the connected account. Required for connect mode. Link mode: which card in your Link wallet pays (from GET /users/link-wallet/payment-methods); omitted, your default Link card.
     """
 
     customer: typing.Optional[str] = pydantic.Field(default=None)

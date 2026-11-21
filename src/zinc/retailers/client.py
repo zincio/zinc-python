@@ -91,7 +91,7 @@ class RetailersClient:
 
         | tier | meaning |
         |---|---|
-        | `verified` | curated, and its daily test order is passing |
+        | `verified` | curated, and its daily test checkout is passing |
         | `active` | real orders succeeded here in the last 90 days |
         | `observed` | Zinc has attempted orders here |
         | `untested` | never seen — and Zinc will still attempt it |
@@ -220,7 +220,7 @@ class AsyncRetailersClient:
 
         | tier | meaning |
         |---|---|
-        | `verified` | curated, and its daily test order is passing |
+        | `verified` | curated, and its daily test checkout is passing |
         | `active` | real orders succeeded here in the last 90 days |
         | `observed` | Zinc has attempted orders here |
         | `untested` | never seen — and Zinc will still attempt it |

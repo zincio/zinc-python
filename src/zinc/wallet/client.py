@@ -4,6 +4,9 @@ import typing
 
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.request_options import RequestOptions
+from ..types.transaction_list_response import TransactionListResponse
+from ..types.transaction_response import TransactionResponse
+from ..types.transaction_type import TransactionType
 from ..types.wallet_response import WalletResponse
 from .raw_client import AsyncRawWalletClient, RawWalletClient
 
@@ -39,6 +42,13 @@ class WalletClient:
         Under a `zn_test_` key (or `X-Test-Mode`) this reads the sandbox wallet,
         which sandbox orders never draw down. Funds are added from the dashboard.
 
+        On a team with an organization wallet, `organization_wallet` carries its
+        balance (for every member but its holder, whose own wallet it is:
+        `is_organization_wallet`).
+
+        `pending_deposits` is money on its way in but not yet spendable, such as a
+        bank (ACH) debit, which takes 3-5 business days to settle.
+
         Parameters
         ----------
         authorization : typing.Optional[str]
@@ -61,6 +71,108 @@ class WalletClient:
         client.wallet.get_wallet()
         """
         _response = self._raw_client.get_wallet(authorization=authorization, request_options=request_options)
+        return _response.data
+
+    def get_transactions(
+        self,
+        *,
+        limit: typing.Optional[int] = None,
+        offset: typing.Optional[int] = None,
+        type: typing.Optional[typing.Sequence[TransactionType]] = None,
+        authorization: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> TransactionListResponse:
+        """
+        List your wallet transactions, newest first.
+
+        Paginate with `limit` and `offset`. Filter by `type`, repeating it to ask
+        for several (`?type=refund&type=return_credit`); `?type=deposit` lists your
+        deposits, pending ones included.
+
+        A deposit's `status` is `pending` until the money arrives, then `completed`
+        (counted in `balance`), `failed` (`failure_reason` says why) or
+        `cancelled`. A bank (ACH) debit (`payment_type: us_bank_account`) takes 3-5
+        business days; while pending it carries `expected_available_at`. `fee` is
+        the processing fee charged on top of a deposit.
+
+        On a team, a billing viewer sees every member's history, each row labelled
+        `created_by`; deposits a teammate paid into another wallet carry `paid_by`.
+
+        Parameters
+        ----------
+        limit : typing.Optional[int]
+
+        offset : typing.Optional[int]
+
+        type : typing.Optional[typing.Sequence[TransactionType]]
+
+        authorization : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        TransactionListResponse
+            Successful Response
+
+        Examples
+        --------
+        from zinc import ZincClient
+
+        client = ZincClient(
+            api_key="YOUR_API_KEY",
+        )
+        client.wallet.get_transactions()
+        """
+        _response = self._raw_client.get_transactions(
+            limit=limit, offset=offset, type=type, authorization=authorization, request_options=request_options
+        )
+        return _response.data
+
+    def get_transaction(
+        self,
+        transaction_id: str,
+        *,
+        authorization: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> TransactionResponse:
+        """
+        Get one wallet transaction, e.g. to check on a pending deposit.
+
+        Same fields as each row of `GET /wallet/transactions`: a pending bank
+        (ACH) debit carries `expected_available_at`, a completed one
+        `completed_at`, a failed one `failure_reason`. Returns 404 for a
+        transaction that isn't yours.
+
+        Parameters
+        ----------
+        transaction_id : str
+
+        authorization : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        TransactionResponse
+            Successful Response
+
+        Examples
+        --------
+        from zinc import ZincClient
+
+        client = ZincClient(
+            api_key="YOUR_API_KEY",
+        )
+        client.wallet.get_transaction(
+            transaction_id="transaction_id",
+        )
+        """
+        _response = self._raw_client.get_transaction(
+            transaction_id, authorization=authorization, request_options=request_options
+        )
         return _response.data
 
 
@@ -95,6 +207,13 @@ class AsyncWalletClient:
         Under a `zn_test_` key (or `X-Test-Mode`) this reads the sandbox wallet,
         which sandbox orders never draw down. Funds are added from the dashboard.
 
+        On a team with an organization wallet, `organization_wallet` carries its
+        balance (for every member but its holder, whose own wallet it is:
+        `is_organization_wallet`).
+
+        `pending_deposits` is money on its way in but not yet spendable, such as a
+        bank (ACH) debit, which takes 3-5 business days to settle.
+
         Parameters
         ----------
         authorization : typing.Optional[str]
@@ -125,4 +244,122 @@ class AsyncWalletClient:
         asyncio.run(main())
         """
         _response = await self._raw_client.get_wallet(authorization=authorization, request_options=request_options)
+        return _response.data
+
+    async def get_transactions(
+        self,
+        *,
+        limit: typing.Optional[int] = None,
+        offset: typing.Optional[int] = None,
+        type: typing.Optional[typing.Sequence[TransactionType]] = None,
+        authorization: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> TransactionListResponse:
+        """
+        List your wallet transactions, newest first.
+
+        Paginate with `limit` and `offset`. Filter by `type`, repeating it to ask
+        for several (`?type=refund&type=return_credit`); `?type=deposit` lists your
+        deposits, pending ones included.
+
+        A deposit's `status` is `pending` until the money arrives, then `completed`
+        (counted in `balance`), `failed` (`failure_reason` says why) or
+        `cancelled`. A bank (ACH) debit (`payment_type: us_bank_account`) takes 3-5
+        business days; while pending it carries `expected_available_at`. `fee` is
+        the processing fee charged on top of a deposit.
+
+        On a team, a billing viewer sees every member's history, each row labelled
+        `created_by`; deposits a teammate paid into another wallet carry `paid_by`.
+
+        Parameters
+        ----------
+        limit : typing.Optional[int]
+
+        offset : typing.Optional[int]
+
+        type : typing.Optional[typing.Sequence[TransactionType]]
+
+        authorization : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        TransactionListResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from zinc import AsyncZincClient
+
+        client = AsyncZincClient(
+            api_key="YOUR_API_KEY",
+        )
+
+
+        async def main() -> None:
+            await client.wallet.get_transactions()
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_transactions(
+            limit=limit, offset=offset, type=type, authorization=authorization, request_options=request_options
+        )
+        return _response.data
+
+    async def get_transaction(
+        self,
+        transaction_id: str,
+        *,
+        authorization: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> TransactionResponse:
+        """
+        Get one wallet transaction, e.g. to check on a pending deposit.
+
+        Same fields as each row of `GET /wallet/transactions`: a pending bank
+        (ACH) debit carries `expected_available_at`, a completed one
+        `completed_at`, a failed one `failure_reason`. Returns 404 for a
+        transaction that isn't yours.
+
+        Parameters
+        ----------
+        transaction_id : str
+
+        authorization : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        TransactionResponse
+            Successful Response
+
+        Examples
+        --------
+        import asyncio
+
+        from zinc import AsyncZincClient
+
+        client = AsyncZincClient(
+            api_key="YOUR_API_KEY",
+        )
+
+
+        async def main() -> None:
+            await client.wallet.get_transaction(
+                transaction_id="transaction_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.get_transaction(
+            transaction_id, authorization=authorization, request_options=request_options
+        )
         return _response.data

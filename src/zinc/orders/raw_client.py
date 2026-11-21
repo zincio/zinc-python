@@ -13,6 +13,8 @@ from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
 from ..core.serialization import convert_and_respect_annotation_metadata
+from ..errors.bad_request_error import BadRequestError
+from ..errors.conflict_error import ConflictError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
 from ..types.address import Address
 from ..types.bulk_batch_list_response import BulkBatchListResponse
@@ -196,6 +198,10 @@ class RawOrdersClient:
     ) -> HttpResponse[BulkBatchResponse]:
         """
         Create a bulk-upload batch and place its rows asynchronously.
+
+        The 201 returns the batch before its rows are placed; each row becomes an
+        order that is placed asynchronously like any POST /orders order. Poll
+        GET /orders/bulk/{batch_id} for per-row results and live order statuses.
 
         Parameters
         ----------
@@ -390,6 +396,7 @@ class RawOrdersClient:
         merchant_order_id: typing.Optional[str] = None,
         shipping_name: typing.Optional[str] = None,
         status_filter: typing.Optional[str] = None,
+        hide_failed_and_cancelled: typing.Optional[bool] = None,
         tracking_status: typing.Optional[str] = None,
         has_tracking: typing.Optional[bool] = None,
         return_status: typing.Optional[str] = None,
@@ -426,7 +433,10 @@ class RawOrdersClient:
             Filter by the shipping recipient's name, matched as a case-insensitive substring of `first_name last_name`.
 
         status_filter : typing.Optional[str]
-            Filter by order status
+            Filter by order status; comma-separate to match any of several. `delivered` matches placed orders whose items have all been delivered.
+
+        hide_failed_and_cancelled : typing.Optional[bool]
+            Exclude `order_failed`, `cancelled`, and `cancelled_by_retailer` orders. ANDed with `status_filter`, so combining it with one of those statuses returns nothing.
 
         tracking_status : typing.Optional[str]
             Filter to orders having at least one tracking number with this status
@@ -476,6 +486,7 @@ class RawOrdersClient:
                 "merchant_order_id": merchant_order_id,
                 "shipping_name": shipping_name,
                 "status_filter": status_filter,
+                "hide_failed_and_cancelled": hide_failed_and_cancelled,
                 "tracking_status": tracking_status,
                 "has_tracking": has_tracking,
                 "return_status": return_status,
@@ -526,6 +537,7 @@ class RawOrdersClient:
         *,
         products: typing.Sequence[OrderProduct],
         max_price: int,
+        idempotency_key_header: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
         shipping_address: typing.Optional[Address] = OMIT,
         idempotency_key: typing.Optional[str] = OMIT,
@@ -543,12 +555,17 @@ class RawOrdersClient:
         """
         Posts an order to a queue for processing
 
+        **Placement is asynchronous.** A 201 means the order was accepted and queued, not that the retailer order exists: the returned order is normally `pending`, with an empty `job_result` and `merchant_order_ids`. A worker then places it at the retailer, which usually takes a few minutes. Learn the outcome either by polling GET /orders/{order_id} (linked from this response) until `status` is no longer `pending` or `in_progress` — `order_placed`, `order_failed`, or `cancelled` — or by registering a URL with PUT /webhooks/endpoint and waiting for `order.placed` or `order.failed`. To retry safely after a timeout, send an `Idempotency-Key` and resend the same value.
+
         Parameters
         ----------
         products : typing.Sequence[OrderProduct]
 
         max_price : int
             Maximum price (in cents) allowed for an order before it is finalized.
+
+        idempotency_key_header : typing.Optional[str]
+            Optional key (max 36 characters) that makes this request safe to retry after a timeout or dropped connection. Equivalent to the `idempotency_key` body field: send either one, or both with the same value. A header and body field that differ are rejected with 400 before anything is created or charged. Use a fresh unique value (e.g. a UUID) for each distinct order, and the same value when retrying that order. Keys never expire. Keys are scoped to your account. The first request with a key creates the order; a later request with the same key creates no second order and charges nothing, whatever its body says, and answers 409 `already_exists` with the original order's id in `error.details.order_id` — read it with GET /orders/{order_id}. `order_id` is absent when the two requests arrived concurrently, or when the key was already used for a different `payment.mode=card` basket; either way the key is spent, so use a new one for a new order. A `payment.mode=card` order whose payment page is still open answers with its original 402 instead.
 
         authorization : typing.Optional[str]
 
@@ -583,7 +600,7 @@ class RawOrdersClient:
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         fulfillment : typing.Optional[FulfillmentPreferences]
-            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from.
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from. `shipping` picks a preferred delivery speed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -623,6 +640,7 @@ class RawOrdersClient:
             },
             headers={
                 "content-type": "application/json",
+                "Idempotency-Key": str(idempotency_key_header) if idempotency_key_header is not None else None,
                 "authorization": str(authorization) if authorization is not None else None,
             },
             request_options=request_options,
@@ -638,6 +656,28 @@ class RawOrdersClient:
                     ),
                 )
                 return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     headers=dict(_response.headers),
@@ -664,6 +704,7 @@ class RawOrdersClient:
         order_id: typing.Optional[str] = None,
         search: typing.Optional[str] = None,
         status_filter: typing.Optional[str] = None,
+        hide_failed_and_cancelled: typing.Optional[bool] = None,
         merchant_order_id: typing.Optional[str] = None,
         shipping_name: typing.Optional[str] = None,
         tracking_status: typing.Optional[str] = None,
@@ -694,7 +735,10 @@ class RawOrdersClient:
             Partial match on order ID OR tracking number
 
         status_filter : typing.Optional[str]
-            Filter by order status
+            Filter by order status; comma-separate to match any of several. `delivered` matches placed orders whose items have all been delivered.
+
+        hide_failed_and_cancelled : typing.Optional[bool]
+            Exclude `order_failed`, `cancelled`, and `cancelled_by_retailer` orders. ANDed with `status_filter`, so combining it with one of those statuses returns nothing.
 
         merchant_order_id : typing.Optional[str]
             Filter by the retailer's own order number (exact match)
@@ -743,6 +787,7 @@ class RawOrdersClient:
                 "order_id": order_id,
                 "search": search,
                 "status_filter": status_filter,
+                "hide_failed_and_cancelled": hide_failed_and_cancelled,
                 "merchant_order_id": merchant_order_id,
                 "shipping_name": shipping_name,
                 "tracking_status": tracking_status,
@@ -1175,6 +1220,10 @@ class AsyncRawOrdersClient:
         """
         Create a bulk-upload batch and place its rows asynchronously.
 
+        The 201 returns the batch before its rows are placed; each row becomes an
+        order that is placed asynchronously like any POST /orders order. Poll
+        GET /orders/bulk/{batch_id} for per-row results and live order statuses.
+
         Parameters
         ----------
         authorization : typing.Optional[str]
@@ -1368,6 +1417,7 @@ class AsyncRawOrdersClient:
         merchant_order_id: typing.Optional[str] = None,
         shipping_name: typing.Optional[str] = None,
         status_filter: typing.Optional[str] = None,
+        hide_failed_and_cancelled: typing.Optional[bool] = None,
         tracking_status: typing.Optional[str] = None,
         has_tracking: typing.Optional[bool] = None,
         return_status: typing.Optional[str] = None,
@@ -1404,7 +1454,10 @@ class AsyncRawOrdersClient:
             Filter by the shipping recipient's name, matched as a case-insensitive substring of `first_name last_name`.
 
         status_filter : typing.Optional[str]
-            Filter by order status
+            Filter by order status; comma-separate to match any of several. `delivered` matches placed orders whose items have all been delivered.
+
+        hide_failed_and_cancelled : typing.Optional[bool]
+            Exclude `order_failed`, `cancelled`, and `cancelled_by_retailer` orders. ANDed with `status_filter`, so combining it with one of those statuses returns nothing.
 
         tracking_status : typing.Optional[str]
             Filter to orders having at least one tracking number with this status
@@ -1454,6 +1507,7 @@ class AsyncRawOrdersClient:
                 "merchant_order_id": merchant_order_id,
                 "shipping_name": shipping_name,
                 "status_filter": status_filter,
+                "hide_failed_and_cancelled": hide_failed_and_cancelled,
                 "tracking_status": tracking_status,
                 "has_tracking": has_tracking,
                 "return_status": return_status,
@@ -1504,6 +1558,7 @@ class AsyncRawOrdersClient:
         *,
         products: typing.Sequence[OrderProduct],
         max_price: int,
+        idempotency_key_header: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
         shipping_address: typing.Optional[Address] = OMIT,
         idempotency_key: typing.Optional[str] = OMIT,
@@ -1521,12 +1576,17 @@ class AsyncRawOrdersClient:
         """
         Posts an order to a queue for processing
 
+        **Placement is asynchronous.** A 201 means the order was accepted and queued, not that the retailer order exists: the returned order is normally `pending`, with an empty `job_result` and `merchant_order_ids`. A worker then places it at the retailer, which usually takes a few minutes. Learn the outcome either by polling GET /orders/{order_id} (linked from this response) until `status` is no longer `pending` or `in_progress` — `order_placed`, `order_failed`, or `cancelled` — or by registering a URL with PUT /webhooks/endpoint and waiting for `order.placed` or `order.failed`. To retry safely after a timeout, send an `Idempotency-Key` and resend the same value.
+
         Parameters
         ----------
         products : typing.Sequence[OrderProduct]
 
         max_price : int
             Maximum price (in cents) allowed for an order before it is finalized.
+
+        idempotency_key_header : typing.Optional[str]
+            Optional key (max 36 characters) that makes this request safe to retry after a timeout or dropped connection. Equivalent to the `idempotency_key` body field: send either one, or both with the same value. A header and body field that differ are rejected with 400 before anything is created or charged. Use a fresh unique value (e.g. a UUID) for each distinct order, and the same value when retrying that order. Keys never expire. Keys are scoped to your account. The first request with a key creates the order; a later request with the same key creates no second order and charges nothing, whatever its body says, and answers 409 `already_exists` with the original order's id in `error.details.order_id` — read it with GET /orders/{order_id}. `order_id` is absent when the two requests arrived concurrently, or when the key was already used for a different `payment.mode=card` basket; either way the key is spent, so use a new one for a new order. A `payment.mode=card` order whose payment page is still open answers with its original 402 instead.
 
         authorization : typing.Optional[str]
 
@@ -1561,7 +1621,7 @@ class AsyncRawOrdersClient:
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         fulfillment : typing.Optional[FulfillmentPreferences]
-            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from.
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from. `shipping` picks a preferred delivery speed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1601,6 +1661,7 @@ class AsyncRawOrdersClient:
             },
             headers={
                 "content-type": "application/json",
+                "Idempotency-Key": str(idempotency_key_header) if idempotency_key_header is not None else None,
                 "authorization": str(authorization) if authorization is not None else None,
             },
             request_options=request_options,
@@ -1616,6 +1677,28 @@ class AsyncRawOrdersClient:
                     ),
                 )
                 return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 422:
                 raise UnprocessableEntityError(
                     headers=dict(_response.headers),
@@ -1642,6 +1725,7 @@ class AsyncRawOrdersClient:
         order_id: typing.Optional[str] = None,
         search: typing.Optional[str] = None,
         status_filter: typing.Optional[str] = None,
+        hide_failed_and_cancelled: typing.Optional[bool] = None,
         merchant_order_id: typing.Optional[str] = None,
         shipping_name: typing.Optional[str] = None,
         tracking_status: typing.Optional[str] = None,
@@ -1672,7 +1756,10 @@ class AsyncRawOrdersClient:
             Partial match on order ID OR tracking number
 
         status_filter : typing.Optional[str]
-            Filter by order status
+            Filter by order status; comma-separate to match any of several. `delivered` matches placed orders whose items have all been delivered.
+
+        hide_failed_and_cancelled : typing.Optional[bool]
+            Exclude `order_failed`, `cancelled`, and `cancelled_by_retailer` orders. ANDed with `status_filter`, so combining it with one of those statuses returns nothing.
 
         merchant_order_id : typing.Optional[str]
             Filter by the retailer's own order number (exact match)
@@ -1721,6 +1808,7 @@ class AsyncRawOrdersClient:
                 "order_id": order_id,
                 "search": search,
                 "status_filter": status_filter,
+                "hide_failed_and_cancelled": hide_failed_and_cancelled,
                 "merchant_order_id": merchant_order_id,
                 "shipping_name": shipping_name,
                 "tracking_status": tracking_status,

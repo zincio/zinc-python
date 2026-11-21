@@ -84,7 +84,7 @@ class GetProductOffersProductsProductIdOffersGetResponseOffersItem(UniversalBase
         typing.List[GetProductOffersProductsProductIdOffersGetResponseOffersItemShippingOptionsItem]
     ] = pydantic.Field(default=None)
     """
-    Shipping methods offered by this seller.
+    Shipping methods offered by this seller. Amazon: empty when the item is digital (an ebook or a code sent by email), or when the seller won't ship it to the location Zinc looks it up from (e.g. a state shipping restriction); a restricted item may still ship to other addresses.
     """
 
     if IS_PYDANTIC_V2:

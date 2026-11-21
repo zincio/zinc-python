@@ -182,6 +182,10 @@ client.orders.list_bulk_uploads()
 <dd>
 
 Create a bulk-upload batch and place its rows asynchronously.
+
+The 201 returns the batch before its rows are placed; each row becomes an
+order that is placed asynchronously like any POST /orders order. Poll
+GET /orders/bulk/{batch_id} for per-row results and live order statuses.
 </dd>
 </dl>
 </dd>
@@ -509,7 +513,15 @@ client.orders.list_orders()
 <dl>
 <dd>
 
-**status_filter:** `typing.Optional[str]` — Filter by order status
+**status_filter:** `typing.Optional[str]` — Filter by order status; comma-separate to match any of several. `delivered` matches placed orders whose items have all been delivered.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**hide_failed_and_cancelled:** `typing.Optional[bool]` — Exclude `order_failed`, `cancelled`, and `cancelled_by_retailer` orders. ANDed with `status_filter`, so combining it with one of those statuses returns nothing.
     
 </dd>
 </dl>
@@ -622,6 +634,8 @@ client.orders.list_orders()
 <dd>
 
 Posts an order to a queue for processing
+
+**Placement is asynchronous.** A 201 means the order was accepted and queued, not that the retailer order exists: the returned order is normally `pending`, with an empty `job_result` and `merchant_order_ids`. A worker then places it at the retailer, which usually takes a few minutes. Learn the outcome either by polling GET /orders/{order_id} (linked from this response) until `status` is no longer `pending` or `in_progress` — `order_placed`, `order_failed`, or `cancelled` — or by registering a URL with PUT /webhooks/endpoint and waiting for `order.placed` or `order.failed`. To retry safely after a timeout, send an `Idempotency-Key` and resend the same value.
 </dd>
 </dl>
 </dd>
@@ -676,6 +690,14 @@ client.orders.create_order(
 <dd>
 
 **max_price:** `int` — Maximum price (in cents) allowed for an order before it is finalized.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**idempotency_key_header:** `typing.Optional[str]` — Optional key (max 36 characters) that makes this request safe to retry after a timeout or dropped connection. Equivalent to the `idempotency_key` body field: send either one, or both with the same value. A header and body field that differ are rejected with 400 before anything is created or charged. Use a fresh unique value (e.g. a UUID) for each distinct order, and the same value when retrying that order. Keys never expire. Keys are scoped to your account. The first request with a key creates the order; a later request with the same key creates no second order and charges nothing, whatever its body says, and answers 409 `already_exists` with the original order's id in `error.details.order_id` — read it with GET /orders/{order_id}. `order_id` is absent when the two requests arrived concurrently, or when the key was already used for a different `payment.mode=card` basket; either way the key is spent, so use a new one for a new order. A `payment.mode=card` order whose payment page is still open answers with its original 402 instead.
     
 </dd>
 </dl>
@@ -771,7 +793,7 @@ client.orders.create_order(
 <dl>
 <dd>
 
-**fulfillment:** `typing.Optional[FulfillmentPreferences]` — Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from.
+**fulfillment:** `typing.Optional[FulfillmentPreferences]` — Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from. `shipping` picks a preferred delivery speed.
     
 </dd>
 </dl>
@@ -863,7 +885,15 @@ client.orders.export_orders_csv()
 <dl>
 <dd>
 
-**status_filter:** `typing.Optional[str]` — Filter by order status
+**status_filter:** `typing.Optional[str]` — Filter by order status; comma-separate to match any of several. `delivered` matches placed orders whose items have all been delivered.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**hide_failed_and_cancelled:** `typing.Optional[bool]` — Exclude `order_failed`, `cancelled`, and `cancelled_by_retailer` orders. ANDed with `status_filter`, so combining it with one of those statuses returns nothing.
     
 </dd>
 </dl>
@@ -2425,6 +2455,8 @@ whose retry body no longer matches the challenge).
 ``X-Test-Mode: true`` runs the same flow on testnets: every rail is swapped
 for a testnet-only twin, and the order is created in the sandbox, where it
 is simulated like any ``zn_test_`` order. Testnet payments are not refunded.
+
+**Placement is asynchronous.** A 201 means the order was accepted and queued, not that the retailer order exists: the returned order is normally `pending`, with an empty `job_result` and `merchant_order_ids`. A worker then places it at the retailer, which usually takes a few minutes. Learn the outcome either by polling GET /orders/{order_id} (linked from this response) until `status` is no longer `pending` or `in_progress` — `order_placed`, `order_failed`, or `cancelled` — or by registering a URL with PUT /webhooks/endpoint and waiting for `order.placed` or `order.failed`. To retry safely after a timeout, send an `Idempotency-Key` and resend the same value.
 </dd>
 </dl>
 </dd>
@@ -2526,6 +2558,14 @@ client.agent.create_mpp_order(
 <dl>
 <dd>
 
+**idempotency_key_header:** `typing.Optional[str]` — Optional key (max 36 characters) that makes this request safe to retry after a timeout or dropped connection. Equivalent to the `idempotency_key` body field: send either one, or both with the same value. A header and body field that differ are rejected with 400 before anything is created or charged. Use a fresh unique value (e.g. a UUID) for each distinct order, and the same value when retrying that order. Keys never expire. Keys are scoped to the paying wallet. A replay is detected after the payment proof is verified but before it is settled, so the retry is never charged: it answers 409 `already_exists` with the original order's id in `error.details.order_id` (absent only if the two requests arrived concurrently) and the payer's API key in the `X-Api-Key` response header — read the order with GET /orders/{order_id}.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
 **idempotency_key:** `typing.Optional[str]` — Optional idempotency key to prevent duplicate orders. If not provided, one will be generated.
     
 </dd>
@@ -2598,7 +2638,7 @@ client.agent.create_mpp_order(
 <dl>
 <dd>
 
-**fulfillment:** `typing.Optional[FulfillmentPreferences]` — Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from.
+**fulfillment:** `typing.Optional[FulfillmentPreferences]` — Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from. `shipping` picks a preferred delivery speed.
     
 </dd>
 </dl>
@@ -4024,7 +4064,7 @@ caller holding an arbitrary URL has no way to find out from the list alone.
 
 | tier | meaning |
 |---|---|
-| `verified` | curated, and its daily test order is passing |
+| `verified` | curated, and its daily test checkout is passing |
 | `active` | real orders succeeded here in the last 90 days |
 | `observed` | Zinc has attempted orders here |
 | `untested` | never seen — and Zinc will still attempt it |
@@ -4211,6 +4251,13 @@ placing one instead of discovering a shortfall as a 402. Bulk-deal customers
 
 Under a `zn_test_` key (or `X-Test-Mode`) this reads the sandbox wallet,
 which sandbox orders never draw down. Funds are added from the dashboard.
+
+On a team with an organization wallet, `organization_wallet` carries its
+balance (for every member but its holder, whose own wallet it is:
+`is_organization_wallet`).
+
+`pending_deposits` is money on its way in but not yet spendable, such as a
+bank (ACH) debit, which takes 3-5 business days to settle.
 </dd>
 </dl>
 </dd>
@@ -4245,6 +4292,200 @@ client.wallet.get_wallet()
 
 <dl>
 <dd>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.wallet.<a href="src/zinc/wallet/client.py">get_transactions</a>(...) -> TransactionListResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+List your wallet transactions, newest first.
+
+Paginate with `limit` and `offset`. Filter by `type`, repeating it to ask
+for several (`?type=refund&type=return_credit`); `?type=deposit` lists your
+deposits, pending ones included.
+
+A deposit's `status` is `pending` until the money arrives, then `completed`
+(counted in `balance`), `failed` (`failure_reason` says why) or
+`cancelled`. A bank (ACH) debit (`payment_type: us_bank_account`) takes 3-5
+business days; while pending it carries `expected_available_at`. `fee` is
+the processing fee charged on top of a deposit.
+
+On a team, a billing viewer sees every member's history, each row labelled
+`created_by`; deposits a teammate paid into another wallet carry `paid_by`.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.wallet.get_transactions()
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**limit:** `typing.Optional[int]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**offset:** `typing.Optional[int]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**type:** `typing.Optional[typing.List[TransactionType]]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**authorization:** `typing.Optional[str]` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**request_options:** `typing.Optional[RequestOptions]` — Request-specific configuration.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.wallet.<a href="src/zinc/wallet/client.py">get_transaction</a>(...) -> TransactionResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Get one wallet transaction, e.g. to check on a pending deposit.
+
+Same fields as each row of `GET /wallet/transactions`: a pending bank
+(ACH) debit carries `expected_available_at`, a completed one
+`completed_at`, a failed one `failure_reason`. Returns 404 for a
+transaction that isn't yours.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```python
+from zinc import ZincClient
+from zinc.environment import ZincClientEnvironment
+
+client = ZincClient(
+    api_key="<value>",
+    environment=ZincClientEnvironment.PRODUCTION,
+)
+
+client.wallet.get_transaction(
+    transaction_id="transaction_id",
+)
+
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**transaction_id:** `str` 
+    
+</dd>
+</dl>
 
 <dl>
 <dd>

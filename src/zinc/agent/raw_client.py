@@ -10,6 +10,7 @@ from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
 from ..core.serialization import convert_and_respect_annotation_metadata
+from ..errors.bad_request_error import BadRequestError
 from ..errors.conflict_error import ConflictError
 from ..errors.payment_required_error import PaymentRequiredError
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
@@ -43,6 +44,7 @@ class RawAgentClient:
         method: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
         test_mode: typing.Optional[str] = None,
+        idempotency_key_header: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = OMIT,
         retailer_credentials_id: typing.Optional[str] = OMIT,
         metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
@@ -78,6 +80,8 @@ class RawAgentClient:
         for a testnet-only twin, and the order is created in the sandbox, where it
         is simulated like any ``zn_test_`` order. Testnet payments are not refunded.
 
+        **Placement is asynchronous.** A 201 means the order was accepted and queued, not that the retailer order exists: the returned order is normally `pending`, with an empty `job_result` and `merchant_order_ids`. A worker then places it at the retailer, which usually takes a few minutes. Learn the outcome either by polling GET /orders/{order_id} (linked from this response) until `status` is no longer `pending` or `in_progress` — `order_placed`, `order_failed`, or `cancelled` — or by registering a URL with PUT /webhooks/endpoint and waiting for `order.placed` or `order.failed`. To retry safely after a timeout, send an `Idempotency-Key` and resend the same value.
+
         Parameters
         ----------
         products : typing.Sequence[OrderProduct]
@@ -94,6 +98,9 @@ class RawAgentClient:
 
         test_mode : typing.Optional[str]
             Set to 'true' for test mode: the 402 offers testnet rails only (Tempo testnet, Base Sepolia, Solana devnet), and the order is simulated in the sandbox — no real funds, no retailer order. The X-Api-Key returned is a zn_test_ key.
+
+        idempotency_key_header : typing.Optional[str]
+            Optional key (max 36 characters) that makes this request safe to retry after a timeout or dropped connection. Equivalent to the `idempotency_key` body field: send either one, or both with the same value. A header and body field that differ are rejected with 400 before anything is created or charged. Use a fresh unique value (e.g. a UUID) for each distinct order, and the same value when retrying that order. Keys never expire. Keys are scoped to the paying wallet. A replay is detected after the payment proof is verified but before it is settled, so the retry is never charged: it answers 409 `already_exists` with the original order's id in `error.details.order_id` (absent only if the two requests arrived concurrently) and the payer's API key in the `X-Api-Key` response header — read the order with GET /orders/{order_id}.
 
         idempotency_key : typing.Optional[str]
             Optional idempotency key to prevent duplicate orders. If not provided, one will be generated.
@@ -123,7 +130,7 @@ class RawAgentClient:
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         fulfillment : typing.Optional[FulfillmentPreferences]
-            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from.
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from. `shipping` picks a preferred delivery speed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -168,6 +175,7 @@ class RawAgentClient:
                 "content-type": "application/json",
                 "authorization": str(authorization) if authorization is not None else None,
                 "x-test-mode": str(test_mode) if test_mode is not None else None,
+                "Idempotency-Key": str(idempotency_key_header) if idempotency_key_header is not None else None,
             },
             request_options=request_options,
             omit=OMIT,
@@ -182,6 +190,17 @@ class RawAgentClient:
                     ),
                 )
                 return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 402:
                 raise PaymentRequiredError(
                     headers=dict(_response.headers),
@@ -690,6 +709,7 @@ class AsyncRawAgentClient:
         method: typing.Optional[str] = None,
         authorization: typing.Optional[str] = None,
         test_mode: typing.Optional[str] = None,
+        idempotency_key_header: typing.Optional[str] = None,
         idempotency_key: typing.Optional[str] = OMIT,
         retailer_credentials_id: typing.Optional[str] = OMIT,
         metadata: typing.Optional[typing.Dict[str, typing.Any]] = OMIT,
@@ -725,6 +745,8 @@ class AsyncRawAgentClient:
         for a testnet-only twin, and the order is created in the sandbox, where it
         is simulated like any ``zn_test_`` order. Testnet payments are not refunded.
 
+        **Placement is asynchronous.** A 201 means the order was accepted and queued, not that the retailer order exists: the returned order is normally `pending`, with an empty `job_result` and `merchant_order_ids`. A worker then places it at the retailer, which usually takes a few minutes. Learn the outcome either by polling GET /orders/{order_id} (linked from this response) until `status` is no longer `pending` or `in_progress` — `order_placed`, `order_failed`, or `cancelled` — or by registering a URL with PUT /webhooks/endpoint and waiting for `order.placed` or `order.failed`. To retry safely after a timeout, send an `Idempotency-Key` and resend the same value.
+
         Parameters
         ----------
         products : typing.Sequence[OrderProduct]
@@ -741,6 +763,9 @@ class AsyncRawAgentClient:
 
         test_mode : typing.Optional[str]
             Set to 'true' for test mode: the 402 offers testnet rails only (Tempo testnet, Base Sepolia, Solana devnet), and the order is simulated in the sandbox — no real funds, no retailer order. The X-Api-Key returned is a zn_test_ key.
+
+        idempotency_key_header : typing.Optional[str]
+            Optional key (max 36 characters) that makes this request safe to retry after a timeout or dropped connection. Equivalent to the `idempotency_key` body field: send either one, or both with the same value. A header and body field that differ are rejected with 400 before anything is created or charged. Use a fresh unique value (e.g. a UUID) for each distinct order, and the same value when retrying that order. Keys never expire. Keys are scoped to the paying wallet. A replay is detected after the payment proof is verified but before it is settled, so the retry is never charged: it answers 409 `already_exists` with the original order's id in `error.details.order_id` (absent only if the two requests arrived concurrently) and the payer's API key in the `X-Api-Key` response header — read the order with GET /orders/{order_id}.
 
         idempotency_key : typing.Optional[str]
             Optional idempotency key to prevent duplicate orders. If not provided, one will be generated.
@@ -770,7 +795,7 @@ class AsyncRawAgentClient:
             Opt in to emailing the end customer order updates (and unlock the public tracking page for this order). Adds a per-order surcharge. Omit for no customer notifications (default).
 
         fulfillment : typing.Optional[FulfillmentPreferences]
-            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from.
+            Loosen the order's strict-by-default rules. Omit for today's behaviour: any rule that can't be met fails the order. Set a rule (`gift`, `items`, `quantity`) to `best_effort` to have the order placed anyway; anything left unset stays strict. Whatever was relaxed is reported back in `fulfillment.concessions` on the order. `max_price` is never relaxed. `excluded_merchants`, `included_merchants` and `first_party_only` tighten instead: which merchants this order may be bought from. `shipping` picks a preferred delivery speed.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -815,6 +840,7 @@ class AsyncRawAgentClient:
                 "content-type": "application/json",
                 "authorization": str(authorization) if authorization is not None else None,
                 "x-test-mode": str(test_mode) if test_mode is not None else None,
+                "Idempotency-Key": str(idempotency_key_header) if idempotency_key_header is not None else None,
             },
             request_options=request_options,
             omit=OMIT,
@@ -829,6 +855,17 @@ class AsyncRawAgentClient:
                     ),
                 )
                 return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
             if _response.status_code == 402:
                 raise PaymentRequiredError(
                     headers=dict(_response.headers),

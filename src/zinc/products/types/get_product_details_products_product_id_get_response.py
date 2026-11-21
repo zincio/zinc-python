@@ -47,6 +47,11 @@ class GetProductDetailsProductsProductIdGetResponse(UniversalBaseModel):
     Only on `status: failed`. Human-readable explanation.
     """
 
+    replaced_by_product_id: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Only on `status: failed` with `code: invalid_product`, when the retailer has replaced the requested product with another listing (Walmart). The successor's `product_id`: retry the call with it.
+    """
+
     retailer: typing.Optional[str] = pydantic.Field(default=None)
     """
     Zinc retailer slug that served the payload, the value to pass back as `retailer`: `amazon`, `amazon-uk`, `walmart`, `bestbuy`, `etsy`, or a Shopify store's slug (e.g. `yetch`, with `platform: "shopify"` and the store's hostname in `domain`).

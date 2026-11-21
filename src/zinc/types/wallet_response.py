@@ -5,6 +5,8 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import IS_PYDANTIC_V2, UniversalBaseModel
+from .organization_wallet_summary import OrganizationWalletSummary
+from .wallet_fee_allowance import WalletFeeAllowance
 from .wallet_type import WalletType
 
 
@@ -40,6 +42,26 @@ class WalletResponse(UniversalBaseModel):
     billed_by_invoice: typing.Optional[bool] = pydantic.Field(default=None)
     """
     True for bulk-deal customers, who are invoiced monthly. Their orders skip the wallet balance check entirely, so a low balance does not block them.
+    """
+
+    fee_allowance: typing.Optional[WalletFeeAllowance] = pydantic.Field(default=None)
+    """
+    Promotional fee-free orders and data calls granted to this account, or null when there are none. Not part of `balance`. While free orders remain, `order_fee_cents` is 0.
+    """
+
+    organization_wallet: typing.Optional[OrganizationWalletSummary] = pydantic.Field(default=None)
+    """
+    Your organization's wallet, when it has one and it isn't this wallet: manual top-ups can be sent there. Null otherwise, in test mode, and for OAuth tokens. Orders still draw this wallet, not that one.
+    """
+
+    is_organization_wallet: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    True when this wallet is your organization's wallet.
+    """
+
+    pending_deposits: typing.Optional[int] = pydantic.Field(default=None)
+    """
+    Deposits started but not yet settled, in cents: bank (ACH) debits, which take 3-5 business days, and bank transfers. Card payments settle at once and are never counted. Not part of `balance` and not spendable until they complete. See `GET /wallet/transactions?type=deposit` for each one's `expected_available_at`.
     """
 
     if IS_PYDANTIC_V2:

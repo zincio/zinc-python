@@ -27,7 +27,7 @@ class RetailerCheckResponse(UniversalBaseModel):
 
     support: str = pydantic.Field()
     """
-    verified: curated, daily test order passing. active: real orders succeeded in the last 90 days. observed: Zinc has attempted orders here. untested: never seen, and Zinc will still try. unsupported: Zinc refuses; see `unsupported_reason`.
+    verified: curated, daily test checkout passing. active: real orders succeeded in the last 90 days. observed: Zinc has attempted orders here. untested: never seen, and Zinc will still try. unsupported: Zinc refuses; see `unsupported_reason`.
     """
 
     retailer: typing.Optional[RetailerCheckRetailer] = pydantic.Field(default=None)

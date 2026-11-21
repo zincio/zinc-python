@@ -8,10 +8,10 @@
       "class_name": "ZincClient"
     }
   },
-  "originGitCommit": "b97f0d6dae2d6717117652b979541378f6b9f4d2",
+  "originGitCommit": "59f29f30076a05372a877886d6ae7afe4280ca88",
   "originGitCommitIsDirty": false,
   "invokedBy": "ci",
-  "requestedVersion": "2026.10.30",
+  "requestedVersion": "2026.11.20",
   "ciProvider": "github",
-  "sdkVersion": "2026.10.30"
+  "sdkVersion": "2026.11.20"
 }

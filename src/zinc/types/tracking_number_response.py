@@ -45,7 +45,7 @@ class TrackingNumberResponse(UniversalBaseModel):
 
     delivery_proof_url: typing.Optional[str] = pydantic.Field(default=None)
     """
-    URL of the carrier's proof-of-delivery photo, when one was captured. Typically appears once the shipment is delivered; null when none is available.
+    URL of the proof-of-delivery photo, when the retailer provided one. Only available on orders placed with a managed account; delivery photos can't be pulled from carriers (USPS, UPS, etc.) for privacy reasons, so the retailer must supply it. Typically appears once the shipment is delivered; null when none is available.
     """
 
     checkpoints: typing.Optional[typing.List[TrackingCheckpointResponse]] = pydantic.Field(default=None)

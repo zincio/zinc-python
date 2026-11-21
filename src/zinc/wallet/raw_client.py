@@ -6,10 +6,14 @@ from json.decoder import JSONDecodeError
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.http_response import AsyncHttpResponse, HttpResponse
+from ..core.jsonable_encoder import encode_path_param
 from ..core.parse_error import ParsingError
 from ..core.pydantic_utilities import parse_obj_as
 from ..core.request_options import RequestOptions
 from ..errors.unprocessable_entity_error import UnprocessableEntityError
+from ..types.transaction_list_response import TransactionListResponse
+from ..types.transaction_response import TransactionResponse
+from ..types.transaction_type import TransactionType
 from ..types.wallet_response import WalletResponse
 from pydantic import ValidationError
 
@@ -33,6 +37,13 @@ class RawWalletClient:
 
         Under a `zn_test_` key (or `X-Test-Mode`) this reads the sandbox wallet,
         which sandbox orders never draw down. Funds are added from the dashboard.
+
+        On a team with an organization wallet, `organization_wallet` carries its
+        balance (for every member but its holder, whose own wallet it is:
+        `is_organization_wallet`).
+
+        `pending_deposits` is money on its way in but not yet spendable, such as a
+        bank (ACH) debit, which takes 3-5 business days to settle.
 
         Parameters
         ----------
@@ -84,6 +95,159 @@ class RawWalletClient:
             )
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
+    def get_transactions(
+        self,
+        *,
+        limit: typing.Optional[int] = None,
+        offset: typing.Optional[int] = None,
+        type: typing.Optional[typing.Sequence[TransactionType]] = None,
+        authorization: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[TransactionListResponse]:
+        """
+        List your wallet transactions, newest first.
+
+        Paginate with `limit` and `offset`. Filter by `type`, repeating it to ask
+        for several (`?type=refund&type=return_credit`); `?type=deposit` lists your
+        deposits, pending ones included.
+
+        A deposit's `status` is `pending` until the money arrives, then `completed`
+        (counted in `balance`), `failed` (`failure_reason` says why) or
+        `cancelled`. A bank (ACH) debit (`payment_type: us_bank_account`) takes 3-5
+        business days; while pending it carries `expected_available_at`. `fee` is
+        the processing fee charged on top of a deposit.
+
+        On a team, a billing viewer sees every member's history, each row labelled
+        `created_by`; deposits a teammate paid into another wallet carry `paid_by`.
+
+        Parameters
+        ----------
+        limit : typing.Optional[int]
+
+        offset : typing.Optional[int]
+
+        type : typing.Optional[typing.Sequence[TransactionType]]
+
+        authorization : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[TransactionListResponse]
+            Successful Response
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            "wallet/transactions",
+            method="GET",
+            params={
+                "limit": limit,
+                "offset": offset,
+                "type": type,
+            },
+            headers={
+                "authorization": str(authorization) if authorization is not None else None,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    TransactionListResponse,
+                    parse_obj_as(
+                        type_=TransactionListResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    def get_transaction(
+        self,
+        transaction_id: str,
+        *,
+        authorization: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[TransactionResponse]:
+        """
+        Get one wallet transaction, e.g. to check on a pending deposit.
+
+        Same fields as each row of `GET /wallet/transactions`: a pending bank
+        (ACH) debit carries `expected_available_at`, a completed one
+        `completed_at`, a failed one `failure_reason`. Returns 404 for a
+        transaction that isn't yours.
+
+        Parameters
+        ----------
+        transaction_id : str
+
+        authorization : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[TransactionResponse]
+            Successful Response
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"wallet/transactions/{encode_path_param(transaction_id)}",
+            method="GET",
+            headers={
+                "authorization": str(authorization) if authorization is not None else None,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    TransactionResponse,
+                    parse_obj_as(
+                        type_=TransactionResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
 
 class AsyncRawWalletClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
@@ -104,6 +268,13 @@ class AsyncRawWalletClient:
 
         Under a `zn_test_` key (or `X-Test-Mode`) this reads the sandbox wallet,
         which sandbox orders never draw down. Funds are added from the dashboard.
+
+        On a team with an organization wallet, `organization_wallet` carries its
+        balance (for every member but its holder, whose own wallet it is:
+        `is_organization_wallet`).
+
+        `pending_deposits` is money on its way in but not yet spendable, such as a
+        bank (ACH) debit, which takes 3-5 business days to settle.
 
         Parameters
         ----------
@@ -131,6 +302,159 @@ class AsyncRawWalletClient:
                     WalletResponse,
                     parse_obj_as(
                         type_=WalletResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_transactions(
+        self,
+        *,
+        limit: typing.Optional[int] = None,
+        offset: typing.Optional[int] = None,
+        type: typing.Optional[typing.Sequence[TransactionType]] = None,
+        authorization: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[TransactionListResponse]:
+        """
+        List your wallet transactions, newest first.
+
+        Paginate with `limit` and `offset`. Filter by `type`, repeating it to ask
+        for several (`?type=refund&type=return_credit`); `?type=deposit` lists your
+        deposits, pending ones included.
+
+        A deposit's `status` is `pending` until the money arrives, then `completed`
+        (counted in `balance`), `failed` (`failure_reason` says why) or
+        `cancelled`. A bank (ACH) debit (`payment_type: us_bank_account`) takes 3-5
+        business days; while pending it carries `expected_available_at`. `fee` is
+        the processing fee charged on top of a deposit.
+
+        On a team, a billing viewer sees every member's history, each row labelled
+        `created_by`; deposits a teammate paid into another wallet carry `paid_by`.
+
+        Parameters
+        ----------
+        limit : typing.Optional[int]
+
+        offset : typing.Optional[int]
+
+        type : typing.Optional[typing.Sequence[TransactionType]]
+
+        authorization : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[TransactionListResponse]
+            Successful Response
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            "wallet/transactions",
+            method="GET",
+            params={
+                "limit": limit,
+                "offset": offset,
+                "type": type,
+            },
+            headers={
+                "authorization": str(authorization) if authorization is not None else None,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    TransactionListResponse,
+                    parse_obj_as(
+                        type_=TransactionListResponse,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 422:
+                raise UnprocessableEntityError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        except ValidationError as e:
+            raise ParsingError(
+                status_code=_response.status_code, headers=dict(_response.headers), body=_response.json(), cause=e
+            )
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
+    async def get_transaction(
+        self,
+        transaction_id: str,
+        *,
+        authorization: typing.Optional[str] = None,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[TransactionResponse]:
+        """
+        Get one wallet transaction, e.g. to check on a pending deposit.
+
+        Same fields as each row of `GET /wallet/transactions`: a pending bank
+        (ACH) debit carries `expected_available_at`, a completed one
+        `completed_at`, a failed one `failure_reason`. Returns 404 for a
+        transaction that isn't yours.
+
+        Parameters
+        ----------
+        transaction_id : str
+
+        authorization : typing.Optional[str]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[TransactionResponse]
+            Successful Response
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"wallet/transactions/{encode_path_param(transaction_id)}",
+            method="GET",
+            headers={
+                "authorization": str(authorization) if authorization is not None else None,
+            },
+            request_options=request_options,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    TransactionResponse,
+                    parse_obj_as(
+                        type_=TransactionResponse,  # type: ignore
                         object_=_response.json(),
                     ),
                 )

@@ -30,6 +30,7 @@ ErrorCode = typing.Union[
         "retailer_country_not_supported",
         "guest_checkout_not_supported",
         "invalid_variant",
+        "unsupported_product",
         "out_of_stock",
         "shipping_unavailable",
         "order_not_cancellable",
